@@ -1,0 +1,39 @@
+# 数学建模运行状态与生成物
+state/*
+!state/.gitkeep
+results/*
+!results/.gitkeep
+figures/*
+!figures/.gitkeep
+paper_workspace/*
+!paper_workspace/.gitkeep
+paper_output/
+
+# 常见数据与文档临时文件
+*.aux
+*.log
+*.toc
+*.out
+*.synctex.gz
+~$*
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# 编辑器与系统文件
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 凭据和本地环境
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
