@@ -6,7 +6,7 @@
 
 **Architecture:** 按能力依赖而不是按题号拆分代码。场景契约和混合事件时间线位于最底层；共享动力学、解析证书、路径约束和联合覆盖验证器构成唯一可信计算内核；Q1–Q4 只生成候选并调用验证器。所有结论保存场景哈希、假设版本、Git SHA、随机种子和三值认证状态。
 
-**Tech Stack:** Python 3.12、NumPy、SciPy、Pydantic、PyYAML、jsonschema、Shapely、pandas、pytest、Hypothesis、Ruff、Matplotlib。
+**Tech Stack:** Python 3.12、NumPy、SciPy、Pydantic、PyYAML、Shapely、pandas、pytest、Hypothesis、Ruff、Matplotlib。
 
 ---
 
@@ -30,6 +30,29 @@
 | 仿真代码 → 论文 | 自动生成图表、表格和图注元数据 | 图表与已验收结果使用相同配置哈希 |
 | 论文 → 全组 | 论点—公式—结果—图表映射表 | 不存在无来源公式、数字或结论 |
 
+## PR 边界与第一批实现验收门
+
+当前 PR #2 只固化实现架构和 Implementation Plan，不创建任何 Python 源码、场景生成物或仿真结果，也不执行下文 Task 1–Task 11。
+
+后续第一批实现 PR 只允许执行：
+
+1. Task 1：场景契约；
+2. Task 2：场景矩阵与溯源；
+3. Task 3：混合事件时间线和最早烟幕形成公共证书。
+
+第一批完成后必须单独验收：
+
+1. `constants.yaml` 是题面公共常数唯一事实源，场景无重复常数；
+2. Pydantic 与仓库中导出的 JSON Schema 完全一致；
+3. 非零 `appearance_time_s` 的导弹坐标相对出现时刻舰船解释正确；
+4. 2 s 被实现为最短响应时间，而不是固定响应时间；
+5. 事件顺序、事件点和闭区间语义明确；
+6. 场景哈希对 YAML 键顺序稳定，并覆盖常数版本和显式覆盖；
+7. PN 配置不能启用；
+8. 第一批全部测试通过。
+
+上述接口未完成验收前，不得开始 Task 4–Task 11。执行者不得一次性执行全部 11 个任务。
+
 ## 执行约束
 
 1. 开始每个任务前阅读：
@@ -49,7 +72,7 @@ Task 1 场景契约与协作接口
   ↓
 Task 2 场景矩阵与溯源
   ↓
-Task 3 混合事件时间线
+Task 3 混合事件时间线与烟幕可用性证书
   ↓
 Task 4 共享动力学与探测窗口
   ↓
@@ -82,28 +105,43 @@ Task 11 鲁棒验证、报告和端到端验收
 - Create: `configs/constants.yaml`
 - Create: `configs/schema/scenario.schema.json`
 - Create: `configs/scenarios/examples/q1_front_d10000_nominal.yaml`
+- Create: `scripts/export_scenario_schema.py`
 - Create: `docs/ai-task-template.md`
 - Create: `tests/test_scenario.py`
 
-**Step 1: 写场景载入的失败测试**
+**Step 1: 写场景、常数和坐标语义的失败测试**
 
 ```python
+import json
 from pathlib import Path
 
 import pytest
+import yaml
+from pydantic import ValidationError
 
-from smoke_defense.scenario import ScenarioError, load_scenario
+from smoke_defense.scenario import (
+    Scenario,
+    ScenarioError,
+    load_problem_constants,
+    load_scenario,
+)
 
 
 EXAMPLE = Path("configs/scenarios/examples/q1_front_d10000_nominal.yaml")
+REPOSITORY_SCHEMA = Path("configs/schema/scenario.schema.json")
+
+
+def valid_scenario_dict():
+    return yaml.safe_load(EXAMPLE.read_text(encoding="utf-8"))
 
 
 def test_example_scenario_has_frozen_semantics():
     scene = load_scenario(EXAMPLE)
     assert scene.schema_version == "1.0"
+    assert scene.constants_version == "b-problem-v1"
     assert scene.time_origin == "decision_start"
     assert scene.missiles[0].guidance_model == "pure_pursuit"
-    assert scene.constraints.operation_radius_reference == "moving_ship"
+    assert scene.constants.uav.operation_radius_m == pytest.approx(12000.0)
     assert {"A-019", "A-020"} <= set(scene.assumption_ids)
 
 
@@ -115,6 +153,76 @@ def test_unknown_field_is_rejected(tmp_path):
     )
     with pytest.raises(ScenarioError, match="unknown_knob"):
         load_scenario(bad)
+
+
+def test_nonzero_appearance_position_is_relative_to_ship_at_appearance():
+    raw = valid_scenario_dict()
+    raw["ship"] = {
+        "initial_position_world_m": [0.0, 0.0],
+        "heading_deg": 0.0,
+    }
+    raw["missiles"][0].update({
+        "appearance_time_s": 20.0,
+        "initial_position_at_appearance_body_m": [1000.0, 200.0],
+    })
+    scene = Scenario.model_validate(raw).normalize(load_problem_constants())
+    assert scene.missiles[0].initial_position_world_m == pytest.approx(
+        [7.71 * 20.0 + 1000.0, 200.0]
+    )
+
+
+def test_world_and_body_position_fields_are_mutually_exclusive():
+    raw = valid_scenario_dict()
+    raw["missiles"][0]["initial_position_world_m"] = [1000.0, 200.0]
+    with pytest.raises(ValidationError, match="exactly one"):
+        Scenario.model_validate(raw)
+
+
+def test_wrong_unit_field_is_rejected():
+    raw = valid_scenario_dict()
+    raw["uavs"][0]["available_time_ms"] = 1000.0
+    with pytest.raises(ValidationError, match="available_time_ms"):
+        Scenario.model_validate(raw)
+
+
+def test_speed_override_requires_source():
+    raw = valid_scenario_dict()
+    raw["missiles"][0]["speed_override_mps"] = 300.0
+    with pytest.raises(ValidationError, match="speed_source"):
+        Scenario.model_validate(raw)
+
+
+def test_constants_are_not_duplicated_in_scenario():
+    raw = yaml.safe_load(EXAMPLE.read_text(encoding="utf-8"))
+    assert raw["constants_version"] == "b-problem-v1"
+    assert "bomb" not in raw
+    assert "smoke" not in raw
+    assert not {"speed_mps", "equivalent_radius_m"} & raw["ship"].keys()
+    assert all(
+        not {"flight_speed_mps", "operation_radius_m", "max_payload"}
+        & uav.keys()
+        for uav in raw["uavs"]
+    )
+    assert all(
+        not {"speed_mps", "detection_range_m", "field_of_view_half_angle_deg"}
+        & missile.keys()
+        for missile in raw["missiles"]
+    )
+    assert not {
+        "minimum_release_response_s",
+        "inertial_flight_s",
+        "minimum_release_interval_s",
+    } & raw["constraints"].keys()
+
+
+def test_exported_json_schema_matches_repository_schema():
+    exported = json.dumps(
+        Scenario.model_json_schema(),
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+    assert REPOSITORY_SCHEMA.read_text(encoding="utf-8") == exported
 ```
 
 **Step 2: 运行测试，确认失败**
@@ -140,16 +248,39 @@ class CertificationStatus(StrEnum):
 FROZEN_ASSUMPTIONS = tuple(f"A-{index:03d}" for index in range(1, 21))
 ```
 
-在 `scenario.py` 使用 Pydantic `extra="forbid"` 定义 `ShipSpec`、`UavSpec`、`MissileSpec`、`ConstraintSpec`、`UncertaintySpec` 和 `Scenario`。载入顺序固定为：
+在 `scenario.py` 使用 Pydantic 定义 `ProblemConstants`、`ShipSpec`、`UavSpec`、`MissileSpec`、`ConstraintSpec`、`UncertaintySpec` 和 `Scenario`。所有模型及嵌套模型统一设置 `ConfigDict(extra="forbid")`。载入顺序固定为：
 
 1. YAML 解析；
-2. JSON Schema 校验；
-3. Pydantic 语义校验；
+2. Pydantic 结构与语义校验；
+3. 通过 `Scenario.model_json_schema()` 导出或核对 JSON Schema；
 4. 检查基准场景只允许 `pure_pursuit` 和 `velocity_aligned`；
 5. 检查所有速度、半径和时间非负；
-6. 生成规范化字典。
+6. 按 `constants_version` 载入题面常数；
+7. 生成只读规范化场景对象。
 
-`constants.yaml` 只保存题面常数及事实编号，不保存初始坐标、安全距离或误差。
+Pydantic 是场景 Schema 的唯一源码。`scripts/export_scenario_schema.py` 只调用 `Scenario.model_json_schema()` 并以固定排序、缩进和 UTF-8 换行写出 `configs/schema/scenario.schema.json`；`--check` 模式只比较、不写文件。禁止人工独立修改生成的 Schema。未知字段、错误单位字段、缺少位置字段、两个位置字段同时出现、速度覆盖缺少 `speed_source` 等情况全部拒绝。
+
+每枚导弹的位置字段必须且只能二选一：
+
+```python
+initial_position_at_appearance_body_m: tuple[float, float] | None
+initial_position_world_m: tuple[float, float] | None
+```
+
+若使用体坐标，规范化时按
+
+\[
+\boldsymbol m_i(t_i^{\rm app})
+=
+\boldsymbol s(t_i^{\rm app})
++Q(\theta_s)\boldsymbol r_i^{\rm app}
+\]
+
+转换为世界坐标。导弹在 `appearance_time_s` 之前不存在，并从该时刻开始积分。
+若使用 `initial_position_world_m`，该字段也表示
+\(\boldsymbol m_i(t_i^{\rm app})\)，不是 \(t=0\) 时不存在导弹的外推位置。
+
+`constants.yaml` 按设计文档保存舰船、导弹、无人机、干扰弹和烟幕公共常数；场景只写 `constants_version`。Q4 导弹速度只通过成对字段 `speed_override_mps` 与 `speed_source` 覆盖，禁止修改常数文件。规范化哈希必须包含常数内容哈希、覆盖值和覆盖来源。
 
 **Step 4: 固化 AI 任务模板**
 
@@ -171,16 +302,20 @@ FROZEN_ASSUMPTIONS = tuple(f"A-{index:03d}" for index in range(1, 21))
 
 Run: `python -m pytest tests/test_scenario.py -v`
 
-Expected: 2 passed。
+Expected: 全部通过。
 
-Run: `python -m ruff check src tests`
+Run: `python scripts/export_scenario_schema.py --check`
+
+Expected: `scenario.schema.json is up to date`。
+
+Run: `python -m ruff check src tests scripts`
 
 Expected: `All checks passed!`
 
 **Step 6: 提交**
 
 ```bash
-git add pyproject.toml src/smoke_defense configs/constants.yaml configs/schema configs/scenarios/examples docs/ai-task-template.md tests/test_scenario.py
+git add pyproject.toml src/smoke_defense configs/constants.yaml configs/schema configs/scenarios/examples scripts/export_scenario_schema.py docs/ai-task-template.md tests/test_scenario.py
 git commit -m "feat: establish scenario and collaboration contracts"
 ```
 
@@ -217,14 +352,17 @@ def test_q1_q3_matrix_has_four_directions_and_four_distances():
         np.cos(np.deg2rad(135.0)),
         np.sin(np.deg2rad(135.0)),
     ])
-    np.testing.assert_allclose(oblique.missile_position_body_m, expected)
+    np.testing.assert_allclose(
+        oblique.missiles[0].initial_position_at_appearance_body_m,
+        expected,
+    )
 ```
 
-再测试安全距离恰为 `{50, 100, 200, 500}`，鲁棒等级字段与设计文档完全一致，`pn_ablation.yaml` 默认 `enabled: false`。
+再测试安全距离恰为 `{50, 100, 200, 500}`；三档场景误差分别包含 `release_response_error_s`、`detonation_delay_error_s`、`smoke_center_error_m`、`smoke_radius_error_m` 和 `wind_speed_bound_mps`；`pn_ablation.yaml` 默认 `enabled: false` 且场景载入器拒绝启用。
 
 **Step 2: 写配置哈希稳定性测试**
 
-同一规范化场景即使 YAML 键顺序不同，也必须产生相同 SHA-256；任何数值改变必须改变哈希。
+同一规范化场景即使 YAML 键顺序不同，也必须产生相同 SHA-256；任何场景数值、`constants_version`、常数内容、`speed_override_mps` 或 `speed_source` 改变都必须改变哈希。缺少来源的速度覆盖必须在计算哈希前被 Pydantic 拒绝。
 
 **Step 3: 运行测试，确认失败**
 
@@ -239,19 +377,20 @@ Expected: FAIL，缺少生成器和哈希函数。
 ```python
 scenario_id: str
 scenario_sha256: str
+constants_sha256: str
 assumption_ids: tuple[str, ...]
 git_sha: str
 random_seed: int | None
 generated_at_utc: str
 ```
 
-生成文件写入 `configs/scenarios/q1_q3/generated/`。脚本必须先在临时目录生成，再逐个通过 `load_scenario`，全部合法后才替换生成目录。
+生成文件写入 `configs/scenarios/q1_q3/generated/`。脚本必须先在临时目录生成，再逐个通过 `load_scenario` 的 Pydantic 管线，全部合法后才替换生成目录。
 
 **Step 5: 验证输出**
 
 Run: `python scripts/generate_scenarios.py`
 
-Expected: 输出 16 个 YAML，所有文件通过 schema 校验。
+Expected: 输出 16 个 YAML，所有文件通过 Pydantic 校验，且生成的 JSON Schema 与仓库文件一致。
 
 Run: `python -m pytest tests/test_scenario_matrix.py tests/test_provenance.py -v`
 
@@ -268,41 +407,62 @@ git commit -m "feat: generate traceable parameterized scenarios"
 
 ## Stage 2：混合事件时间线
 
-### Task 3：实现事件类型、因果关系和连续模式切分
+### Task 3：实现事件时间线和最早烟幕形成公共证书
 
 **Files:**
 - Create: `src/smoke_defense/events.py`
 - Create: `src/smoke_defense/timeline.py`
+- Create: `src/smoke_defense/certificates/__init__.py`
+- Create: `src/smoke_defense/certificates/availability.py`
 - Create: `tests/test_timeline.py`
+- Create: `tests/certificates/test_availability.py`
 
-**Step 1: 写事件因果测试**
+**Step 1: 写“2 s 是最短响应时间”的事件测试**
 
 ```python
 import pytest
 
-from smoke_defense.events import BombEvents, EventOrderError
+from smoke_defense.events import (
+    BombEvents,
+    EventOrderError,
+    earliest_release_time,
+)
 
 
-def test_bomb_event_timing_respects_a005_a006():
-    events = BombEvents.from_command(command_time_s=4.0)
-    assert events.release_time_s == pytest.approx(6.0)
-    assert events.burst_time_s == pytest.approx(9.5)
-    assert events.hold_end_time_s == pytest.approx(27.5)
-    assert events.expire_time_s == pytest.approx(32.5)
+def test_release_later_than_minimum_response_is_allowed():
+    events = BombEvents(
+        command_time_s=4.0,
+        release_time_s=7.3,
+        burst_time_s=10.8,
+    )
+    assert earliest_release_time(4.0) == pytest.approx(6.0)
+    assert events.release_time_s == pytest.approx(7.3)
+    assert events.burst_time_s == pytest.approx(10.8)
+    assert events.hold_end_time_s == pytest.approx(28.8)
+    assert events.expire_time_s == pytest.approx(33.8)
 
 
-def test_release_before_response_delay_is_rejected():
+def test_release_before_minimum_response_is_rejected():
     with pytest.raises(EventOrderError):
         BombEvents(
             command_time_s=4.0,
             release_time_s=5.9,
             burst_time_s=9.4,
-            hold_end_time_s=27.4,
-            expire_time_s=32.4,
+        )
+
+
+def test_nominal_detonation_delay_must_equal_inertial_flight_time():
+    with pytest.raises(EventOrderError):
+        BombEvents(
+            command_time_s=4.0,
+            release_time_s=7.3,
+            burst_time_s=10.7,
         )
 ```
 
-**Step 2: 写切段测试**
+`BombEvents` 不得提供从指令时刻自动生成实际释放时刻的构造器。`earliest_release_time(command_time_s)` 只计算可行域下界，不得写入候选方案的实际 `release_time_s`。
+
+**Step 2: 写切段和闭端点测试**
 
 输入事件 `[0, 3.5, 21.5, 26.5]` 和分析窗口 `[0, 30]`，预期连续区间为：
 
@@ -312,13 +472,45 @@ def test_release_before_response_delay_is_rejected():
 
 重复事件必须去重，但事件点仍单独出现在 `event_times` 中。
 
-**Step 3: 运行失败测试**
+**Step 3: 写最早烟幕形成证书测试**
 
-Run: `python -m pytest tests/test_timeline.py -v`
+```python
+import pytest
+
+from smoke_defense.certificates.availability import (
+    certify_earliest_smoke_availability,
+)
+
+
+def test_earliest_smoke_certificate_detects_unavoidable_initial_exposure():
+    certificate = certify_earliest_smoke_availability(
+        command_time_s=0.0,
+        minimum_response_s=2.0,
+        inertial_flight_s=3.5,
+        minimum_maneuver_time_s=0.0,
+        detection_entry_time_s=0.0,
+        no_predeployed_smoke=True,
+        full_detection_window_required=True,
+    )
+    assert certificate.earliest_burst_time_s == pytest.approx(5.5)
+    assert certificate.unavoidably_exposed_duration_s == pytest.approx(5.5)
+    assert certificate.status.value == "certified_infeasible"
+```
+
+再增加以下反例：
+
+- 若 `detection_entry_time_s >= earliest_burst_time_s`，该定理不能据此宣布成功，只能返回 `indeterminate_at_tolerance`；
+- 若允许预部署烟幕，定理前提不成立；
+- 若 `minimum_maneuver_time_s > 0`，最早起爆时刻必须相应后移；
+- \(d_0=8000\rm\,m\) 且 \(t=0\) 已进入探测区时，Q1、Q2、Q3 的严格全窗口目标均读取同一证书，不能报告 100% 防御，但次级优化入口仍保持可调用。
+
+**Step 4: 运行失败测试**
+
+Run: `python -m pytest tests/test_timeline.py tests/certificates/test_availability.py -v`
 
 Expected: FAIL。
 
-**Step 4: 实现**
+**Step 5: 实现事件与时间线**
 
 使用有序不可变 dataclass 表示事件。`HybridTimeline` 提供：
 
@@ -329,14 +521,47 @@ Expected: FAIL。
 
 不得把事件时刻舍入到固定时间步。
 
-**Step 5: 验证并提交**
+`BombEvents` 显式接收 `command_time_s`、`release_time_s` 和 `burst_time_s`。名义场景校验
+\(t^d-t^c\ge2\) 和 \(t^e-t^d=3.5\)；鲁棒场景按独立的 `release_response_error_s` 与 `detonation_delay_error_s` 检查相应区间。平台结束和失效时刻由起爆时刻及 `constants.yaml` 派生。
 
-Run: `python -m pytest tests/test_timeline.py -v`
+**Step 6: 实现公共解析证书**
+
+`certify_earliest_smoke_availability(...)` 放在公共 `certificates/availability.py`，由 Q1–Q3 共用。证书对象保存：
+
+```python
+status: CertificationStatus
+theorem_id: str
+command_time_s: float
+minimum_response_s: float
+inertial_flight_s: float
+minimum_maneuver_time_s: float
+earliest_burst_time_s: float
+detection_entry_time_s: float
+unavoidably_exposed_duration_s: float
+premises: dict
+human_readable_reason: str
+```
+
+计算：
+
+\[
+t_{\rm smoke}^{\min}
+=t^c+2+3.5+T_{\rm maneuver},
+\qquad
+T_{\rm unavoidable}
+=\max(0,t_{\rm smoke}^{\min}-t_{\rm detection}^{\rm entry}).
+\]
+
+只有在无预部署烟幕、所有投放均发生在任务开始后、严格要求全探测窗口无裸露且 \(T_{\rm unavoidable}>0\) 时，才返回 `certified_infeasible`。该状态只否定严格目标，调用方仍继续求最大覆盖时长、最小裸露时间和最佳投放方案。
+
+**Step 7: 验证并提交**
+
+Run: `python -m pytest tests/test_timeline.py tests/certificates/test_availability.py -v`
 
 Expected: 全部通过。
 
 ```bash
-git add src/smoke_defense/events.py src/smoke_defense/timeline.py tests/test_timeline.py
+git add src/smoke_defense/events.py src/smoke_defense/timeline.py src/smoke_defense/certificates tests/test_timeline.py tests/certificates/test_availability.py
 git commit -m "feat: add causal hybrid event timeline"
 ```
 
@@ -430,7 +655,7 @@ git commit -m "feat: implement shared baseline dynamics"
 ### Task 5：实现单烟幕持续时间上界和不可行性剪枝
 
 **Files:**
-- Create: `src/smoke_defense/certificates/__init__.py`
+- Modify: `src/smoke_defense/certificates/__init__.py`
 - Create: `src/smoke_defense/certificates/q1.py`
 - Create: `tests/certificates/test_q1.py`
 
@@ -688,16 +913,22 @@ git commit -m "feat: certify joint continuous-time smoke coverage"
 **Step 1: 写“证书优先”测试**
 
 ```python
-def test_q1_does_not_optimize_after_analytic_infeasibility(mocker):
-    optimizer = mocker.Mock()
-    result = solve_q1(full_window_scene(), optimizer=optimizer)
-    assert result.status.value == "certified_infeasible"
-    optimizer.assert_not_called()
+def test_q1_skips_strict_search_but_continues_secondary_objective(mocker):
+    strict_optimizer = mocker.Mock()
+    secondary_optimizer = mocker.Mock(return_value=secondary_candidate())
+    result = solve_q1(
+        full_window_scene(),
+        strict_optimizer=strict_optimizer,
+        secondary_optimizer=secondary_optimizer,
+    )
+    assert result.strict_full_window_status.value == "certified_infeasible"
+    strict_optimizer.assert_not_called()
+    secondary_optimizer.assert_called_once()
 ```
 
 **Step 2: 写候选可达性测试**
 
-每个候选必须包含指令、起飞、投弹、起爆和失效时刻，以及完整 UAV 路径。对每个候选依次调用事件、载弹、投弹间隔、A-020 和联合覆盖验证器。
+每个候选必须包含指令、实际投弹、起爆和失效时刻，以及完整 UAV 路径。实际投弹时刻可以晚于最早响应时刻。对每个候选依次调用事件、载弹、投弹间隔、A-020 和联合覆盖验证器。
 
 **Step 3: 运行失败测试**
 
@@ -753,6 +984,8 @@ git commit -m "feat: solve q1 with analytic-first candidate search"
 **Step 1: 写 Q2 联合覆盖回归测试**
 
 构造两个烟幕必须联合覆盖才能成功的场景。验证 Q2 调用 `ContinuousCoverageVerifier`，而不是合并每枚烟幕的“独立完整覆盖时间区间”。
+
+再对 \(d_0=8000\rm\,m\)、\(t=0\) 已进入探测区、无预部署烟幕的场景，验证 Q2 和 Q3 都调用 `certify_earliest_smoke_availability`：严格全窗口状态为 `certified_infeasible`，但次级目标求解仍继续。
 
 **Step 2: 写 Q2 投弹约束测试**
 
@@ -820,9 +1053,9 @@ git commit -m "feat: optimize verified q2 and q3 smoke plans"
 ### Task 10：实现 Q4 三类场景、任务包接口和滚动调度
 
 **Files:**
-- Create: `configs/scenarios/q4/abundant.yaml`
-- Create: `configs/scenarios/q4/critical.yaml`
-- Create: `configs/scenarios/q4/shortage.yaml`
+- Create: `configs/scenarios/q4/q4_case_3_threats.yaml`
+- Create: `configs/scenarios/q4/q4_case_6_threats.yaml`
+- Create: `configs/scenarios/q4/q4_case_9_threats.yaml`
 - Create: `src/smoke_defense/packages.py`
 - Create: `src/smoke_defense/q4.py`
 - Create: `scripts/run_q4.py`
@@ -831,13 +1064,12 @@ git commit -m "feat: optimize verified q2 and q3 smoke plans"
 
 **Step 1: 写场景规模和时间语义测试**
 
-验证三场景导弹数分别为：
+验证三个中性场景的导弹数分别为 3、6、9。每枚弹必须有互相独立的：
 
-- abundant：3；
-- critical：5–7；
-- shortage：8–10。
-
-每枚弹必须有 `appearance_time_s`；仿真结果另行计算 `detection_entry_time_s`，两字段不得互相覆盖。
+- `reveal_time_s`；
+- `appearance_time_s`；
+- `initial_position_at_appearance_body_m` 或 `initial_position_world_m`；
+- 仿真结果派生的 `detection_entry_time_s`。
 
 **Step 2: 写任务包可信性测试**
 
@@ -848,17 +1080,52 @@ git commit -m "feat: optimize verified q2 and q3 smoke plans"
 - 场景哈希与当前威胁不匹配；
 - 来自 Q2/Q3 的方案未经过联合覆盖验证。
 
-**Step 3: 写调度约束测试**
+**Step 3: 写信息揭示约束测试**
+
+```python
+def test_q4_online_scheduler_cannot_see_unrevealed_missile():
+    scene = q4_scene(
+        information_mode="revealed_at_appearance",
+        missiles=[
+            threat("M1", reveal_time_s=0.0, appearance_time_s=0.0),
+            threat("M2", reveal_time_s=20.0, appearance_time_s=20.0),
+        ],
+    )
+    decision = RollingScheduler().plan_at(time_s=10.0, scene=scene)
+    assert decision.known_missile_ids == ("M1",)
+    assert "M2" not in decision.assigned_missile_ids
+    assert "M2" not in decision.prepositioned_for_missile_ids
+```
+
+再验证同一场景在 `offline_full_information` 模式下可以读取全部威胁，但结果必须标记为离线性能上界，不能标记为滚动在线结果。在线模式校验 `reveal_time_s == appearance_time_s`。
+
+**Step 4: 写调度约束和结果分类测试**
 
 验证 5 架 UAV、每机最多 3 枚、任务时间不重叠、动态安全距离、资源占用和新批次到达后的滚动重算。
 
-**Step 4: 运行失败测试**
+```python
+def test_q4_resource_label_is_derived_from_result_not_filename():
+    result = synthetic_defense_result(
+        scenario_path="configs/scenarios/q4/q4_case_3_threats.yaml",
+        all_threats_certified=False,
+        unavoidable_exposed_threat_ids=("M3",),
+        used_uavs=5,
+        available_uavs=5,
+        used_bombs=15,
+        available_bombs=15,
+    )
+    assert classify_resource_regime(result).value == "resource_shortage"
+```
+
+再分别构造“全部认证且有冗余”和“全部或高优先级认证但接近资源上限”的结果，预期分类为 `resource_abundant` 和 `resource_critical`。分类器不得接收文件名作为决策变量。
+
+**Step 5: 运行失败测试**
 
 Run: `python -m pytest tests/test_packages.py tests/test_q4.py -v`
 
 Expected: FAIL。
 
-**Step 5: 实现任务包和滚动 MILP**
+**Step 6: 实现任务包、信息过滤和滚动 MILP**
 
 任务包至少保存：
 
@@ -874,6 +1141,16 @@ robustness_tier: str
 flight_distance_m: float
 ```
 
+定义：
+
+\[
+\mathcal I_{\rm known}(t)
+=\left\{i:t_i^{\rm reveal}\le t\right\}.
+\]
+
+`revealed_at_appearance` 模式下，调度器在时刻 \(t\) 只能接收
+\(\mathcal I_{\rm known}(t)\) 的只读威胁快照；未揭示威胁不能进入候选任务包、无人机预调动或精确投弹位置预留。`offline_full_information` 使用同一组威胁作为全知上界。
+
 目标使用题面优先级的词典序近似：
 
 1. 最大化高威胁的认证防御收益；
@@ -884,25 +1161,37 @@ flight_distance_m: float
 
 不得使用无数据依据的熵权法。
 
-**Step 6: 运行三类工况**
+结果分类只能由求解和认证结果产生：
+
+- 全部威胁可认证防御且存在冗余资源 → `resource_abundant`；
+- 全部或高优先级威胁仅在接近资源上限时可认证防御 → `resource_critical`；
+- 即使用尽资源仍存在不可避免裸露威胁 → `resource_shortage`。
+
+分类按 `resource_shortage`、`resource_critical`、`resource_abundant` 的优先级判定。“接近上限”由容量松弛为零或删减一单位资源后认证结论恶化证明；“存在冗余”由正容量松弛或删减资源后结论不变证明。分类输入只包含认证结果、资源容量、资源占用和删减复核结果。
+
+每个中性场景分别运行 `offline_full_information` 与 `revealed_at_appearance`。对同一可比收益标量 \(J\)，报告
+\(\Delta_{\rm info}=J_{\rm offline}-J_{\rm online}\)；若使用词典序向量，则逐项报告差异。
+
+**Step 7: 运行三类工况**
 
 Run:
 
 ```bash
-python scripts/run_q4.py --scenario configs/scenarios/q4/abundant.yaml
-python scripts/run_q4.py --scenario configs/scenarios/q4/critical.yaml
-python scripts/run_q4.py --scenario configs/scenarios/q4/shortage.yaml
+python scripts/run_q4.py --scenario configs/scenarios/q4/q4_case_3_threats.yaml --compare-information-modes
+python scripts/run_q4.py --scenario configs/scenarios/q4/q4_case_6_threats.yaml --compare-information-modes
+python scripts/run_q4.py --scenario configs/scenarios/q4/q4_case_9_threats.yaml --compare-information-modes
 ```
 
 Expected:
 
-- 三个结果均不超过 5 机、15 弹；
-- abundant 输出全部威胁的分配或明确不可行证书；
-- critical 显示任务包竞争和优先级；
-- shortage 明确列出未防御风险，不伪造全覆盖；
+- 六个模式结果均不超过 5 机、15 弹；
+- 每个结果写入由认证结果导出的资源类别；
+- 在线结果只使用当时已揭示的导弹；
+- 离线结果明确标记为性能上界；
+- 无法全覆盖时列出未防御风险，不伪造全覆盖；
 - 每个已分配任务包通过独立时空复核。
 
-**Step 7: 提交**
+**Step 8: 提交**
 
 ```bash
 git add configs/scenarios/q4 src/smoke_defense/packages.py src/smoke_defense/q4.py scripts/run_q4.py tests/test_packages.py tests/test_q4.py
@@ -928,16 +1217,18 @@ def test_medium_tier_effective_radius_in_hold_stage():
     radius = robust_effective_radius(
         nominal_radius_m=120.0,
         smoke_age_s=10.0,
-        delay_error_s=0.3,
-        position_error_m=10.0,
-        radius_error_m=6.0,
+        release_response_error_s=0.3,
+        detonation_delay_error_s=0.3,
+        smoke_center_error_m=10.0,
+        smoke_radius_error_m=6.0,
         wind_speed_bound_mps=3.0,
         radius_slope_bound_mps=0.0,
     )
     assert radius == pytest.approx(120.0 - 10.0 - 6.0 - 30.0)
 ```
 
-另测试衰减阶段加入 \(24\varepsilon_t\)，结果不得小于 0。
+另测试衰减阶段加入
+\(24(\varepsilon_{\rm response}+\varepsilon_{\rm detonation})\)，结果不得小于 0。两个时间误差必须分别出现在反例与报告中，不能重新合并成含义不明的单字段。
 
 **Step 2: 写溯源和数字单一来源测试**
 
@@ -954,7 +1245,7 @@ Expected: FAIL。
 对名义候选依次执行 `light`、`medium`、`strong`：
 
 1. 使用保守有效半径快速筛选；
-2. 枚举时间、位置、半径和风漂误差盒的关键顶点；
+2. 分别枚举响应时间、起爆延时、烟幕中心、半径和风漂误差盒的关键顶点；
 3. 把事件时间误差加入时间线；
 4. 对每个关键场景调用完整验证器；
 5. 输出最强可认证等级和第一个失效反例。
@@ -971,7 +1262,7 @@ Expected: FAIL。
 4. Q1 解析证书与次级优化；
 5. Q2；
 6. Q3 安全距离扫描；
-7. Q4 三类工况；
+7. Q4 三个中性威胁规模及两种信息模式；
 8. 三档鲁棒复核；
 9. 汇总结果和论文图表。
 
@@ -1007,14 +1298,16 @@ Expected: `0 missing or inconsistent provenance fields`。
 
 1. 是否有模块绕过 A-001–A-020？
 2. 是否把某个场景称为官方数据？
-3. `appearance_time_s` 是否与探测入口混淆？
+3. `reveal_time_s`、`appearance_time_s` 是否与探测入口混淆？
 4. Q1 是否在解析不可行后仍声称 100% 成功？
 5. Q2/Q3 是否真正检查联合空间覆盖？
 6. A-020 是否按移动舰船逐段认证？
 7. 安全距离是否检查了内部最近点？
 8. 鲁棒误差是否被误称为真实设备精度？
-9. Q4 是否只消费已验证任务包？
-10. 报告数字是否都来自同一结果对象？
+9. Q4 在线调度是否读取了尚未揭示的导弹？
+10. Q4 资源类别是否由结果认证而不是文件名决定？
+11. Q4 是否只消费已验证任务包？
+12. 报告数字是否都来自同一结果对象？
 
 **Step 8: 更新 README 并提交**
 
@@ -1040,8 +1333,13 @@ N\in\{3,4,5\},\qquad a_{\max}\in\{5g,10g,20g\}.
 ## 完成定义
 
 - [ ] A-001–A-020 在场景、代码和测试中可追溯；
-- [ ] 16 个 Q1–Q3 参数场景和三类 Q4 场景均通过 schema；
+- [ ] `constants.yaml` 是题面公共常数唯一事实源，场景只引用 `constants_version`；
+- [ ] Pydantic 是场景结构唯一源码，仓库 JSON Schema 与重新导出结果完全一致；
+- [ ] 非零 `appearance_time_s` 的体坐标相对出现时刻舰船转换，且与世界坐标输入互斥；
+- [ ] 16 个 Q1–Q3 参数场景和三个中性 Q4 威胁规模均通过 Pydantic 校验；
 - [ ] 混合事件时间轴不依赖网格舍入；
+- [ ] 2 s 是最短响应时间，实际释放允许晚于最早时刻；
+- [ ] 最早烟幕形成公共证书约束 Q1–Q3 严格目标但不阻止次级优化；
 - [ ] 纯追踪解析边界与数值积分一致；
 - [ ] Q1 不可行性证书通过回归测试；
 - [ ] A-020 使用分段端点精确认证；
@@ -1049,6 +1347,8 @@ N\in\{3,4,5\},\qquad a_{\max}\in\{5g,10g,20g\}.
 - [ ] 多烟幕使用联合空间覆盖；
 - [ ] 连续时间无裸露得到证书而非采样猜测；
 - [ ] Q1–Q4 只消费公共验证器；
+- [ ] Q4 在线调度无法读取尚未揭示的导弹，离线全知结果仅作为上界；
+- [ ] Q4 资源类别由求解后认证结果产生，不由场景文件名产生；
 - [ ] 三档误差只作为场景鲁棒等级；
 - [ ] 所有结果具有配置哈希、假设 ID、Git SHA、随机种子和认证状态；
 - [ ] Ruff、pytest、全量流水线和溯源检查全部通过。
