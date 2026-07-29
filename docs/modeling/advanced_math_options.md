@@ -90,11 +90,11 @@ q_j\in\{\text{未投放},\text{惯性飞行},
 \[
 \mathcal P(\boldsymbol c)
 \cap\mathcal R_u(t^d)
-\cap B(\boldsymbol b_u,12000)
+\cap B(\boldsymbol s(t^d),12000)
 \ne\varnothing.
 \]
 
-这就是简化后向可达性，无需求解Hamilton–Jacobi PDE。
+这就是投弹时刻的简化后向可达性，无需求解Hamilton–Jacobi PDE。最终路径仍须满足A-019的“起飞后定速、禁止空中悬停”和A-020的全时段相对运动舰船作战半径。
 
 ### 3.3 何时才需要生存核
 
