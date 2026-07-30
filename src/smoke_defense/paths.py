@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.optimize import brentq
 
 from smoke_defense.dynamics import ShipMotion
 
@@ -103,6 +104,17 @@ class ShipborneUavPath:
     def end_time_s(self) -> float:
         return self.segments[-1].end_time_s
 
+    @property
+    def flight_distance_m(self) -> float:
+        return sum(
+            float(
+                np.linalg.norm(
+                    segment.end_position_m - segment.start_position_m
+                )
+            )
+            for segment in self.segments
+        )
+
     def is_airborne(self, time_s: float) -> bool:
         return self.takeoff_time_s <= time_s <= self.end_time_s
 
@@ -124,3 +136,165 @@ class ShipborneUavPath:
             )
             return self.ship.speed_mps * direction
         return self.segment_at(time_s).velocity_mps
+
+
+@dataclass(frozen=True)
+class ReleaseWaypoint:
+    release_time_s: float
+    release_position_m: np.ndarray
+    heading_unit: np.ndarray
+
+    def __post_init__(self) -> None:
+        position = np.asarray(self.release_position_m, dtype=float).copy()
+        heading = np.asarray(self.heading_unit, dtype=float).copy()
+        if position.shape != (2,) or heading.shape != (2,):
+            raise ValueError("release position and heading must be two-dimensional")
+        if not np.isclose(
+            np.linalg.norm(heading),
+            1.0,
+            rtol=0.0,
+            atol=1e-10,
+        ):
+            raise ValueError("release heading must be a unit vector")
+        object.__setattr__(self, "release_position_m", position)
+        object.__setattr__(self, "heading_unit", heading)
+
+
+def _connect_with_terminal_heading(
+    *,
+    start_time_s: float,
+    start_position_m: np.ndarray,
+    release: ReleaseWaypoint,
+) -> tuple[LinearFlightSegment, ...]:
+    duration_s = release.release_time_s - start_time_s
+    if duration_s <= 0.0:
+        raise ValueError("release times must be strictly increasing")
+    available_length_m = UAV_SPEED_MPS * duration_s
+    displacement = release.release_position_m - start_position_m
+    direct_distance_m = float(np.linalg.norm(displacement))
+    if direct_distance_m > available_length_m + POSITION_TOLERANCE_M:
+        raise ValueError("ordered release is unreachable from the previous event")
+
+    direct_heading = (
+        displacement / direct_distance_m
+        if direct_distance_m > POSITION_TOLERANCE_M
+        else release.heading_unit
+    )
+    if np.isclose(
+        direct_distance_m,
+        available_length_m,
+        rtol=0.0,
+        atol=POSITION_TOLERANCE_M,
+    ):
+        if not np.allclose(
+            direct_heading,
+            release.heading_unit,
+            rtol=0.0,
+            atol=POSITION_TOLERANCE_M,
+        ):
+            raise ValueError(
+                "ordered release is unreachable with its required terminal heading"
+            )
+        return (
+            LinearFlightSegment(
+                start_time_s,
+                release.release_time_s,
+                start_position_m,
+                release.release_position_m,
+            ),
+        )
+
+    def length_residual(final_leg_m: float) -> float:
+        waypoint = (
+            release.release_position_m
+            - final_leg_m * release.heading_unit
+        )
+        return (
+            float(np.linalg.norm(waypoint - start_position_m))
+            + final_leg_m
+            - available_length_m
+        )
+
+    final_leg_m = float(
+        brentq(
+            length_residual,
+            0.0,
+            available_length_m,
+            xtol=1e-12,
+        )
+    )
+    waypoint = release.release_position_m - final_leg_m * release.heading_unit
+    first_leg_m = float(np.linalg.norm(waypoint - start_position_m))
+    segments: list[LinearFlightSegment] = []
+    current_time_s = start_time_s
+    if first_leg_m > POSITION_TOLERANCE_M:
+        first_end_time_s = current_time_s + first_leg_m / UAV_SPEED_MPS
+        segments.append(
+            LinearFlightSegment(
+                current_time_s,
+                first_end_time_s,
+                start_position_m,
+                waypoint,
+            )
+        )
+        current_time_s = first_end_time_s
+    if final_leg_m <= POSITION_TOLERANCE_M:
+        raise ValueError(
+            "ordered release timing leaves no terminal-heading segment"
+        )
+    segments.append(
+        LinearFlightSegment(
+            current_time_s,
+            release.release_time_s,
+            waypoint,
+            release.release_position_m,
+        )
+    )
+    return tuple(segments)
+
+
+def build_ordered_release_path(
+    *,
+    ship: ShipMotion,
+    takeoff_time_s: float,
+    releases: tuple[ReleaseWaypoint, ...],
+    continue_until_s: float,
+) -> ShipborneUavPath:
+    """Connect ordered release events with one fixed-speed shipborne path."""
+
+    if not 1 <= len(releases) <= 3:
+        raise ValueError("an ordered path requires one to three releases")
+    if continue_until_s <= releases[-1].release_time_s:
+        raise ValueError("path must continue after the final release")
+    segments: list[LinearFlightSegment] = []
+    current_time_s = takeoff_time_s
+    current_position = ship.position(takeoff_time_s)
+    for release in releases:
+        connector = _connect_with_terminal_heading(
+            start_time_s=current_time_s,
+            start_position_m=current_position,
+            release=release,
+        )
+        segments.extend(connector)
+        current_time_s = release.release_time_s
+        current_position = release.release_position_m
+
+    final_heading = releases[-1].heading_unit
+    post_release_position = current_position + (
+        UAV_SPEED_MPS
+        * (continue_until_s - current_time_s)
+        * final_heading
+    )
+    segments.append(
+        LinearFlightSegment(
+            current_time_s,
+            continue_until_s,
+            current_position,
+            post_release_position,
+        )
+    )
+    return ShipborneUavPath(
+        ship=ship,
+        takeoff_time_s=takeoff_time_s,
+        segments=tuple(segments),
+    )
