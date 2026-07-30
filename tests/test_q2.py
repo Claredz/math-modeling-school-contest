@@ -2,7 +2,9 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
+from smoke_defense.detection import DetectionSet
 from smoke_defense.dynamics import ShipMotion
+from smoke_defense.events import ClosedInterval
 from smoke_defense.paths import (
     ReleaseWaypoint,
     build_ordered_release_path,
@@ -12,6 +14,8 @@ from smoke_defense.q2 import (
     OrderedReleasePlan,
     PathNode,
     SmokeReleaseEvent,
+    generate_q2_candidate_library,
+    prune_q2_candidates,
 )
 from smoke_defense.smoke import detonation_position
 
@@ -189,3 +193,83 @@ def test_individually_reachable_releases_can_be_jointly_unlinkable():
             releases=releases,
             continue_until_s=14.5,
         )
+
+
+def make_candidate_library():
+    ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=7.71)
+    detection = DetectionSet(
+        components=(ClosedInterval(10.0, 20.0),),
+        source_events=(),
+    )
+    library = generate_q2_candidate_library(
+        ship=ship,
+        detection=detection,
+        uav_available_time_s=0.0,
+        scenario_id="synthetic-q2",
+        scenario_hash="scenario-hash",
+        constants_hash="constants-hash",
+        assumption_ids=("A-001", "A-022"),
+        guidance_model="inertial_pure_pursuit",
+        model_layer="formal",
+        heading_response_rate_per_s=1.0,
+        max_turn_rate_deg_s=10.0,
+    )
+    return ship, library
+
+
+def test_q2_candidate_library_preserves_spatial_and_time_diversity():
+    ship, library = make_candidate_library()
+
+    assert len(library.candidates) > 3
+    assert len(
+        {round(candidate.coverage_center_time_s, 6) for candidate in library.candidates}
+    ) > 1
+    assert len(
+        {round(candidate.takeoff_time_s, 6) for candidate in library.candidates}
+    ) > 1
+    assert any(
+        abs(candidate.lateral_offset_m) > 0.0 for candidate in library.candidates
+    )
+    assert any(
+        not np.allclose(
+            candidate.release.burst_center_m,
+            ship.position(candidate.coverage_center_time_s),
+        )
+        for candidate in library.candidates
+    )
+    assert all(
+        candidate.scenario_hash == "scenario-hash"
+        and candidate.constants_hash == "constants-hash"
+        for candidate in library.candidates
+    )
+
+
+def test_individually_incomplete_candidates_survive_q2_pruning():
+    _ship, library = make_candidate_library()
+    incomplete = tuple(
+        candidate
+        for candidate in library.candidates
+        if candidate.single_coverage_status.value != "certified_feasible"
+    )
+
+    assert incomplete
+    pruning = prune_q2_candidates(incomplete)
+
+    assert pruning.retained_candidates
+    assert any(
+        candidate.single_coverage_status.value != "certified_feasible"
+        for candidate in pruning.retained_candidates
+    )
+
+
+def test_q2_pruning_removes_only_duplicate_physical_events():
+    _ship, library = make_candidate_library()
+    original = library.candidates[0]
+    duplicate = original.model_copy(update={"candidate_id": "duplicate-id"})
+
+    pruning = prune_q2_candidates((original, duplicate, library.candidates[1]))
+
+    assert pruning.input_count == 3
+    assert pruning.duplicate_count == 1
+    assert pruning.retained_count == 2
+    assert library.candidates[1] in pruning.retained_candidates
