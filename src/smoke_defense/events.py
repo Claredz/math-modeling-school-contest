@@ -8,7 +8,7 @@ from enum import StrEnum
 from math import ceil
 
 import numpy as np
-from scipy.optimize import brentq
+from scipy.optimize import brentq, minimize_scalar
 
 ScalarFunction = Callable[[float], float]
 
@@ -71,34 +71,138 @@ def find_roots(
     start_s: float,
     end_s: float,
     max_step_s: float,
+    lipschitz_bound_per_s: float,
     value_tolerance: float = 1e-12,
+    time_tolerance_s: float = 1e-7,
 ) -> tuple[float, ...]:
-    """Find bracketed continuous roots and refine their physical times."""
+    """Find all roots resolved above ``time_tolerance_s``.
 
+    A cell is discarded only when the declared global Lipschitz bound proves
+    that its midpoint enclosure cannot contain zero. Every other cell is
+    bisected adaptively, so a short sign excursion with same-sign coarse
+    endpoints is retained rather than skipped.
+    """
+
+    if lipschitz_bound_per_s < 0:
+        raise ValueError("Lipschitz bound cannot be negative")
+    if value_tolerance <= 0:
+        raise ValueError("value tolerance must be positive")
+    if time_tolerance_s <= 0:
+        raise ValueError("time tolerance must be positive")
     grid = _scan_grid(start_s, end_s, max_step_s)
-    values = np.array([float(function(float(time_s))) for time_s in grid])
+    value_cache: dict[float, float] = {}
+
+    def value(time_s: float) -> float:
+        key = float(time_s)
+        if key not in value_cache:
+            value_cache[key] = float(function(key))
+        return value_cache[key]
+
     roots: list[float] = []
-    for index, (left_s, right_s) in enumerate(
-        zip(grid[:-1], grid[1:], strict=True)
-    ):
-        left_value = values[index]
-        right_value = values[index + 1]
-        if abs(left_value) <= value_tolerance:
-            roots.append(float(left_s))
-        if left_value * right_value < 0:
-            roots.append(
-                float(
-                    brentq(
-                        function,
-                        float(left_s),
-                        float(right_s),
-                        xtol=1e-13,
-                        rtol=1e-14,
+
+    def add_leaf_roots(
+        left_s: float,
+        left_value: float,
+        midpoint_s: float,
+        midpoint_value: float,
+        right_s: float,
+        right_value: float,
+    ) -> None:
+        samples = (
+            (left_s, left_value),
+            (midpoint_s, midpoint_value),
+            (right_s, right_value),
+        )
+        for time_s, sample_value in samples:
+            if abs(sample_value) <= value_tolerance:
+                roots.append(time_s)
+        for (first_s, first_value), (second_s, second_value) in zip(
+            samples[:-1],
+            samples[1:],
+            strict=True,
+        ):
+            if first_value * second_value < 0:
+                roots.append(
+                    float(
+                        brentq(
+                            function,
+                            first_s,
+                            second_s,
+                            xtol=1e-13,
+                            rtol=1e-14,
+                        )
                     )
                 )
+        if all(
+            first_value * second_value >= 0
+            for (_, first_value), (_, second_value) in zip(
+                samples[:-1],
+                samples[1:],
+                strict=True,
             )
-    if abs(values[-1]) <= value_tolerance:
-        roots.append(float(grid[-1]))
+        ):
+            minimum = minimize_scalar(
+                lambda time_s: abs(float(function(float(time_s)))),
+                bounds=(left_s, right_s),
+                method="bounded",
+                options={"xatol": time_tolerance_s / 8.0},
+            )
+            if minimum.success and minimum.fun <= value_tolerance:
+                roots.append(float(minimum.x))
+
+    def search_cell(
+        left_s: float,
+        left_value: float,
+        right_s: float,
+        right_value: float,
+    ) -> None:
+        midpoint_s = 0.5 * (left_s + right_s)
+        midpoint_value = value(midpoint_s)
+        half_width_s = 0.5 * (right_s - left_s)
+        if (
+            abs(midpoint_value)
+            > lipschitz_bound_per_s * half_width_s + value_tolerance
+        ):
+            return
+        if max(
+            abs(left_value),
+            abs(midpoint_value),
+            abs(right_value),
+        ) <= value_tolerance:
+            roots.extend((left_s, right_s))
+            return
+        if right_s - left_s <= time_tolerance_s:
+            add_leaf_roots(
+                left_s,
+                left_value,
+                midpoint_s,
+                midpoint_value,
+                right_s,
+                right_value,
+            )
+            return
+        search_cell(
+            left_s,
+            left_value,
+            midpoint_s,
+            midpoint_value,
+        )
+        search_cell(
+            midpoint_s,
+            midpoint_value,
+            right_s,
+            right_value,
+        )
+
+    for left_s, right_s in zip(grid[:-1], grid[1:], strict=True):
+        search_cell(
+            float(left_s),
+            value(float(left_s)),
+            float(right_s),
+            value(float(right_s)),
+        )
+    if grid.size == 1 and abs(value(float(grid[0]))) <= value_tolerance:
+        roots.append(float(grid[0]))
 
     unique: list[float] = []
     for root in sorted(roots):
@@ -134,6 +238,7 @@ def find_boundary_events(
     start_s: float,
     end_s: float,
     max_step_s: float,
+    lipschitz_bound_per_s: float,
     entry_kind: EventKind,
     exit_kind: EventKind,
 ) -> tuple[TrajectoryEvent, ...]:
@@ -143,6 +248,7 @@ def find_boundary_events(
         start_s=start_s,
         end_s=end_s,
         max_step_s=max_step_s,
+        lipschitz_bound_per_s=lipschitz_bound_per_s,
     ):
         kind = _crossing_kind(
             function,
@@ -163,6 +269,7 @@ def intervals_where_nonnegative(
     start_s: float,
     end_s: float,
     max_step_s: float,
+    lipschitz_bound_per_s: float,
     value_tolerance: float = 1e-10,
 ) -> tuple[ClosedInterval, ...]:
     """Return the closed components on which a continuous margin is nonnegative."""
@@ -177,6 +284,7 @@ def intervals_where_nonnegative(
         start_s=start_s,
         end_s=end_s,
         max_step_s=max_step_s,
+        lipschitz_bound_per_s=lipschitz_bound_per_s,
         value_tolerance=value_tolerance,
     )
     breakpoints = [start_s, *roots, end_s]

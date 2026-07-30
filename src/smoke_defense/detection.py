@@ -71,12 +71,18 @@ def build_detection_set(
     *,
     detection_range_m: float,
     field_of_view_half_angle_rad: float,
+    distance_margin_lipschitz_mps: float,
+    fov_margin_lipschitz_rad_s: float,
     event_scan_step_s: float = 0.05,
 ) -> DetectionSet:
     if detection_range_m <= 0:
         raise ValueError("detection range must be positive")
     if not 0 < field_of_view_half_angle_rad <= np.pi:
         raise ValueError("field-of-view half angle must lie in (0, pi]")
+    if distance_margin_lipschitz_mps < 0:
+        raise ValueError("distance-margin Lipschitz bound cannot be negative")
+    if fov_margin_lipschitz_rad_s < 0:
+        raise ValueError("FOV-margin Lipschitz bound cannot be negative")
 
     start_s = float(trajectory.start_time_s)
     end_s = float(trajectory.end_time_s)
@@ -117,6 +123,10 @@ def build_detection_set(
         start_s=start_s,
         end_s=end_s,
         max_step_s=event_scan_step_s,
+        lipschitz_bound_per_s=max(
+            distance_margin_lipschitz_mps,
+            fov_margin_lipschitz_rad_s,
+        ),
     )
     events: list[TrajectoryEvent] = [
         TrajectoryEvent(start_s, EventKind.APPEARANCE)
@@ -127,6 +137,7 @@ def build_detection_set(
             start_s=start_s,
             end_s=end_s,
             max_step_s=event_scan_step_s,
+            lipschitz_bound_per_s=distance_margin_lipschitz_mps,
             entry_kind=EventKind.DISTANCE_ENTRY,
             exit_kind=EventKind.DISTANCE_EXIT,
         )
@@ -137,6 +148,7 @@ def build_detection_set(
             start_s=start_s,
             end_s=end_s,
             max_step_s=event_scan_step_s,
+            lipschitz_bound_per_s=fov_margin_lipschitz_rad_s,
             entry_kind=EventKind.FOV_ENTRY,
             exit_kind=EventKind.FOV_EXIT,
         )

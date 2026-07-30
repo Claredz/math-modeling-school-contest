@@ -40,6 +40,8 @@ def test_missile_does_not_exist_before_appearance():
         origin,
         detection_range_m=20.0,
         field_of_view_half_angle_rad=radians(15.0),
+        distance_margin_lipschitz_mps=1.0,
+        fov_margin_lipschitz_rad_s=0.0,
     )
 
     assert detection.contains(2.0)
@@ -61,6 +63,8 @@ def test_distance_entry_is_found_as_continuous_event():
         detection_range_m=8.0,
         field_of_view_half_angle_rad=radians(15.0),
         event_scan_step_s=0.7,
+        distance_margin_lipschitz_mps=1.0,
+        fov_margin_lipschitz_rad_s=0.0,
     )
 
     assert detection.components == (ClosedInterval(2.0, 5.0),)
@@ -87,6 +91,8 @@ def test_fov_entry_and_exit_split_detection_components():
         detection_range_m=8.0,
         field_of_view_half_angle_rad=radians(15.0),
         event_scan_step_s=0.05,
+        distance_margin_lipschitz_mps=0.0,
+        fov_margin_lipschitz_rad_s=1.0,
     )
 
     assert len(detection.components) >= 2
@@ -108,6 +114,8 @@ def test_hit_time_is_included_as_closed_detection_endpoint():
         origin,
         detection_range_m=20.0,
         field_of_view_half_angle_rad=radians(15.0),
+        distance_margin_lipschitz_mps=1.0,
+        fov_margin_lipschitz_rad_s=0.0,
     )
 
     assert detection.components == (ClosedInterval(0.0, 4.25),)
@@ -129,6 +137,8 @@ def test_initial_centre_hit_records_events_without_evaluating_line_of_sight():
         origin,
         detection_range_m=20.0,
         field_of_view_half_angle_rad=radians(15.0),
+        distance_margin_lipschitz_mps=0.0,
+        fov_margin_lipschitz_rad_s=0.0,
     )
 
     assert detection.components == ()
@@ -156,7 +166,42 @@ def test_detection_set_can_have_two_disconnected_closed_components():
         detection_range_m=8.0,
         field_of_view_half_angle_rad=radians(15.0),
         event_scan_step_s=0.02,
+        distance_margin_lipschitz_mps=0.0,
+        fov_margin_lipschitz_rad_s=1.0,
     )
 
     assert len(detection.components) > 1
     assert all(component.start_s <= component.end_s for component in detection.components)
+
+
+def test_narrow_detection_component_is_not_deleted_or_merged():
+    def fov_margin(time_s: float) -> float:
+        first = 100.0 * (time_s - 0.04) * (0.06 - time_s)
+        second = 20.0 * (time_s - 0.12) * (0.18 - time_s)
+        return max(first, second)
+
+    half_angle = radians(15.0)
+    trajectory = FunctionalTrajectory(
+        start_time_s=0.0,
+        end_time_s=0.2,
+        hit_time_s=None,
+        position_function=lambda _time_s: np.array([1.0, 0.0]),
+        heading_function=lambda time_s: np.pi
+        + half_angle
+        - fov_margin(time_s),
+    )
+
+    detection = build_detection_set(
+        trajectory,
+        origin,
+        detection_range_m=8.0,
+        field_of_view_half_angle_rad=half_angle,
+        event_scan_step_s=0.1,
+        distance_margin_lipschitz_mps=0.0,
+        fov_margin_lipschitz_rad_s=30.0,
+    )
+
+    assert detection.components == (
+        ClosedInterval(0.04, 0.06),
+        ClosedInterval(0.12, 0.18),
+    )

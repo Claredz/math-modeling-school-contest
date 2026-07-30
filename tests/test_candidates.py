@@ -5,9 +5,13 @@ from smoke_defense.candidates import (
     Q1Candidate,
     build_shipborne_release_path,
     candidate_rank_key,
+    generate_q1_candidates,
 )
 from smoke_defense.coverage import CertificationStatus
+from smoke_defense.detection import DetectionSet
 from smoke_defense.dynamics import ShipMotion
+from smoke_defense.events import ClosedInterval
+from smoke_defense.path_constraints import certify_operation_radius
 from smoke_defense.smoke import detonation_position
 
 
@@ -50,3 +54,86 @@ def test_lexicographic_rank_prefers_coverage_before_flight_distance():
     )
 
     assert candidate_rank_key(long_flight) > candidate_rank_key(short_flight)
+
+
+def test_delayed_takeoff_can_preserve_coverage_and_shorten_flight():
+    ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=7.71)
+    detection = DetectionSet(
+        components=(ClosedInterval(20.0, 30.0),),
+        source_events=(),
+    )
+
+    candidates = generate_q1_candidates(
+        ship=ship,
+        detection=detection,
+        uav_available_time_s=0.0,
+    )
+    centered = [
+        candidate
+        for candidate in candidates
+        if candidate.coverage_center_time_s == pytest.approx(25.0)
+    ]
+    earliest = next(
+        candidate
+        for candidate in centered
+        if candidate.takeoff_time_s == pytest.approx(0.0)
+    )
+    delayed = [
+        candidate for candidate in centered if candidate.takeoff_time_s > 0.0
+    ]
+
+    assert delayed
+    best_delayed = max(delayed, key=candidate_rank_key)
+    assert best_delayed.covered_duration_s == pytest.approx(
+        earliest.covered_duration_s
+    )
+    assert best_delayed.flight_distance_m < earliest.flight_distance_m
+    assert best_delayed.path is not None
+    assert best_delayed.path.position(
+        best_delayed.takeoff_time_s
+    ) == pytest.approx(ship.position(best_delayed.takeoff_time_s))
+    assert best_delayed.takeoff_time_s < best_delayed.release_time_s
+    assert best_delayed.flight_distance_m == pytest.approx(
+        sum(
+            segment.speed_mps * segment.duration_s
+            for segment in best_delayed.path.segments
+        )
+    )
+    assert (
+        certify_operation_radius(
+            best_delayed.path,
+            operation_radius_m=12000.0,
+        ).status
+        == "certified_feasible"
+    )
+
+
+def test_custom_smoke_timing_changes_candidate_coverage():
+    ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=7.71)
+    detection = DetectionSet(
+        components=(ClosedInterval(10.0, 25.0),),
+        source_events=(),
+    )
+
+    nominal = generate_q1_candidates(
+        ship=ship,
+        detection=detection,
+        uav_available_time_s=0.0,
+    )
+    custom = generate_q1_candidates(
+        ship=ship,
+        detection=detection,
+        uav_available_time_s=0.0,
+        maximum_smoke_radius_m=130.0,
+        smoke_hold_duration_s=1.0,
+        smoke_decay_duration_s=1.0,
+    )
+
+    assert custom
+    assert all(candidate.smoke is not None for candidate in custom)
+    assert all(candidate.smoke.maximum_radius_m == 130.0 for candidate in custom)
+    assert all(candidate.smoke.hold_duration_s == 1.0 for candidate in custom)
+    assert all(candidate.smoke.decay_duration_s == 1.0 for candidate in custom)
+    assert max(candidate.covered_duration_s for candidate in custom) < max(
+        candidate.covered_duration_s for candidate in nominal
+    )

@@ -220,6 +220,22 @@ def solve_q1_scenario(
 ) -> Q1ScenarioResult:
     constants = constants or load_problem_constants()
     ship, trajectory = _integrate_scenario(scenario, constants)
+    missile = scenario.missiles[0]
+    missile_speed_mps = (
+        missile.speed_override_mps
+        if missile.speed_override_mps is not None
+        else constants.missile.nominal_speed_mps
+    )
+    distance_margin_lipschitz_mps = missile_speed_mps + ship.speed_mps
+    fov_margin_lipschitz_rad_s = 0.0
+    if missile.guidance_model == "inertial_pure_pursuit":
+        if missile.max_turn_rate_deg_s is None:
+            raise RuntimeError("formal missile lacks a turn-rate bound")
+        fov_margin_lipschitz_rad_s = (
+            distance_margin_lipschitz_mps
+            / constants.ship.effective_radius_m
+            + radians(missile.max_turn_rate_deg_s)
+        )
     detection = build_detection_set(
         trajectory,
         ship.position,
@@ -227,6 +243,8 @@ def solve_q1_scenario(
         field_of_view_half_angle_rad=radians(
             constants.missile.field_of_view_half_angle_deg
         ),
+        distance_margin_lipschitz_mps=distance_margin_lipschitz_mps,
+        fov_margin_lipschitz_rad_s=fov_margin_lipschitz_rad_s,
         event_scan_step_s=0.02,
     )
     duration_certificate = certify_single_smoke_duration(
@@ -253,6 +271,8 @@ def solve_q1_scenario(
         ),
         detonation_delay_s=constants.countermeasure.detonation_delay_s,
         maximum_smoke_radius_m=constants.smoke.maximum_radius_m,
+        smoke_hold_duration_s=constants.smoke.hold_duration_s,
+        smoke_decay_duration_s=constants.smoke.decay_duration_s,
         ship_radius_m=constants.ship.effective_radius_m,
     )
     best_candidate = max(candidates, key=candidate_rank_key, default=None)
@@ -266,7 +286,6 @@ def solve_q1_scenario(
         strict_status = CertificationStatus.INDETERMINATE
     else:
         strict_status = best_candidate.strict_status
-    missile = scenario.missiles[0]
     return Q1ScenarioResult(
         scenario_id=scenario.scenario_id,
         scenario_hash=scenario_hash(scenario),
@@ -365,18 +384,24 @@ def solve_q1_guidance_sweep(
     component_counts = {
         len(result.detection.components) for result in formal_results
     }
+    coverage_sensitive = bool(covered_values) and (
+        max(covered_values) - min(covered_values) > 1e-4
+    )
     parameter_sensitive = (
-        (max(covered_values) - min(covered_values) > 1e-4)
+        coverage_sensitive
         or (max(detection_values) - min(detection_values) > 1e-4)
         or len(component_counts) > 1
     )
-    worst_case = min(
-        cross_validation,
-        key=lambda item: (
-            item.covered_duration_s,
-            -item.maximum_exposed_interval_s,
-        ),
-    )
+    if cross_validation:
+        worst_case_scenario_id = min(
+            cross_validation,
+            key=lambda item: (
+                item.covered_duration_s,
+                -item.maximum_exposed_interval_s,
+            ),
+        ).scenario_id
+    else:
+        worst_case_scenario_id = reference.scenario_id
     return Q1GuidanceSweepResult(
         direction=direction,
         distance_m=distance_m,
@@ -384,7 +409,7 @@ def solve_q1_guidance_sweep(
         ablation_result=ablation_result,
         cross_validation=cross_validation,
         parameter_sensitive=parameter_sensitive,
-        worst_case_scenario_id=worst_case.scenario_id,
+        worst_case_scenario_id=worst_case_scenario_id,
     )
 
 

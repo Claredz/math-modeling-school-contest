@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+import smoke_defense.q1 as q1_module
 from smoke_defense.coverage import CertificationStatus
 from smoke_defense.q1 import (
     solve_q1_guidance_sweep,
@@ -77,3 +78,28 @@ def test_q1_writes_reader_facing_markdown_summary(front_sweep, tmp_path):
     assert "# Q1 惯性纯追踪计算结果" in text
     assert "front" in text
     assert "certified_infeasible" in text
+
+
+@pytest.mark.parametrize(
+    ("direction", "expected_sensitive"),
+    [("front", False), ("side", True)],
+)
+def test_empty_cross_validation_still_uses_detection_sensitivity(
+    monkeypatch,
+    direction,
+    expected_sensitive,
+):
+    monkeypatch.setattr(
+        q1_module,
+        "_cross_validate_reference",
+        lambda *_args, **_kwargs: (),
+    )
+
+    sweep = solve_q1_guidance_sweep(
+        direction=direction,
+        distance_m=8000.0,
+    )
+
+    assert sweep.cross_validation == ()
+    assert sweep.parameter_sensitive is expected_sensitive
+    assert sweep.worst_case_scenario_id == sweep.reference_result.scenario_id
