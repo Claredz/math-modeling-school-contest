@@ -1,0 +1,124 @@
+{
+  "formal_result": false,
+  "guarantee_boundary": [
+    "All instances and parameters in this directory are synthetic.",
+    "These records compare algorithm behavior; they are not contest answers.",
+    "A converged toy run is not a proof that the corresponding formal model is valid."
+  ],
+  "module": "q4_scheduling",
+  "module_summary": {
+    "causal_policies_do_not_see_future_releases": true,
+    "offline_is_hindsight_only": true,
+    "offline_upper_bound": 19.0,
+    "policies": {
+      "greedy": {
+        "converged": true,
+        "failure_reason": null,
+        "objective": 18.0,
+        "selected_ids": [
+          "T1-short",
+          "T2-short",
+          "T3-only"
+        ],
+        "unresolved": false,
+        "verified": true
+      },
+      "offline_enumeration": {
+        "converged": true,
+        "failure_reason": null,
+        "objective": 19.0,
+        "selected_ids": [
+          "T1-short",
+          "T2-long"
+        ],
+        "unresolved": false,
+        "verified": true
+      },
+      "offline_milp": {
+        "converged": true,
+        "failure_reason": null,
+        "objective": 19.0,
+        "selected_ids": [
+          "T1-short",
+          "T2-long"
+        ],
+        "unresolved": false,
+        "verified": true
+      },
+      "rolling": {
+        "converged": true,
+        "failure_reason": null,
+        "objective": 13.0,
+        "selected_ids": [
+          "T1-long",
+          "T3-only"
+        ],
+        "unresolved": false,
+        "verified": true
+      }
+    }
+  },
+  "records": [
+    {
+      "converged": true,
+      "demo_name": "q4_synthetic_scheduling",
+      "failure_reason": null,
+      "metadata": {
+        "combinations_checked": 18,
+        "interpretation": "audit_oracle"
+      },
+      "objective": 19.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.0003996000159531832,
+      "seed": 20260731,
+      "solver": "independent exhaustive enumeration"
+    },
+    {
+      "converged": true,
+      "demo_name": "q4_synthetic_scheduling",
+      "failure_reason": null,
+      "metadata": {
+        "interpretation": "hindsight_upper_bound",
+        "oracle_match": true
+      },
+      "objective": 19.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.006731100031174719,
+      "seed": 20260731,
+      "solver": "scipy.optimize.milp"
+    },
+    {
+      "converged": true,
+      "demo_name": "q4_synthetic_scheduling",
+      "failure_reason": null,
+      "metadata": {
+        "epochs_solved": 3,
+        "information": "released_threats_only",
+        "whole_package_commitment": true
+      },
+      "objective": 13.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.008872299978975207,
+      "seed": 20260731,
+      "solver": "rolling zero-forecast MILP"
+    },
+    {
+      "converged": true,
+      "demo_name": "q4_synthetic_scheduling",
+      "failure_reason": null,
+      "metadata": {
+        "information": "released_threats_only",
+        "rule": "value_density_then_value_then_id",
+        "whole_package_commitment": true
+      },
+      "objective": 18.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.00020740000763908029,
+      "seed": 20260731,
+      "solver": "causal value-density greedy"
+    }
+  ],
+  "schema_version": 1,
+  "seed": 20260731,
+  "synthetic": true
+}
