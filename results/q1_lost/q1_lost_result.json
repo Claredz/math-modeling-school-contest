@@ -1,5 +1,5 @@
 {
-  "git_sha": "48bd674b3bad90f94c0c7b2851f0e209ad8783e1",
+  "git_sha": "c40ad9bec7d187d2c304faf7524e050c01aa8a3e",
   "model_version": "lost-coupled-v1",
   "scenario_id": "q1_q3_side_d12000_k1_w5",
   "assumption_ids": [
