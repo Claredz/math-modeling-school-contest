@@ -308,7 +308,7 @@ def test_result_contracts_deep_freeze_and_reject_inconsistent_status() -> None:
         False,
         True,
         None,
-        record,
+        replace(record, objective=5),
         trace=[q4.DecisionTrace(0, ("T1",), ("T1-short",), (0,))],  # type: ignore[arg-type]
     )
 
@@ -318,6 +318,84 @@ def test_result_contracts_deep_freeze_and_reject_inconsistent_status() -> None:
         q4.ScheduleResult((), 0, True, True, True, None, record)
     with pytest.raises(ValueError):
         q4.VerificationResult(True, float("nan"), None)
+
+
+def test_result_contract_rejects_duplicate_negative_and_ambiguous_statuses() -> None:
+    record = q4.enumerate_offline(q4.default_batches()).record
+    with pytest.raises(ValueError, match="selected_ids must be unique"):
+        q4.ScheduleResult(("x", "x"), 19, True, False, True, None, record)
+    with pytest.raises(ValueError, match="objective must be nonnegative"):
+        q4.ScheduleResult((), -1, True, False, True, None, replace(record, objective=-1))
+    with pytest.raises(ValueError, match="failure must not be empty"):
+        q4.ScheduleResult(
+            (),
+            0,
+            False,
+            True,
+            False,
+            " ",
+            replace(
+                record,
+                objective=0,
+                converged=False,
+                passed_manual_case=False,
+                failure_reason="failed",
+            ),
+        )
+    with pytest.raises(ValueError, match="must be either successful or unresolved"):
+        q4.ScheduleResult(
+            (),
+            0,
+            False,
+            False,
+            False,
+            None,
+            replace(record, objective=0, converged=False, passed_manual_case=False),
+        )
+    with pytest.raises(ValueError, match="unresolved result cannot be verified"):
+        q4.ScheduleResult(
+            (),
+            0,
+            False,
+            True,
+            True,
+            "failed",
+            replace(
+                record,
+                objective=0,
+                converged=False,
+                passed_manual_case=True,
+                failure_reason="failed",
+            ),
+        )
+    with pytest.raises(ValueError, match="objective must be nonnegative"):
+        q4.VerificationResult(False, -1, "bad")
+
+
+@pytest.mark.parametrize(
+    "record_patch",
+    [
+        {"objective": 18},
+        {"converged": False},
+        {"failure_reason": "unexpected"},
+        {"passed_manual_case": False},
+    ],
+)
+def test_schedule_result_must_match_its_toy_run_record(
+    record_patch: dict[str, object],
+) -> None:
+    record = q4.enumerate_offline(q4.default_batches()).record
+
+    with pytest.raises(ValueError, match="record must match schedule result"):
+        q4.ScheduleResult(
+            ("T1-short", "T2-long"),
+            19,
+            True,
+            False,
+            True,
+            None,
+            replace(record, **record_patch),
+        )
 
 
 def test_demo_is_isolated_and_runs_under_thirty_seconds() -> None:

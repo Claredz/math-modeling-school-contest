@@ -145,6 +145,8 @@ class VerificationResult:
         normalized = float(self.objective)
         if not math.isfinite(normalized):
             raise ValueError("objective must be finite")
+        if normalized < 0:
+            raise ValueError("objective must be nonnegative")
         object.__setattr__(self, "objective", normalized)
         if self.valid is (self.failure is not None):
             raise ValueError("valid and failure must be consistent")
@@ -170,21 +172,34 @@ class ScheduleResult:
         ):
             raise TypeError("selected_ids must contain nonempty strings")
         object.__setattr__(self, "selected_ids", tuple(self.selected_ids))
+        if len(set(self.selected_ids)) != len(self.selected_ids):
+            raise ValueError("selected_ids must be unique")
         if isinstance(self.objective, bool) or not isinstance(self.objective, Real):
             raise TypeError("objective must be real")
         objective = float(self.objective)
         if not math.isfinite(objective):
             raise ValueError("objective must be finite")
+        if objective < 0:
+            raise ValueError("objective must be nonnegative")
         object.__setattr__(self, "objective", objective)
         for name in ("converged", "unresolved", "verified"):
             if not isinstance(getattr(self, name), bool):
                 raise TypeError(f"{name} must be boolean")
-        if self.converged and self.unresolved:
-            raise ValueError("converged and unresolved cannot both be true")
-        if self.converged and self.failure is not None:
-            raise ValueError("a converged result cannot have a failure")
-        if self.unresolved and self.failure is None:
-            raise ValueError("an unresolved result must have a failure")
+        if self.failure is not None:
+            if not isinstance(self.failure, str):
+                raise TypeError("failure must be a string or None")
+            if not self.failure.strip():
+                raise ValueError("failure must not be empty")
+        if self.converged:
+            if self.unresolved or not self.verified or self.failure is not None:
+                raise ValueError("successful result status is inconsistent")
+        else:
+            if not self.unresolved:
+                raise ValueError("result must be either successful or unresolved")
+            if self.verified:
+                raise ValueError("unresolved result cannot be verified")
+            if self.failure is None:
+                raise ValueError("unresolved result must have a failure")
         if not isinstance(self.trace, (tuple, list)) or any(
             not isinstance(item, DecisionTrace) for item in self.trace
         ):
@@ -197,6 +212,13 @@ class ScheduleResult:
         )
         if not isinstance(self.record, ToyRunRecord):
             raise TypeError("record must be a ToyRunRecord")
+        if (
+            not math.isclose(self.record.objective, self.objective, abs_tol=1e-12)
+            or self.record.converged is not self.converged
+            or self.record.failure_reason != self.failure
+            or self.record.passed_manual_case is not self.verified
+        ):
+            raise ValueError("record must match schedule result")
 
 
 def _validated_binary_vector(
