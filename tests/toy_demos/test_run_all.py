@@ -114,6 +114,11 @@ def test_write_and_check_detect_missing_or_stale_artifacts(tmp_path: Path) -> No
     )
     assert ok is False
     assert any("stale" in issue and stale.name in issue for issue in issues)
+    assert any(
+        "module_summary.offline_upper_bound" in issue
+        for issue in issues
+        if stale.name in issue
+    )
 
 
 def test_cli_check_returns_nonzero_for_missing_artifacts(tmp_path: Path) -> None:

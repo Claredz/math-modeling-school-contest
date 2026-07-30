@@ -252,6 +252,32 @@ def normalize_for_check(value: Any) -> Any:
     return normalized
 
 
+def _difference_paths(actual: Any, expected: Any, *, prefix: str = "") -> tuple[str, ...]:
+    """Return stable leaf paths whose normalized artifact values differ."""
+
+    if isinstance(actual, dict) and isinstance(expected, dict):
+        paths: list[str] = []
+        for key in sorted(set(actual) | set(expected)):
+            path = f"{prefix}.{key}" if prefix else str(key)
+            if key not in actual or key not in expected:
+                paths.append(path)
+            else:
+                paths.extend(_difference_paths(actual[key], expected[key], prefix=path))
+        return tuple(paths)
+    if isinstance(actual, list) and isinstance(expected, list):
+        paths = []
+        for index in range(max(len(actual), len(expected))):
+            path = f"{prefix}[{index}]"
+            if index >= len(actual) or index >= len(expected):
+                paths.append(path)
+            else:
+                paths.extend(
+                    _difference_paths(actual[index], expected[index], prefix=path)
+                )
+        return tuple(paths)
+    return () if actual == expected else (prefix or "<root>",)
+
+
 def _json_text(payload: Mapping[str, Any]) -> str:
     return (
         json.dumps(
@@ -380,8 +406,14 @@ def check_artifacts(
         except (TypeError, ValueError) as error:
             issues.append(f"invalid artifact {filename}: {error}")
             continue
-        if normalize_for_check(actual_payload) != normalize_for_check(expected_payload):
-            issues.append(f"stale artifact: {filename}")
+        normalized_actual = normalize_for_check(actual_payload)
+        normalized_expected = normalize_for_check(expected_payload)
+        if normalized_actual != normalized_expected:
+            difference_paths = _difference_paths(normalized_actual, normalized_expected)
+            preview = ", ".join(difference_paths[:8])
+            if len(difference_paths) > 8:
+                preview += f", ... (+{len(difference_paths) - 8} more)"
+            issues.append(f"stale artifact: {filename} (differing fields: {preview})")
     unexpected = sorted(
         path.name for path in output_dir.glob("*.json") if path.name not in expected
     )
