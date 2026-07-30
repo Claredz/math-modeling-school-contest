@@ -32,8 +32,10 @@ from experiments.toy_demos.q4_scheduling import run_demo as run_q4
 
 DEFAULT_SEED = 20260731
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "results"
-FLOAT_CHECK_ABS_TOL = 5e-5
-FLOAT_CHECK_REL_TOL = 1e-9
+DEFAULT_FLOAT_CHECK_ABS_TOL = 1e-12
+SOLVER_METRIC_CHECK_ABS_TOL = 1e-5
+SOLVER_COORDINATE_CHECK_ABS_TOL = 1e-4
+FLOAT_CHECK_REL_TOL = 1e-12
 _TOP_LEVEL_FIELDS = {
     "schema_version",
     "module",
@@ -294,11 +296,24 @@ def _difference_descriptions(
                 )
         return tuple(paths)
     if isinstance(actual, float) and isinstance(expected, float):
+        if ".metadata.burst_times[" in prefix or ".metadata.master_values[" in prefix:
+            absolute_tolerance = SOLVER_COORDINATE_CHECK_ABS_TOL
+        elif prefix.endswith(
+            (
+                ".objective",
+                ".global_gap",
+                ".global_lower_bound",
+                ".verified_objective",
+            )
+        ):
+            absolute_tolerance = SOLVER_METRIC_CHECK_ABS_TOL
+        else:
+            absolute_tolerance = DEFAULT_FLOAT_CHECK_ABS_TOL
         if isclose(
             actual,
             expected,
             rel_tol=FLOAT_CHECK_REL_TOL,
-            abs_tol=FLOAT_CHECK_ABS_TOL,
+            abs_tol=absolute_tolerance,
         ):
             return ()
     elif actual == expected:

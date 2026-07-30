@@ -168,6 +168,50 @@ def test_check_tolerates_cross_platform_float_noise_but_detects_material_drift(
     )
 
 
+def test_float_tolerance_is_wider_for_solver_coordinates_than_certificates(
+    tmp_path: Path,
+) -> None:
+    artifacts = run_all.build_artifacts(seed=20260731)
+    run_all.write_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        artifacts=artifacts,
+    )
+
+    joint_path = tmp_path / "q2_joint_prototype.json"
+    joint_payload = json.loads(joint_path.read_text(encoding="utf-8"))
+    joint_payload["records"][0]["metadata"]["burst_times"][0] += 5.3e-5
+    joint_path.write_text(json.dumps(joint_payload), encoding="utf-8")
+    ok, issues = run_all.check_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        expected_artifacts=artifacts,
+    )
+    assert ok is True
+    assert issues == ()
+
+    run_all.write_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        artifacts=artifacts,
+    )
+    certificate_path = tmp_path / "q2_constraint_generation.json"
+    certificate_payload = json.loads(certificate_path.read_text(encoding="utf-8"))
+    certificate_payload["module_summary"]["final_violation"] = 4e-5
+    certificate_path.write_text(json.dumps(certificate_payload), encoding="utf-8")
+    ok, issues = run_all.check_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        expected_artifacts=artifacts,
+    )
+    assert ok is False
+    assert any(
+        "module_summary.final_violation" in issue
+        for issue in issues
+        if certificate_path.name in issue
+    )
+
+
 def test_check_rejects_invalid_record_schema_before_ignoring_runtime(
     tmp_path: Path,
 ) -> None:
