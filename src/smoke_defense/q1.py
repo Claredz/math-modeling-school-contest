@@ -12,6 +12,7 @@ from typing import Literal
 import numpy as np
 
 from smoke_defense.candidates import (
+    RANKING_TIME_DECIMALS,
     Q1Candidate,
     candidate_rank_key,
     evaluate_smoke_against_detection,
@@ -34,6 +35,7 @@ from smoke_defense.dynamics import (
     integrate_instantaneous_reference,
 )
 from smoke_defense.events import ClosedInterval
+from smoke_defense.paths import UAV_SPEED_MPS
 from smoke_defense.scenario import Scenario, scenario_hash
 from smoke_defense.scenario_matrix import (
     DIRECTIONS,
@@ -219,6 +221,15 @@ def solve_q1_scenario(
     constants: ProblemConstants | None = None,
 ) -> Q1ScenarioResult:
     constants = constants or load_problem_constants()
+    if not np.isclose(
+        constants.uav.speed_mps,
+        UAV_SPEED_MPS,
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise ValueError(
+            "the frozen Q1 model contract requires UAV speed 28 m/s"
+        )
     ship, trajectory = _integrate_scenario(scenario, constants)
     missile = scenario.missiles[0]
     missile_speed_mps = (
@@ -288,7 +299,7 @@ def solve_q1_scenario(
         strict_status = best_candidate.strict_status
     return Q1ScenarioResult(
         scenario_id=scenario.scenario_id,
-        scenario_hash=scenario_hash(scenario),
+        scenario_hash=scenario_hash(scenario, constants=constants),
         assumption_ids=FROZEN_ASSUMPTION_IDS,
         model_layer=scenario.model_layer,
         guidance_model=missile.guidance_model,
@@ -307,6 +318,7 @@ def _cross_validate_reference(
     formal_results: tuple[Q1ScenarioResult, ...],
     reference: Q1ScenarioResult,
     ship: ShipMotion,
+    ship_radius_m: float,
 ) -> tuple[CandidateCrossValidation, ...]:
     if reference.best_candidate is None or reference.best_candidate.smoke is None:
         return ()
@@ -323,6 +335,7 @@ def _cross_validate_reference(
             ship=ship,
             smoke=reference.best_candidate.smoke,
             detection=result.detection,
+            ship_radius_m=ship_radius_m,
         )
         validation.append(
             CandidateCrossValidation(
@@ -334,6 +347,25 @@ def _cross_validate_reference(
             )
         )
     return tuple(validation)
+
+
+def _worst_case_scenario_id(
+    cross_validation: tuple[CandidateCrossValidation, ...],
+    *,
+    fallback_scenario_id: str,
+) -> str:
+    if not cross_validation:
+        return fallback_scenario_id
+    return min(
+        cross_validation,
+        key=lambda item: (
+            round(
+                item.covered_duration_s,
+                RANKING_TIME_DECIMALS,
+            ),
+            -item.maximum_exposed_interval_s,
+        ),
+    ).scenario_id
 
 
 def solve_q1_guidance_sweep(
@@ -376,6 +408,7 @@ def solve_q1_guidance_sweep(
         formal_results,
         reference,
         ship,
+        constants.ship.effective_radius_m,
     )
     covered_values = [
         item.covered_duration_s for item in cross_validation
@@ -392,16 +425,10 @@ def solve_q1_guidance_sweep(
         or (max(detection_values) - min(detection_values) > 1e-4)
         or len(component_counts) > 1
     )
-    if cross_validation:
-        worst_case_scenario_id = min(
-            cross_validation,
-            key=lambda item: (
-                item.covered_duration_s,
-                -item.maximum_exposed_interval_s,
-            ),
-        ).scenario_id
-    else:
-        worst_case_scenario_id = reference.scenario_id
+    worst_case_scenario_id = _worst_case_scenario_id(
+        cross_validation,
+        fallback_scenario_id=reference.scenario_id,
+    )
     return Q1GuidanceSweepResult(
         direction=direction,
         distance_m=distance_m,

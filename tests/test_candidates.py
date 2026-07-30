@@ -56,6 +56,25 @@ def test_lexicographic_rank_prefers_coverage_before_flight_distance():
     assert candidate_rank_key(long_flight) > candidate_rank_key(short_flight)
 
 
+def test_lexicographic_rank_ignores_sub_nanosecond_duration_noise():
+    noisy_longer = Q1Candidate.for_ranking_test(
+        strict_status=CertificationStatus.CERTIFIED_INFEASIBLE,
+        covered_duration_s=9.0 + 1e-12,
+        maximum_exposed_interval_s=8.0,
+        minimum_margin_m=-20.0,
+        flight_distance_m=50.0,
+    )
+    better_secondary = Q1Candidate.for_ranking_test(
+        strict_status=CertificationStatus.CERTIFIED_INFEASIBLE,
+        covered_duration_s=9.0,
+        maximum_exposed_interval_s=4.0,
+        minimum_margin_m=-20.0,
+        flight_distance_m=500.0,
+    )
+
+    assert candidate_rank_key(better_secondary) > candidate_rank_key(noisy_longer)
+
+
 def test_delayed_takeoff_can_preserve_coverage_and_shorten_flight():
     ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=7.71)
     detection = DetectionSet(
@@ -137,3 +156,48 @@ def test_custom_smoke_timing_changes_candidate_coverage():
     assert max(candidate.covered_duration_s for candidate in custom) < max(
         candidate.covered_duration_s for candidate in nominal
     )
+
+
+def test_custom_ship_radius_is_used_by_candidate_coverage():
+    ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=7.71)
+    detection = DetectionSet(
+        components=(ClosedInterval(10.0, 30.0),),
+        source_events=(),
+    )
+
+    candidates = generate_q1_candidates(
+        ship=ship,
+        detection=detection,
+        uav_available_time_s=0.0,
+        maximum_smoke_radius_m=120.0,
+        ship_radius_m=100.0,
+    )
+
+    assert candidates
+    assert max(candidate.covered_duration_s for candidate in candidates) <= (
+        2.0 * (120.0 - 100.0) / ship.speed_mps + 1e-6
+    )
+
+
+def test_custom_smoke_lifetime_adds_balanced_coverage_center():
+    ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=7.71)
+    detection = DetectionSet(
+        components=(ClosedInterval(10.0, 25.0),),
+        source_events=(),
+    )
+
+    candidates = generate_q1_candidates(
+        ship=ship,
+        detection=detection,
+        uav_available_time_s=0.0,
+        maximum_smoke_radius_m=130.0,
+        smoke_hold_duration_s=1.0,
+        smoke_decay_duration_s=1.0,
+    )
+    best = max(candidates, key=candidate_rank_key)
+
+    assert best.covered_intervals
+    covered = best.covered_intervals[0]
+    left_exposure = covered.start_s - detection.components[0].start_s
+    right_exposure = detection.components[0].end_s - covered.end_s
+    assert left_exposure == pytest.approx(right_exposure, abs=1e-6)

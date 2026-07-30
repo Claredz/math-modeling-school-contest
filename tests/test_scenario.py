@@ -3,6 +3,7 @@ from copy import deepcopy
 import pytest
 from pydantic import ValidationError
 
+from smoke_defense.constants import ProblemConstants, load_problem_constants
 from smoke_defense.scenario import Scenario, load_scenario, scenario_hash
 
 
@@ -119,6 +120,20 @@ def test_scenario_hash_is_order_stable_and_parameter_sensitive(valid_dict):
 
     assert scenario_hash(first) == scenario_hash(reordered)
     assert scenario_hash(first) != scenario_hash(changed)
+
+
+def test_scenario_hash_uses_the_actual_constants_object(valid_dict):
+    scene = Scenario.model_validate(valid_dict)
+    nominal = load_problem_constants()
+    custom_payload = nominal.model_dump(mode="python")
+    custom_payload["smoke"]["hold_duration_s"] = 1.0
+    custom = ProblemConstants.model_validate(custom_payload)
+
+    assert scenario_hash(scene, constants=nominal) == scenario_hash(scene)
+    assert scenario_hash(scene, constants=custom) != scenario_hash(
+        scene,
+        constants=nominal,
+    )
 
 
 def test_example_scenario_loads():

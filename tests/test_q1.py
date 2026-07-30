@@ -3,12 +3,16 @@ import json
 import pytest
 
 import smoke_defense.q1 as q1_module
+from smoke_defense.constants import ProblemConstants, load_problem_constants
 from smoke_defense.coverage import CertificationStatus
 from smoke_defense.q1 import (
+    CandidateCrossValidation,
     solve_q1_guidance_sweep,
+    solve_q1_scenario,
     write_q1_markdown_summary,
     write_q1_sweep_result,
 )
+from smoke_defense.scenario_matrix import generate_q1_q3_matrix
 
 
 @pytest.fixture(scope="module")
@@ -103,3 +107,34 @@ def test_empty_cross_validation_still_uses_detection_sensitivity(
     assert sweep.cross_validation == ()
     assert sweep.parameter_sensitive is expected_sensitive
     assert sweep.worst_case_scenario_id == sweep.reference_result.scenario_id
+
+
+def test_q1_rejects_uav_speed_outside_frozen_contract():
+    payload = load_problem_constants().model_dump(mode="python")
+    payload["uav"]["speed_mps"] = 35.0
+    custom = ProblemConstants.model_validate(payload)
+
+    with pytest.raises(ValueError, match="28 m/s"):
+        solve_q1_scenario(generate_q1_q3_matrix()[0], custom)
+
+
+def test_worst_case_selection_ignores_sub_nanosecond_coverage_noise():
+    noisy_lower_coverage = CandidateCrossValidation(
+        scenario_id="numerical-noise",
+        covered_duration_s=9.0 - 1e-12,
+        exposed_duration_s=6.0,
+        maximum_exposed_interval_s=4.0,
+        strict_status=CertificationStatus.CERTIFIED_INFEASIBLE,
+    )
+    physically_worse_gap = CandidateCrossValidation(
+        scenario_id="larger-gap",
+        covered_duration_s=9.0,
+        exposed_duration_s=6.0,
+        maximum_exposed_interval_s=8.0,
+        strict_status=CertificationStatus.CERTIFIED_INFEASIBLE,
+    )
+
+    assert q1_module._worst_case_scenario_id(
+        (noisy_lower_coverage, physically_worse_gap),
+        fallback_scenario_id="fallback",
+    ) == "larger-gap"

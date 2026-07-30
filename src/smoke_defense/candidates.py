@@ -22,6 +22,8 @@ from smoke_defense.smoke import SmokeCloud, detonation_position
 from smoke_defense.timeline import BombEvents
 from smoke_defense.verification import certify_single_smoke_continuous_coverage
 
+RANKING_TIME_DECIMALS = 9
+
 
 @dataclass(frozen=True)
 class Q1Candidate:
@@ -72,7 +74,7 @@ def candidate_rank_key(candidate: Q1Candidate) -> tuple[float, ...]:
     }[candidate.strict_status]
     return (
         strict_rank,
-        candidate.covered_duration_s,
+        round(candidate.covered_duration_s, RANKING_TIME_DECIMALS),
         -candidate.maximum_exposed_interval_s,
         candidate.minimum_margin_m,
         -candidate.flight_distance_m,
@@ -251,6 +253,7 @@ def evaluate_smoke_against_detection(
     ship: ShipMotion,
     smoke: SmokeCloud,
     detection: DetectionSet,
+    ship_radius_m: float = 80.0,
 ) -> tuple[
     tuple[ClosedInterval, ...],
     float,
@@ -259,7 +262,11 @@ def evaluate_smoke_against_detection(
     float,
     CertificationStatus,
 ]:
-    smoke_intervals = smoke_full_coverage_intervals(ship, smoke)
+    smoke_intervals = smoke_full_coverage_intervals(
+        ship,
+        smoke,
+        ship_radius_m=ship_radius_m,
+    )
     covered = intersect_interval_sets(detection.components, smoke_intervals)
     covered_duration = sum(interval.duration_s for interval in covered)
     exposed_duration = max(0.0, detection.duration_s - covered_duration)
@@ -274,6 +281,7 @@ def evaluate_smoke_against_detection(
                     ship.position(float(time_s)),
                     smoke.burst_center_m,
                     smoke.radius(float(time_s)),
+                    ship_radius_m=ship_radius_m,
                 )
             )
     minimum_margin = min(margin_samples, default=float("inf"))
@@ -284,6 +292,7 @@ def evaluate_smoke_against_detection(
             ship_position=ship.position,
             smoke=smoke,
             detection_components=detection.components,
+            ship_radius_m=ship_radius_m,
             ship_speed_bound_mps=ship.speed_mps,
         )
         strict_status = continuous.status
@@ -299,21 +308,63 @@ def evaluate_smoke_against_detection(
 
 def _candidate_center_times(
     components: tuple[ClosedInterval, ...],
-    half_width_s: float,
+    coverage_start_offset_s: float,
+    coverage_end_offset_s: float,
 ) -> tuple[float, ...]:
     times: set[float] = set()
+    coverage_midpoint_offset_s = 0.5 * (
+        coverage_start_offset_s + coverage_end_offset_s
+    )
     for component in components:
         midpoint = 0.5 * (component.start_s + component.end_s)
         times.update(
             {
                 component.start_s,
                 component.end_s,
-                midpoint,
-                component.start_s + half_width_s,
-                component.end_s - half_width_s,
+                midpoint - coverage_midpoint_offset_s,
+                component.start_s - coverage_start_offset_s,
+                component.end_s - coverage_end_offset_s,
             }
         )
     return tuple(sorted(time_s for time_s in times if time_s >= 0.0))
+
+
+def _ideal_smoke_coverage_offsets(
+    *,
+    ship_speed_mps: float,
+    maximum_smoke_radius_m: float,
+    smoke_hold_duration_s: float,
+    smoke_decay_duration_s: float,
+    ship_radius_m: float,
+) -> tuple[float, float]:
+    """Return ideal full-coverage offsets around a spatial centre time."""
+
+    if maximum_smoke_radius_m < ship_radius_m:
+        return 0.0, 0.0
+    geometric_half_width_s = (
+        maximum_smoke_radius_m - ship_radius_m
+    ) / ship_speed_mps
+    canonical_ship = ShipMotion(
+        (0.0, 0.0),
+        heading_rad=0.0,
+        speed_mps=ship_speed_mps,
+    )
+    canonical_smoke = SmokeCloud(
+        burst_time_s=-geometric_half_width_s,
+        burst_center_m=np.zeros(2),
+        maximum_radius_m=maximum_smoke_radius_m,
+        hold_duration_s=smoke_hold_duration_s,
+        decay_duration_s=smoke_decay_duration_s,
+    )
+    intervals = smoke_full_coverage_intervals(
+        canonical_ship,
+        canonical_smoke,
+        ship_radius_m=ship_radius_m,
+    )
+    if not intervals:
+        return 0.0, 0.0
+    longest = max(intervals, key=lambda interval: interval.duration_s)
+    return longest.start_s, longest.end_s
 
 
 def _latest_reachable_takeoff_time(
@@ -418,13 +469,24 @@ def generate_q1_candidates(
     smoke_decay_duration_s: float = 5.0,
     ship_radius_m: float = 80.0,
 ) -> tuple[Q1Candidate, ...]:
-    half_width_s = (
-        maximum_smoke_radius_m - ship_radius_m
-    ) / ship.speed_mps
+    half_width_s = max(
+        0.0,
+        (maximum_smoke_radius_m - ship_radius_m) / ship.speed_mps,
+    )
+    coverage_start_offset_s, coverage_end_offset_s = (
+        _ideal_smoke_coverage_offsets(
+            ship_speed_mps=ship.speed_mps,
+            maximum_smoke_radius_m=maximum_smoke_radius_m,
+            smoke_hold_duration_s=smoke_hold_duration_s,
+            smoke_decay_duration_s=smoke_decay_duration_s,
+            ship_radius_m=ship_radius_m,
+        )
+    )
     candidates: list[Q1Candidate] = []
     for center_time_s in _candidate_center_times(
         detection.components,
-        half_width_s,
+        coverage_start_offset_s,
+        coverage_end_offset_s,
     ):
         burst_center = ship.position(center_time_s)
         for takeoff_time_s in _candidate_takeoff_times(
@@ -514,6 +576,7 @@ def generate_q1_candidates(
                 ship=ship,
                 smoke=smoke,
                 detection=detection,
+                ship_radius_m=ship_radius_m,
             )
             candidates.append(
                 Q1Candidate(

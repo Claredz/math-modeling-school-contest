@@ -10,7 +10,7 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from smoke_defense.constants import DEFAULT_CONSTANTS_PATH
+from smoke_defense.constants import DEFAULT_CONSTANTS_PATH, ProblemConstants
 
 Vector2 = tuple[float, float]
 GuidanceModel = Literal[
@@ -110,14 +110,26 @@ def load_scenario(path: str | Path) -> Scenario:
 
 def scenario_hash(
     scenario: Scenario,
-    constants_path: str | Path = DEFAULT_CONSTANTS_PATH,
+    constants_path: str | Path | None = None,
+    *,
+    constants: ProblemConstants | None = None,
 ) -> str:
     """Hash normalized scenario content together with the constants source."""
 
-    with Path(constants_path).open(encoding="utf-8") as stream:
-        constants = yaml.safe_load(stream)
+    if constants_path is not None and constants is not None:
+        raise ValueError("supply either constants_path or constants, not both")
+    if constants is not None:
+        constants_payload = constants.model_dump(mode="json")
+    else:
+        source = (
+            Path(constants_path)
+            if constants_path is not None
+            else DEFAULT_CONSTANTS_PATH
+        )
+        with source.open(encoding="utf-8") as stream:
+            constants_payload = yaml.safe_load(stream)
     payload = {
-        "constants": constants,
+        "constants": constants_payload,
         "scenario": scenario.model_dump(mode="json"),
     }
     normalized = json.dumps(
