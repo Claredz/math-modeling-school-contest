@@ -1,5 +1,9 @@
 # 校赛 B 题烟幕遮蔽优化 Implementation Plan
 
+> [!WARNING]
+> **已过时，禁止执行。** 本计划基于瞬时纯追踪和旧 UAV 初始位置设定，已被 2026-07-30 惯性模型计划替代；正文只保留为历史记录。
+> 当前计划：[惯性纯追踪与舰载起飞模型修订 Implementation Plan](2026-07-30-inertial-pursuit-shipborne-launch-implementation-plan.md)。
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** 建立可复现的二维舰船烟幕防御仿真与分层优化系统，完成题目四问的模型、算法、验证、图表和论文材料。

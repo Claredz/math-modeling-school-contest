@@ -1,9 +1,11 @@
 # B题实现架构与场景契约设计
 
 > 日期：2026-07-30
-> 状态：已批准设计的工程化固化
+> 状态：**已过时，仅供追溯；禁止作为当前实现依据**
 > 上游契约：[B题统一模型契约 v0.1](../modeling/model_contract_v0.1.md)
 > 假设基线：[A-001–A-020](../modeling/assumption_register.md)
+> 替代设计：[惯性纯追踪与舰载起飞模型修订设计](2026-07-30-inertial-pursuit-shipborne-launch-design.md)
+> 替代计划：[惯性纯追踪与舰载起飞模型修订 Implementation Plan](2026-07-30-inertial-pursuit-shipborne-launch-implementation-plan.md)
 
 ## 1. 设计目标
 

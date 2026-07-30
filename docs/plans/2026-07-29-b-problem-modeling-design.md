@@ -1,5 +1,10 @@
 # 校赛 B 题“舰船烟幕遮蔽干扰优化”建模设计
 
+> [!WARNING]
+> **已过时，仅供模型演进追溯。** 本文采用的瞬时纯追踪、自由 UAV 初态等内容已被 2026-07-30 修订替代，不得用于当前建模、编码或论文结论。
+> 当前设计：[惯性纯追踪与舰载起飞模型修订设计](2026-07-30-inertial-pursuit-shipborne-launch-design.md)。
+> 当前计划：[惯性纯追踪与舰载起飞模型修订 Implementation Plan](2026-07-30-inertial-pursuit-shipborne-launch-implementation-plan.md)。
+
 ## 1. 设计目标
 
 采用“分层建模、逐问递进”的技术路线，将四个问题统一在同一套二维时空仿真内核上：
