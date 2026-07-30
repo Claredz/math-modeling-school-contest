@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-07-30T10:23:48.029214+00:00",
-  "git_sha": "617528c8ff0faccaa3502ede1d4d513c35a769de",
+  "generated_at_utc": "2026-07-30T11:05:01.475494+00:00",
+  "git_sha": "30173c24c974372614e10adadb32e7fac2d3a3ee",
   "random_seed": 20260730,
   "model_contract_version": "v0.2",
   "assumption_register_version": "v0.3",
@@ -1339,7 +1339,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -1361,20 +1361,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -1461,7 +1461,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -1483,20 +1483,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -1583,7 +1583,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -1605,20 +1605,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -1705,7 +1705,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -1727,20 +1727,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -1827,7 +1827,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -1849,20 +1849,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -1949,7 +1949,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -1971,20 +1971,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -2071,7 +2071,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -2093,20 +2093,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -2193,7 +2193,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -2215,20 +2215,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -2315,7 +2315,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.526006025083687,
             "release_time_s": 16.394531247990436,
             "burst_time_s": 19.894531247990436,
             "coverage_center_time_s": 25.08259869286722,
@@ -2337,20 +2337,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 13.791574365379999,
             "minimum_margin_m": -226.33303835708313,
-            "flight_distance_m": 459.0468749437322,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.526006025083687,
                 "position_m": [
-                  0.0,
+                  119.70550645339523,
                   0.0
                 ]
               },
               {
-                "time_s": 6.493929268245107,
+                "time_s": 16.394530610311865,
                 "position_m": [
-                  -181.830019510863,
+                  95.38681806700625,
                   0.0
                 ]
               },
@@ -2409,7 +2409,7 @@
             "kind": "appearance"
           },
           {
-            "time_s": 6.102956882609617,
+            "time_s": 6.102956882609618,
             "kind": "distance_entry"
           },
           {
@@ -2438,7 +2438,7 @@
         "best_candidate": {
           "strict_status": "certified_infeasible",
           "command_time_s": 0.0,
-          "takeoff_time_s": 0.0,
+          "takeoff_time_s": 15.526006025083687,
           "release_time_s": 16.394531247990436,
           "burst_time_s": 19.894531247990436,
           "coverage_center_time_s": 25.08259869286722,
@@ -2460,20 +2460,20 @@
           "exposed_duration_s": 13.791574365379997,
           "maximum_exposed_interval_s": 13.791574365379999,
           "minimum_margin_m": -226.33303835708313,
-          "flight_distance_m": 459.0468749437322,
+          "flight_distance_m": 24.318706241388973,
           "reachability_status": "certified_feasible",
           "path_nodes": [
             {
-              "time_s": 0.0,
+              "time_s": 15.526006025083687,
               "position_m": [
-                0.0,
+                119.70550645339523,
                 0.0
               ]
             },
             {
-              "time_s": 6.493929268245107,
+              "time_s": 16.394530610311865,
               "position_m": [
-                -181.830019510863,
+                95.38681806700625,
                 0.0
               ]
             },
@@ -2637,7 +2637,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -2659,20 +2659,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -2763,7 +2763,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -2785,20 +2785,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -2889,7 +2889,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -2911,20 +2911,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -3015,7 +3015,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -3037,20 +3037,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -3141,7 +3141,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -3163,20 +3163,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -3267,7 +3267,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -3289,20 +3289,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -3393,7 +3393,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -3415,20 +3415,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -3519,7 +3519,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -3541,20 +3541,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -3645,7 +3645,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 14.73317572500247,
             "release_time_s": 15.601700947909219,
             "burst_time_s": 19.10170094790922,
             "coverage_center_time_s": 24.289768392786,
@@ -3667,20 +3667,20 @@
             "exposed_duration_s": 13.791574365379997,
             "maximum_exposed_interval_s": 6.89578718269,
             "minimum_margin_m": -173.1665191785416,
-            "flight_distance_m": 436.8476265414581,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 14.73317572500247,
                 "position_m": [
-                  0.0,
+                  113.59278483976904,
                   0.0
                 ]
               },
               {
-                "time_s": 6.206669861304965,
+                "time_s": 15.601700310230648,
                 "position_m": [
-                  -173.786756116539,
+                  89.27409645338007,
                   0.0
                 ]
               },
@@ -3743,7 +3743,7 @@
             "kind": "detection_entry"
           },
           {
-            "time_s": 12.205913765219226,
+            "time_s": 12.205913765219224,
             "kind": "distance_entry"
           },
           {
@@ -3772,7 +3772,7 @@
         "best_candidate": {
           "strict_status": "certified_infeasible",
           "command_time_s": 0.0,
-          "takeoff_time_s": 0.0,
+          "takeoff_time_s": 14.73317572500247,
           "release_time_s": 15.601700947909219,
           "burst_time_s": 19.10170094790922,
           "coverage_center_time_s": 24.289768392786,
@@ -3794,20 +3794,20 @@
           "exposed_duration_s": 13.791574365379997,
           "maximum_exposed_interval_s": 6.89578718269,
           "minimum_margin_m": -173.1665191785416,
-          "flight_distance_m": 436.8476265414581,
+          "flight_distance_m": 24.318706241388973,
           "reachability_status": "certified_feasible",
           "path_nodes": [
             {
-              "time_s": 0.0,
+              "time_s": 14.73317572500247,
               "position_m": [
-                0.0,
+                113.59278483976904,
                 0.0
               ]
             },
             {
-              "time_s": 6.206669861304965,
+              "time_s": 15.601700310230648,
               "position_m": [
-                -173.786756116539,
+                89.27409645338007,
                 0.0
               ]
             },
@@ -3938,7 +3938,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4064,7 +4064,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4190,7 +4190,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4316,7 +4316,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4442,7 +4442,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4568,7 +4568,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4694,7 +4694,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4820,7 +4820,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -4946,7 +4946,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.36034908913372,
+              "time_s": 21.360349089133717,
               "kind": "distance_entry"
             },
             {
@@ -6526,7 +6526,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -6652,7 +6652,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -6778,7 +6778,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -6904,7 +6904,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -7030,7 +7030,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -7156,7 +7156,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -7282,7 +7282,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -7408,7 +7408,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -7534,7 +7534,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.404303692081077,
+              "time_s": 6.404303692081076,
               "kind": "distance_entry"
             },
             {
@@ -7661,7 +7661,7 @@
             "kind": "detection_entry"
           },
           {
-            "time_s": 6.40430369208107,
+            "time_s": 6.404303692081069,
             "kind": "distance_entry"
           },
           {
@@ -7860,7 +7860,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -7986,7 +7986,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -8112,7 +8112,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -8238,7 +8238,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -8364,7 +8364,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -8490,7 +8490,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -8616,7 +8616,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -8742,7 +8742,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -8868,7 +8868,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.80860738416213,
+              "time_s": 12.808607384162132,
               "kind": "distance_entry"
             },
             {
@@ -10325,7 +10325,7 @@
             "kind": "appearance"
           },
           {
-            "time_s": 22.41506292228382,
+            "time_s": 22.415062922283823,
             "kind": "distance_entry"
           },
           {
@@ -10549,7 +10549,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 10.027810503916685,
             "release_time_s": 10.896335726823434,
             "burst_time_s": 14.396335726823434,
             "coverage_center_time_s": 19.584403171700217,
@@ -10571,20 +10571,20 @@
             "exposed_duration_s": 14.396335726823,
             "maximum_exposed_interval_s": 14.396335726823,
             "minimum_margin_m": -230.99574845380866,
-            "flight_distance_m": 305.09740035105614,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 10.027810503916685,
                 "position_m": [
-                  0.0,
+                  77.31441898519763,
                   0.0
                 ]
               },
               {
-                "time_s": 4.501815212450849,
+                "time_s": 10.896335089144863,
                 "position_m": [
-                  -126.05082594862375,
+                  52.99573059880866,
                   0.0
                 ]
               },
@@ -11017,7 +11017,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 10.022277567154687,
             "release_time_s": 10.890802790061436,
             "burst_time_s": 14.390802790061436,
             "coverage_center_time_s": 19.57887023493822,
@@ -11039,20 +11039,20 @@
             "exposed_duration_s": 14.390802790061,
             "maximum_exposed_interval_s": 14.390802790061,
             "minimum_margin_m": -230.95308951137366,
-            "flight_distance_m": 304.9424781217202,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 10.022277567154687,
                 "position_m": [
-                  0.0,
+                  77.27176004276264,
                   0.0
                 ]
               },
               {
-                "time_s": 4.499810510899046,
+                "time_s": 10.890802152382864,
                 "position_m": [
-                  -125.99469430517328,
+                  52.953071656373666,
                   0.0
                 ]
               },
@@ -11131,7 +11131,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 10.022277567154687,
             "release_time_s": 10.890802790061436,
             "burst_time_s": 14.390802790061436,
             "coverage_center_time_s": 19.57887023493822,
@@ -11153,20 +11153,20 @@
             "exposed_duration_s": 14.390802790061,
             "maximum_exposed_interval_s": 14.390802790061,
             "minimum_margin_m": -230.95308951137366,
-            "flight_distance_m": 304.9424781217202,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 10.022277567154687,
                 "position_m": [
-                  0.0,
+                  77.27176004276264,
                   0.0
                 ]
               },
               {
-                "time_s": 4.499810510899046,
+                "time_s": 10.890802152382864,
                 "position_m": [
-                  -125.99469430517328,
+                  52.953071656373666,
                   0.0
                 ]
               },
@@ -11363,7 +11363,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 10.020379671166685,
             "release_time_s": 10.888904894073434,
             "burst_time_s": 14.388904894073434,
             "coverage_center_time_s": 19.576972338950217,
@@ -11385,20 +11385,20 @@
             "exposed_duration_s": 14.388904894073,
             "maximum_exposed_interval_s": 14.388904894073,
             "minimum_margin_m": -230.93845673330617,
-            "flight_distance_m": 304.88933703405615,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 10.020379671166685,
                 "position_m": [
-                  0.0,
+                  77.25712726469514,
                   0.0
                 ]
               },
               {
-                "time_s": 4.499122862513393,
+                "time_s": 10.888904256394863,
                 "position_m": [
-                  -125.975440150375,
+                  52.93843887830617,
                   0.0
                 ]
               },
@@ -11477,7 +11477,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 10.020379671166685,
             "release_time_s": 10.888904894073434,
             "burst_time_s": 14.388904894073434,
             "coverage_center_time_s": 19.576972338950217,
@@ -11499,20 +11499,20 @@
             "exposed_duration_s": 14.388904894073,
             "maximum_exposed_interval_s": 14.388904894073,
             "minimum_margin_m": -230.93845673330617,
-            "flight_distance_m": 304.88933703405615,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 10.020379671166685,
                 "position_m": [
-                  0.0,
+                  77.25712726469514,
                   0.0
                 ]
               },
               {
-                "time_s": 4.499122862513393,
+                "time_s": 10.888904256394863,
                 "position_m": [
-                  -125.975440150375,
+                  52.93843887830617,
                   0.0
                 ]
               },
@@ -11758,7 +11758,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.2504108756649135,
+              "time_s": 6.250410875664913,
               "kind": "distance_entry"
             },
             {
@@ -11884,7 +11884,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.2504108756649135,
+              "time_s": 6.250410875664912,
               "kind": "distance_entry"
             },
             {
@@ -12006,7 +12006,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.2504108756649135,
+              "time_s": 6.250410875664912,
               "kind": "distance_entry"
             },
             {
@@ -12132,7 +12132,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.250401789195468,
+              "time_s": 6.250401789195465,
               "kind": "distance_entry"
             },
             {
@@ -12254,7 +12254,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.250401789195467,
+              "time_s": 6.2504017891954655,
               "kind": "distance_entry"
             },
             {
@@ -12380,7 +12380,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 6.250401789195467,
+              "time_s": 6.2504017891954655,
               "kind": "distance_entry"
             },
             {
@@ -12502,7 +12502,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.250396168899675,
+              "time_s": 6.250396168899672,
               "kind": "distance_entry"
             },
             {
@@ -12624,7 +12624,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.250396168899674,
+              "time_s": 6.250396168899673,
               "kind": "distance_entry"
             },
             {
@@ -12750,7 +12750,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.250396168899674,
+              "time_s": 6.250396168899673,
               "kind": "distance_entry"
             },
             {
@@ -12881,7 +12881,7 @@
             "kind": "detection_entry"
           },
           {
-            "time_s": 6.250389807834275,
+            "time_s": 6.250389807834273,
             "kind": "distance_entry"
           },
           {
@@ -12906,7 +12906,7 @@
         "best_candidate": {
           "strict_status": "certified_infeasible",
           "command_time_s": 0.0,
-          "takeoff_time_s": 0.0,
+          "takeoff_time_s": 9.077255873362466,
           "release_time_s": 9.945781096269215,
           "burst_time_s": 13.445781096269215,
           "coverage_center_time_s": 18.633848541145998,
@@ -12928,20 +12928,20 @@
           "exposed_duration_s": 14.390782576869997,
           "maximum_exposed_interval_s": 7.195391288435,
           "minimum_margin_m": -175.4764668338355,
-          "flight_distance_m": 278.481870695538,
+          "flight_distance_m": 24.318706241388973,
           "reachability_status": "certified_feasible",
           "path_nodes": [
             {
-              "time_s": 0.0,
+              "time_s": 9.077255873362466,
               "position_m": [
-                0.0,
+                69.98564278362461,
                 0.0
               ]
             },
             {
-              "time_s": 4.157408900773256,
+              "time_s": 9.945780458590644,
               "position_m": [
-                -116.40744922165118,
+                45.66695439723564,
                 0.0
               ]
             },
@@ -13198,7 +13198,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 12.50144960369877,
+              "time_s": 12.501449603698767,
               "kind": "distance_entry"
             },
             {
@@ -13324,7 +13324,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 12.50144960369877,
+              "time_s": 12.501449603698767,
               "kind": "distance_entry"
             },
             {
@@ -13479,7 +13479,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 8.13288745964625,
             "release_time_s": 9.001412682553,
             "burst_time_s": 12.501412682553,
             "coverage_center_time_s": 17.689480127429782,
@@ -13501,20 +13501,20 @@
             "exposed_duration_s": 14.396836023342999,
             "maximum_exposed_interval_s": 14.396836023342999,
             "minimum_margin_m": -230.99960573997788,
-            "flight_distance_m": 252.039555111484,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 8.13288745964625,
                 "position_m": [
-                  0.0,
+                  62.704562313872586,
                   0.0
                 ]
               },
               {
-                "time_s": 3.815243988017864,
+                "time_s": 9.001412044874428,
                 "position_m": [
-                  -106.82683166450019,
+                  38.385873927483615,
                   0.0
                 ]
               },
@@ -13820,7 +13820,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.50139285109742,
+              "time_s": 12.501392851097421,
               "kind": "distance_entry"
             },
             {
@@ -13849,7 +13849,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 8.132867628190253,
             "release_time_s": 9.001392851097002,
             "burst_time_s": 12.501392851097002,
             "coverage_center_time_s": 17.689460295973785,
@@ -13871,20 +13871,20 @@
             "exposed_duration_s": 14.394833186013996,
             "maximum_exposed_interval_s": 14.394833186013997,
             "minimum_margin_m": -230.98416386417125,
-            "flight_distance_m": 252.03899983071605,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 8.132867628190253,
                 "position_m": [
-                  0.0,
+                  62.70440941334685,
                   0.0
                 ]
               },
               {
-                "time_s": 3.8152368026563965,
+                "time_s": 9.00139221341843,
                 "position_m": [
-                  -106.8266304743791,
+                  38.38572102695788,
                   0.0
                 ]
               },
@@ -13946,7 +13946,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.50139285109742,
+              "time_s": 12.501392851097421,
               "kind": "distance_entry"
             },
             {
@@ -13971,7 +13971,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.33028420007947,
             "release_time_s": 16.19880942298622,
             "burst_time_s": 19.69880942298622,
             "coverage_center_time_s": 24.886876867863002,
@@ -13993,20 +13993,20 @@
             "exposed_duration_s": 14.394833143777998,
             "maximum_exposed_interval_s": 7.197416571889001,
             "minimum_margin_m": -175.4920817692659,
-            "flight_distance_m": 453.56666384361415,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.33028420007947,
                 "position_m": [
-                  0.0,
+                  118.19649118261272,
                   0.0
                 ]
               },
               {
-                "time_s": 6.423015057006971,
+                "time_s": 16.198808785307648,
                 "position_m": [
-                  -179.8444215961952,
+                  93.87780279622375,
                   0.0
                 ]
               },
@@ -14068,7 +14068,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.50139285109742,
+              "time_s": 12.501392851097421,
               "kind": "distance_entry"
             },
             {
@@ -14093,7 +14093,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.33028420007947,
             "release_time_s": 16.19880942298622,
             "burst_time_s": 19.69880942298622,
             "coverage_center_time_s": 24.886876867863002,
@@ -14115,20 +14115,20 @@
             "exposed_duration_s": 14.394833143777998,
             "maximum_exposed_interval_s": 7.197416571889001,
             "minimum_margin_m": -175.4920817692659,
-            "flight_distance_m": 453.56666384361415,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.33028420007947,
                 "position_m": [
-                  0.0,
+                  118.19649118261272,
                   0.0
                 ]
               },
               {
-                "time_s": 6.423015057006971,
+                "time_s": 16.198808785307648,
                 "position_m": [
-                  -179.8444215961952,
+                  93.87780279622375,
                   0.0
                 ]
               },
@@ -14187,7 +14187,7 @@
             "kind": "appearance"
           },
           {
-            "time_s": 12.501372249572805,
+            "time_s": 12.501372249572803,
             "kind": "distance_entry"
           },
           {
@@ -14382,7 +14382,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.87876212347094,
+              "time_s": 21.878762123470942,
               "kind": "distance_entry"
             },
             {
@@ -14504,7 +14504,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.87876212347094,
+              "time_s": 21.878762123470942,
               "kind": "distance_entry"
             },
             {
@@ -14626,7 +14626,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.87876212347094,
+              "time_s": 21.878762123470942,
               "kind": "distance_entry"
             },
             {
@@ -14748,7 +14748,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.878670439666518,
+              "time_s": 21.87867043966652,
               "kind": "distance_entry"
             },
             {
@@ -14874,7 +14874,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.878670439666518,
+              "time_s": 21.87867043966652,
               "kind": "distance_entry"
             },
             {
@@ -15000,7 +15000,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.878670439666518,
+              "time_s": 21.87867043966652,
               "kind": "distance_entry"
             },
             {
@@ -15126,7 +15126,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.878623837638962,
+              "time_s": 21.87862383763897,
               "kind": "distance_entry"
             },
             {
@@ -15252,7 +15252,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.878623837638962,
+              "time_s": 21.878623837638965,
               "kind": "distance_entry"
             },
             {
@@ -15378,7 +15378,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 21.878623837638962,
+              "time_s": 21.878623837638965,
               "kind": "distance_entry"
             },
             {
@@ -15725,7 +15725,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 3.0384700470304677,
             "release_time_s": 3.906995269937217,
             "burst_time_s": 7.406995269937217,
             "coverage_center_time_s": 12.595062714814,
@@ -15747,20 +15747,20 @@
             "exposed_duration_s": 14.813990539873998,
             "maximum_exposed_interval_s": 7.406995269937,
             "minimum_margin_m": -177.10793353121596,
-            "flight_distance_m": 109.39586755824207,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 3.0384700470304677,
                 "position_m": [
-                  0.0,
+                  23.426604062604905,
                   0.0
                 ]
               },
               {
-                "time_s": 1.969427393339752,
+                "time_s": 3.906994632258645,
                 "position_m": [
-                  -55.143967013513056,
+                  -0.8920843237840597,
                   0.0
                 ]
               },
@@ -15839,7 +15839,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 3.0384700470304677,
             "release_time_s": 3.906995269937217,
             "burst_time_s": 7.406995269937217,
             "coverage_center_time_s": 12.595062714814,
@@ -15861,20 +15861,20 @@
             "exposed_duration_s": 14.813990539873998,
             "maximum_exposed_interval_s": 7.406995269937,
             "minimum_margin_m": -177.10793353121596,
-            "flight_distance_m": 109.39586755824207,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 3.0384700470304677,
                 "position_m": [
-                  0.0,
+                  23.426604062604905,
                   0.0
                 ]
               },
               {
-                "time_s": 1.969427393339752,
+                "time_s": 3.906994632258645,
                 "position_m": [
-                  -55.143967013513056,
+                  -0.8920843237840597,
                   0.0
                 ]
               },
@@ -15953,7 +15953,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 3.0384700470304677,
             "release_time_s": 3.906995269937217,
             "burst_time_s": 7.406995269937217,
             "coverage_center_time_s": 12.595062714814,
@@ -15975,20 +15975,20 @@
             "exposed_duration_s": 14.813990539873998,
             "maximum_exposed_interval_s": 7.406995269937,
             "minimum_margin_m": -177.10793353121596,
-            "flight_distance_m": 109.39586755824207,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 3.0384700470304677,
                 "position_m": [
-                  0.0,
+                  23.426604062604905,
                   0.0
                 ]
               },
               {
-                "time_s": 1.969427393339752,
+                "time_s": 3.906994632258645,
                 "position_m": [
-                  -55.143967013513056,
+                  -0.8920843237840597,
                   0.0
                 ]
               },
@@ -16922,7 +16922,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.358541652103922,
+              "time_s": 6.358541652103923,
               "kind": "distance_entry"
             },
             {
@@ -17044,7 +17044,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.358541652103922,
+              "time_s": 6.358541652103923,
               "kind": "distance_entry"
             },
             {
@@ -17166,7 +17166,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.358541652103922,
+              "time_s": 6.358541652103923,
               "kind": "distance_entry"
             },
             {
@@ -17288,12 +17288,12 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.358536847249999,
-              "kind": "distance_entry"
-            },
-            {
               "time_s": 6.35853684725,
               "kind": "detection_entry"
+            },
+            {
+              "time_s": 6.358536847250002,
+              "kind": "distance_entry"
             },
             {
               "time_s": 31.547718345307576,
@@ -17410,12 +17410,12 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.358536847249999,
-              "kind": "distance_entry"
-            },
-            {
               "time_s": 6.35853684725,
               "kind": "detection_entry"
+            },
+            {
+              "time_s": 6.358536847250002,
+              "kind": "distance_entry"
             },
             {
               "time_s": 31.547718345307576,
@@ -17532,12 +17532,12 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.358536847249999,
-              "kind": "distance_entry"
-            },
-            {
               "time_s": 6.35853684725,
               "kind": "detection_entry"
+            },
+            {
+              "time_s": 6.358536847250002,
+              "kind": "distance_entry"
             },
             {
               "time_s": 31.547718345307576,
@@ -17654,7 +17654,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.3585338902098965,
+              "time_s": 6.358533890209899,
               "kind": "distance_entry"
             },
             {
@@ -17780,7 +17780,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.3585338902098965,
+              "time_s": 6.358533890209899,
               "kind": "distance_entry"
             },
             {
@@ -17906,7 +17906,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 6.3585338902098965,
+              "time_s": 6.358533890209899,
               "kind": "distance_entry"
             },
             {
@@ -18033,7 +18033,7 @@
             "kind": "appearance"
           },
           {
-            "time_s": 6.358530554180813,
+            "time_s": 6.358530554180814,
             "kind": "distance_entry"
           },
           {
@@ -18232,7 +18232,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 12.717411296125833,
+              "time_s": 12.717411296125832,
               "kind": "distance_entry"
             },
             {
@@ -18261,7 +18261,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 8.348886073219253,
             "release_time_s": 9.217411296126002,
             "burst_time_s": 12.717411296126002,
             "coverage_center_time_s": 17.905478741002785,
@@ -18283,20 +18283,20 @@
             "exposed_duration_s": 14.817098498790996,
             "maximum_exposed_interval_s": 14.817098498790997,
             "minimum_margin_m": -234.23982942568193,
-            "flight_distance_m": 258.08751629152806,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 8.348886073219253,
                 "position_m": [
-                  0.0,
+                  64.36991162452044,
                   0.0
                 ]
               },
               {
-                "time_s": 3.893504914257082,
+                "time_s": 9.217410658447431,
                 "position_m": [
-                  -109.0181375991983,
+                  40.05122323813147,
                   0.0
                 ]
               },
@@ -18354,7 +18354,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 12.717411296125833,
+              "time_s": 12.717411296125832,
               "kind": "distance_entry"
             },
             {
@@ -18383,7 +18383,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 8.348886073219253,
             "release_time_s": 9.217411296126002,
             "burst_time_s": 12.717411296126002,
             "coverage_center_time_s": 17.905478741002785,
@@ -18405,20 +18405,20 @@
             "exposed_duration_s": 14.817098498790996,
             "maximum_exposed_interval_s": 14.817098498790997,
             "minimum_margin_m": -234.23982942568193,
-            "flight_distance_m": 258.08751629152806,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 8.348886073219253,
                 "position_m": [
-                  0.0,
+                  64.36991162452044,
                   0.0
                 ]
               },
               {
-                "time_s": 3.893504914257082,
+                "time_s": 9.217410658447431,
                 "position_m": [
-                  -109.0181375991983,
+                  40.05122323813147,
                   0.0
                 ]
               },
@@ -18476,7 +18476,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 12.717411296125833,
+              "time_s": 12.717411296125832,
               "kind": "distance_entry"
             },
             {
@@ -18505,7 +18505,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 8.348886073219253,
             "release_time_s": 9.217411296126002,
             "burst_time_s": 12.717411296126002,
             "coverage_center_time_s": 17.905478741002785,
@@ -18527,20 +18527,20 @@
             "exposed_duration_s": 14.817098498790996,
             "maximum_exposed_interval_s": 14.817098498790997,
             "minimum_margin_m": -234.23982942568193,
-            "flight_distance_m": 258.08751629152806,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 8.348886073219253,
                 "position_m": [
-                  0.0,
+                  64.36991162452044,
                   0.0
                 ]
               },
               {
-                "time_s": 3.893504914257082,
+                "time_s": 9.217410658447431,
                 "position_m": [
-                  -109.0181375991983,
+                  40.05122323813147,
                   0.0
                 ]
               },
@@ -18602,7 +18602,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.717391947858168,
+              "time_s": 12.717391947858172,
               "kind": "distance_entry"
             },
             {
@@ -18724,7 +18724,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.717391947858168,
+              "time_s": 12.717391947858172,
               "kind": "distance_entry"
             },
             {
@@ -18846,7 +18846,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 12.717391947858168,
+              "time_s": 12.717391947858172,
               "kind": "distance_entry"
             },
             {
@@ -18997,7 +18997,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.75558526610247,
             "release_time_s": 16.62411048900922,
             "burst_time_s": 20.12411048900922,
             "coverage_center_time_s": 25.312177933886,
@@ -19019,20 +19019,20 @@
             "exposed_duration_s": 14.813457812195995,
             "maximum_exposed_interval_s": 7.4067289060979995,
             "minimum_margin_m": -177.10587986601723,
-            "flight_distance_m": 465.47509369225816,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.75558526610247,
                 "position_m": [
-                  0.0,
+                  121.47556240165004,
                   0.0
                 ]
               },
               {
-                "time_s": 6.577110746821377,
+                "time_s": 16.624109851330648,
                 "position_m": [
-                  -184.15910091099857,
+                  97.15687401526107,
                   0.0
                 ]
               },
@@ -19123,7 +19123,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.75558526610247,
             "release_time_s": 16.62411048900922,
             "burst_time_s": 20.12411048900922,
             "coverage_center_time_s": 25.312177933886,
@@ -19145,20 +19145,20 @@
             "exposed_duration_s": 14.813457812195995,
             "maximum_exposed_interval_s": 7.4067289060979995,
             "minimum_margin_m": -177.10587986601723,
-            "flight_distance_m": 465.47509369225816,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.75558526610247,
                 "position_m": [
-                  0.0,
+                  121.47556240165004,
                   0.0
                 ]
               },
               {
-                "time_s": 6.577110746821377,
+                "time_s": 16.624109851330648,
                 "position_m": [
-                  -184.15910091099857,
+                  97.15687401526107,
                   0.0
                 ]
               },
@@ -19249,7 +19249,7 @@
           "best_candidate": {
             "strict_status": "certified_infeasible",
             "command_time_s": 0.0,
-            "takeoff_time_s": 0.0,
+            "takeoff_time_s": 15.75558526610247,
             "release_time_s": 16.62411048900922,
             "burst_time_s": 20.12411048900922,
             "coverage_center_time_s": 25.312177933886,
@@ -19271,20 +19271,20 @@
             "exposed_duration_s": 14.813457812195995,
             "maximum_exposed_interval_s": 7.4067289060979995,
             "minimum_margin_m": -177.10587986601723,
-            "flight_distance_m": 465.47509369225816,
+            "flight_distance_m": 24.318706241388973,
             "reachability_status": "certified_feasible",
             "path_nodes": [
               {
-                "time_s": 0.0,
+                "time_s": 15.75558526610247,
                 "position_m": [
-                  0.0,
+                  121.47556240165004,
                   0.0
                 ]
               },
               {
-                "time_s": 6.577110746821377,
+                "time_s": 16.624109851330648,
                 "position_m": [
-                  -184.15910091099857,
+                  97.15687401526107,
                   0.0
                 ]
               },
@@ -19916,7 +19916,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 22.256059032270716,
+              "time_s": 22.25605903227072,
               "kind": "distance_entry"
             },
             {
@@ -20042,7 +20042,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 22.256059032270716,
+              "time_s": 22.25605903227072,
               "kind": "distance_entry"
             },
             {
@@ -20168,7 +20168,7 @@
               "kind": "appearance"
             },
             {
-              "time_s": 22.256059032270716,
+              "time_s": 22.25605903227072,
               "kind": "distance_entry"
             },
             {
@@ -20298,7 +20298,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 22.25603482389038,
+              "time_s": 22.256034823890385,
               "kind": "distance_entry"
             },
             {
@@ -20420,7 +20420,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 22.25603482389038,
+              "time_s": 22.256034823890385,
               "kind": "distance_entry"
             },
             {
@@ -20542,7 +20542,7 @@
               "kind": "detection_entry"
             },
             {
-              "time_s": 22.25603482389038,
+              "time_s": 22.256034823890385,
               "kind": "distance_entry"
             },
             {
