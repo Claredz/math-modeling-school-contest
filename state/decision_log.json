@@ -313,6 +313,23 @@
       "submission_ready": false
     }
   },
+  "research": {
+    "literature": {
+      "completed_at": "2026-07-31T00:39:49+08:00",
+      "included_count": 29,
+      "category_counts": {
+        "smoke_obscurant_or_uav_interference": 8,
+        "sip_continuous_cover": 10,
+        "trajectory_nonconvex_hybrid": 9,
+        "numerical_validation": 2
+      },
+      "verification": "27条由主流程Crossref/官方页面直接复核；2条Crossref临时SSL失败后由独立agent重试复核。",
+      "excluded_high_pollution": [
+        "10.1109/ISCAIT69154.2026.11477504"
+      ],
+      "pollution_rule": "外题10m、20s、下沉等参数禁止进入本题；基准只采用原题P2-P22。"
+    }
+  },
   "scores": {
     "0": [
       {
@@ -445,6 +462,11 @@
         "stage": 2,
         "verdict": "pass_early",
         "detail": "七层证据、四问原始空间、23变量、数据缺口与依赖完成；进入文献/Q1审计/Stage 3。"
+      },
+      {
+        "ts": "2026-07-31T00:39:49+08:00",
+        "type": "literature_complete",
+        "detail": "29篇核心资料通过配额：烟幕/UAV 8、SIP/连续覆盖10、轨迹/混合9、数值验证2；高污染外题论文排除。"
       }
     ]
   }
