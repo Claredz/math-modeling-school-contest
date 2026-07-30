@@ -1,5 +1,9 @@
 # B题烟幕防御建模 Implementation Plan
 
+> [!WARNING]
+> **已过时，禁止执行。** 本计划的共享动力学、场景数量和 UAV 发射字段均基于旧冻结假设，已由新的惯性纯追踪计划替代。
+> 当前计划：[惯性纯追踪与舰载起飞模型修订 Implementation Plan](2026-07-30-inertial-pursuit-shipborne-launch-implementation-plan.md)。
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** 在不改变 A-001–A-020 的前提下，实现参数化场景、连续时间约束证书、联合覆盖验证器以及依次复用这些能力的 Q1–Q4 求解流水线。
