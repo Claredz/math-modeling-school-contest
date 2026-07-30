@@ -115,6 +115,32 @@ def test_hit_time_is_included_as_closed_detection_endpoint():
     assert detection.source_events[-1].kind is EventKind.HIT
 
 
+def test_initial_centre_hit_records_events_without_evaluating_line_of_sight():
+    trajectory = FunctionalTrajectory(
+        start_time_s=0.0,
+        end_time_s=0.0,
+        hit_time_s=0.0,
+        position_function=lambda _time_s: np.zeros(2),
+        heading_function=lambda _time_s: 0.0,
+    )
+
+    detection = build_detection_set(
+        trajectory,
+        origin,
+        detection_range_m=20.0,
+        field_of_view_half_angle_rad=radians(15.0),
+    )
+
+    assert detection.components == ()
+    assert [event.time_s for event in detection.source_events] == pytest.approx(
+        [0.0, 0.0]
+    )
+    assert [event.kind for event in detection.source_events] == [
+        EventKind.APPEARANCE,
+        EventKind.HIT,
+    ]
+
+
 def test_detection_set_can_have_two_disconnected_closed_components():
     trajectory = FunctionalTrajectory(
         start_time_s=0.0,

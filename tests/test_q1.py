@@ -55,7 +55,17 @@ def test_q1_result_writes_traceable_json(front_sweep, tmp_path):
     assert payload["git_sha"] == "test-sha"
     assert payload["random_seed"] == 20260730
     assert payload["model_contract_version"] == "v0.2"
-    assert payload["sweeps"][0]["formal_results"][0]["scenario_hash"]
+    formal_result = payload["sweeps"][0]["formal_results"][0]
+    assert formal_result["scenario_hash"]
+    assert formal_result["assumption_ids"]
+    assert formal_result["assumption_ids"] == [
+        f"A-{index:03d}" for index in range(1, 23)
+    ]
+    assert payload["assumption_register_version"] == "v0.3"
+    assert formal_result["detection_events"]
+    assert {"appearance", "hit"} <= {
+        event["kind"] for event in formal_result["detection_events"]
+    }
 
 
 def test_q1_writes_reader_facing_markdown_summary(front_sweep, tmp_path):

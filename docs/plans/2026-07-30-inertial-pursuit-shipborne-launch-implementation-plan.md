@@ -15,6 +15,25 @@
 
 ---
 
+## 当前进度
+
+> 2026-07-30 Q1 最终验收：Task 1–Task 7 已完成；Task 8–Task 11 尚未实施。
+> 公共物理内核和 Q1 已完成，Q2–Q4 求解代码尚未实现。本状态更新不改变冻结题面事实、模型契约或 A-001–A-022。
+
+- [x] Task 1：Python 工程和题面常数单一事实源
+- [x] Task 2：强类型场景、惯性参数矩阵和溯源
+- [x] Task 3：舰船和惯性纯追踪导弹动力学
+- [x] Task 4：混合事件时间线和多分量探测集合
+- [x] Task 5：舰载 UAV 路径和约束证书
+- [x] Task 6：烟幕动力学、联合覆盖和连续时间认证
+- [x] Task 7：Q1 分量级证书和单弹求解
+- [ ] Task 8：Q2 单机多弹联合覆盖
+- [ ] Task 9：Q3 三机三弹协同
+- [ ] Task 10：Q4 任务包和滚动调度
+- [ ] Task 11：鲁棒性、端到端报告和全项目验收
+
+---
+
 ## 执行规则
 
 1. 每个任务先写失败测试，再写最小实现。
@@ -27,7 +46,7 @@
 
 ---
 
-### Task 1：建立 Python 工程和题面常数单一事实源
+### Task 1（已完成）：建立 Python 工程和题面常数单一事实源
 
 **Files:**
 - Create: `pyproject.toml`
@@ -86,7 +105,7 @@ git commit -m "build: add problem constants and python scaffold"
 
 ---
 
-### Task 2：建立强类型场景、惯性参数矩阵和溯源
+### Task 2（已完成）：建立强类型场景、惯性参数矩阵和溯源
 
 **Files:**
 - Create: `src/smoke_defense/scenario.py`
@@ -189,7 +208,7 @@ git commit -m "feat: add inertial guidance scenario matrix"
 
 ---
 
-### Task 3：实现舰船和惯性纯追踪导弹动力学
+### Task 3（已完成）：实现舰船和惯性纯追踪导弹动力学
 
 **Files:**
 - Create: `src/smoke_defense/angles.py`
@@ -265,7 +284,7 @@ git commit -m "feat: add inertial pursuit dynamics"
 
 ---
 
-### Task 4：实现混合事件时间线和多分量探测集合
+### Task 4（已完成）：实现混合事件时间线和多分量探测集合
 
 **Files:**
 - Create: `src/smoke_defense/events.py`
@@ -316,7 +335,7 @@ git commit -m "feat: add hybrid detection timeline"
 
 ---
 
-### Task 5：实现舰载 UAV 路径和约束证书
+### Task 5（已完成）：实现舰载 UAV 路径和约束证书
 
 **Files:**
 - Create: `src/smoke_defense/paths.py`
@@ -374,7 +393,7 @@ git commit -m "feat: add shipborne uav path certificates"
 
 ---
 
-### Task 6：实现烟幕动力学、联合覆盖和连续时间认证
+### Task 6（已完成）：实现烟幕动力学、联合覆盖和连续时间认证
 
 **Files:**
 - Create: `src/smoke_defense/smoke.py`
@@ -426,7 +445,7 @@ git commit -m "feat: add certified smoke union coverage"
 
 ---
 
-### Task 7：实现 Q1 分量级证书和单弹求解
+### Task 7（已完成）：实现 Q1 分量级证书和单弹求解
 
 **Files:**
 - Create: `src/smoke_defense/certificates/q1.py`
@@ -482,7 +501,7 @@ git commit -m "feat: solve q1 across inertial guidance sweep"
 
 ---
 
-### Task 8：实现 Q2 单机多弹联合覆盖
+### Task 8（未开始）：实现 Q2 单机多弹联合覆盖
 
 **Files:**
 - Create: `src/smoke_defense/q2.py`
@@ -512,7 +531,7 @@ git commit -m "feat: add q2 multi-smoke optimization"
 
 ---
 
-### Task 9：实现 Q3 三机三弹协同
+### Task 9（未开始）：实现 Q3 三机三弹协同
 
 **Files:**
 - Create: `src/smoke_defense/q3.py`
@@ -536,7 +555,7 @@ git commit -m "feat: add q3 cooperative defense"
 
 ---
 
-### Task 10：实现 Q4 任务包和滚动调度
+### Task 10（未开始）：实现 Q4 任务包和滚动调度
 
 **Files:**
 - Create: `src/smoke_defense/packages.py`
@@ -580,7 +599,7 @@ git commit -m "feat: add q4 rolling defense scheduling"
 
 ---
 
-### Task 11：实现鲁棒性、结果溯源和端到端报告
+### Task 11（未开始）：实现鲁棒性、结果溯源和端到端报告
 
 **Files:**
 - Create: `src/smoke_defense/robustness.py`

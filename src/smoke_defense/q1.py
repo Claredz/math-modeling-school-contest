@@ -42,11 +42,16 @@ from smoke_defense.scenario_matrix import (
     generate_q1_q3_matrix,
 )
 
+FROZEN_ASSUMPTION_IDS = tuple(
+    f"A-{index:03d}" for index in range(1, 23)
+)
+
 
 @dataclass(frozen=True)
 class Q1ScenarioResult:
     scenario_id: str
     scenario_hash: str
+    assumption_ids: tuple[str, ...]
     model_layer: Literal["formal", "ablation"]
     guidance_model: str
     heading_response_rate_per_s: float | None
@@ -265,6 +270,7 @@ def solve_q1_scenario(
     return Q1ScenarioResult(
         scenario_id=scenario.scenario_id,
         scenario_hash=scenario_hash(scenario),
+        assumption_ids=FROZEN_ASSUMPTION_IDS,
         model_layer=scenario.model_layer,
         guidance_model=missile.guidance_model,
         heading_response_rate_per_s=missile.heading_response_rate_per_s,
@@ -448,6 +454,7 @@ def _scenario_result_dict(result: Q1ScenarioResult) -> dict:
     return {
         "scenario_id": result.scenario_id,
         "scenario_hash": result.scenario_hash,
+        "assumption_ids": list(result.assumption_ids),
         "model_layer": result.model_layer,
         "guidance_model": result.guidance_model,
         "heading_response_rate_per_s": result.heading_response_rate_per_s,
@@ -455,6 +462,10 @@ def _scenario_result_dict(result: Q1ScenarioResult) -> dict:
         "hit_time_s": result.hit_time_s,
         "detection_components": [
             _interval_dict(component) for component in result.detection.components
+        ],
+        "detection_events": [
+            {"time_s": event.time_s, "kind": event.kind.value}
+            for event in result.detection.source_events
         ],
         "detection_duration_s": result.detection.duration_s,
         "duration_certificate": {
@@ -520,6 +531,7 @@ def write_q1_sweep_result(
         "git_sha": git_sha,
         "random_seed": random_seed,
         "model_contract_version": "v0.2",
+        "assumption_register_version": "v0.3",
         "constants_version": load_problem_constants().constants_version,
         "formal_guidance_model": "inertial_pure_pursuit",
         "ablation_guidance_model": "instantaneous_pure_pursuit",

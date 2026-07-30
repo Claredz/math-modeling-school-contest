@@ -80,6 +80,21 @@ def build_detection_set(
 
     start_s = float(trajectory.start_time_s)
     end_s = float(trajectory.end_time_s)
+    if (
+        trajectory.hit_time_s is not None
+        and np.isclose(trajectory.hit_time_s, start_s, rtol=0.0, atol=1e-12)
+        and np.linalg.norm(
+            trajectory.position(start_s) - ship_position(start_s)
+        )
+        <= 1e-12
+    ):
+        return DetectionSet(
+            components=(),
+            source_events=(
+                TrajectoryEvent(start_s, EventKind.APPEARANCE),
+                TrajectoryEvent(start_s, EventKind.HIT),
+            ),
+        )
 
     def distance_margin(time_s: float) -> float:
         separation = np.linalg.norm(
