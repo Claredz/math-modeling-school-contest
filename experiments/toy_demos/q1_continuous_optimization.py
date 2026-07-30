@@ -1,7 +1,13 @@
-"""Budget-matched continuous-optimization toy benchmark for Q1 model selection.
+"""Synthetic event-coverage surrogate for Q1 continuous model selection.
 
-This module deliberately uses a dimensionless artificial objective.  It does
-not import any contest scenario, parameter, solver, or result.
+``x`` is a normalized along-track burst-center offset and ``y`` is a
+normalized cross-track offset.  The dimensionless objective is an
+event-coverage utility surrogate: the center of the trajectory band is the
+analytic optimum, and nonnegative loss proves the upper bound 10.
+
+The value 10 is not seconds.  This isolated benchmark imports no contest
+scenario, parameter, formal model, or formal result; it only probes numerical
+optimizer behavior on a known-answer two-dimensional analogue.
 """
 
 from __future__ import annotations
@@ -9,6 +15,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from numbers import Integral
 from time import perf_counter
 from typing import Any
 
@@ -22,6 +29,8 @@ from scipy.optimize import (
 )
 from scipy.stats import qmc
 
+from experiments.toy_demos.common import ToyRunRecord
+
 METHODS = (
     "multistart_slsqp",
     "de_slsqp",
@@ -29,6 +38,19 @@ METHODS = (
     "sobol_trust_constr",
     "shgo",
 )
+METHOD_STAGE_PATHS = {
+    "multistart_slsqp": ("sobol_multistart", "slsqp"),
+    "de_slsqp": ("differential_evolution", "slsqp_polish"),
+    "pso_slsqp": ("particle_swarm", "slsqp_polish"),
+    "sobol_trust_constr": ("sobol_screen", "trust_constr", "slsqp_polish"),
+    "shgo": ("shgo", "slsqp_polish"),
+}
+SURROGATE_DESCRIPTION = {
+    "x": "normalized along-track burst-center offset",
+    "y": "normalized cross-track burst-center offset",
+    "objective": "dimensionless event-coverage utility surrogate",
+    "upper_bound": "10 from nonnegative loss; not seconds and not a formal result",
+}
 BOUNDS = ((-1.4, 1.4), (-1.0, 1.0))
 KNOWN_OPTIMUM = (0.0, 0.0)
 KNOWN_OBJECTIVE = 10.0
@@ -36,7 +58,7 @@ _VERIFICATION_TOLERANCE = 2e-5
 
 
 def coverage(point: tuple[float, float] | np.ndarray) -> float:
-    """Return the artificial coverage score maximized by the solvers."""
+    """Return dimensionless event-coverage utility for normalized offsets."""
 
     x, y = (float(value) for value in point)
     loss = x * x + 1.4 * y * y
@@ -141,6 +163,7 @@ class _CachedOracle:
 @dataclass(frozen=True, slots=True)
 class MethodResult:
     method: str
+    seed: int
     x: tuple[float, float]
     objective: float
     evaluation_count: int
@@ -148,8 +171,10 @@ class MethodResult:
     solver_success: bool
     budget_exhausted: bool
     verified: bool
+    passed_manual_case: bool
     gap: float
     failure: str | None
+    stage_success: dict[str, bool]
     runtime_s: float
 
     def as_dict(self, *, exclude_runtime: bool = False) -> dict[str, Any]:
@@ -158,6 +183,30 @@ class MethodResult:
         if exclude_runtime:
             payload.pop("runtime_s")
         return payload
+
+    def to_toy_record(self) -> ToyRunRecord:
+        """Adapt this method outcome to the shared strict JSON contract."""
+
+        return ToyRunRecord(
+            demo_name="q1_continuous_optimization",
+            solver=self.method,
+            seed=self.seed,
+            objective=self.objective,
+            runtime_s=self.runtime_s,
+            converged=self.solver_success,
+            passed_manual_case=self.passed_manual_case,
+            failure_reason=self.failure,
+            metadata={
+                "x": list(self.x),
+                "evaluation_count": self.evaluation_count,
+                "budget": self.budget,
+                "budget_exhausted": self.budget_exhausted,
+                "verified": self.verified,
+                "gap": self.gap,
+                "stage_success": self.stage_success,
+                "surrogate": SURROGATE_DESCRIPTION,
+            },
+        )
 
 
 def _constraints() -> tuple[dict[str, Callable[[np.ndarray], float]], ...]:
@@ -175,17 +224,22 @@ def _polish_slsqp(oracle: _CachedOracle, start: np.ndarray) -> Any:
     )
 
 
-def _multistart_slsqp(oracle: _CachedOracle, seed: int) -> bool:
+def _multistart_slsqp(
+    oracle: _CachedOracle,
+    seed: int,
+    stage_success: dict[str, bool],
+) -> None:
     starts = qmc.Sobol(d=2, scramble=True, seed=seed).random_base2(m=3)
     starts = qmc.scale(starts, [item[0] for item in BOUNDS], [item[1] for item in BOUNDS])
+    stage_success["sobol_multistart"] = True
     successes = []
     for start in starts:
         if _ellipse_margin(start) >= 0.0:
             successes.append(bool(_polish_slsqp(oracle, start).success))
-    return any(successes)
+    stage_success["slsqp"] = any(successes)
 
 
-def _de_slsqp(oracle: _CachedOracle, seed: int) -> bool:
+def _de_slsqp(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) -> None:
     result = differential_evolution(
         oracle.loss,
         BOUNDS,
@@ -198,11 +252,14 @@ def _de_slsqp(oracle: _CachedOracle, seed: int) -> bool:
         updating="immediate",
         workers=1,
     )
+    stage_success["differential_evolution"] = bool(
+        np.isfinite(result.fun) and _ellipse_margin(result.x) >= -1e-8
+    )
     polished = _polish_slsqp(oracle, np.asarray(result.x))
-    return bool(polished.success)
+    stage_success["slsqp_polish"] = bool(polished.success)
 
 
-def _pso_slsqp(oracle: _CachedOracle, seed: int) -> bool:
+def _pso_slsqp(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) -> None:
     rng = np.random.default_rng(seed)
     particle_count = 18
     positions = rng.uniform(
@@ -238,15 +295,21 @@ def _pso_slsqp(oracle: _CachedOracle, seed: int) -> bool:
             [item[0] for item in BOUNDS],
             [item[1] for item in BOUNDS],
         )
+    stage_success["particle_swarm"] = bool(np.isfinite(global_value))
     polished = _polish_slsqp(oracle, global_best)
-    return bool(polished.success)
+    stage_success["slsqp_polish"] = bool(polished.success)
 
 
-def _sobol_trust_constr(oracle: _CachedOracle, seed: int) -> bool:
+def _sobol_trust_constr(
+    oracle: _CachedOracle,
+    seed: int,
+    stage_success: dict[str, bool],
+) -> None:
     samples = qmc.Sobol(d=2, scramble=True, seed=seed).random_base2(m=7)
     samples = qmc.scale(samples, [item[0] for item in BOUNDS], [item[1] for item in BOUNDS])
     feasible_samples = [sample for sample in samples if _ellipse_margin(sample) >= 0.0]
     start = min(feasible_samples, key=oracle.loss)
+    stage_success["sobol_screen"] = True
     result = minimize(
         oracle.loss,
         start,
@@ -263,11 +326,12 @@ def _sobol_trust_constr(oracle: _CachedOracle, seed: int) -> bool:
         ),
         options={"gtol": 1e-10, "maxiter": 100},
     )
+    stage_success["trust_constr"] = bool(result.success)
     polished = _polish_slsqp(oracle, np.asarray(result.x))
-    return bool(result.success or polished.success)
+    stage_success["slsqp_polish"] = bool(polished.success)
 
 
-def _shgo(oracle: _CachedOracle, seed: int) -> bool:
+def _shgo(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) -> None:
     del seed
     result = shgo(
         oracle.loss,
@@ -278,8 +342,9 @@ def _shgo(oracle: _CachedOracle, seed: int) -> bool:
         sampling_method="simplicial",
         options={"minimize_every_iter": True},
     )
+    stage_success["shgo"] = bool(result.success)
     polished = _polish_slsqp(oracle, np.asarray(result.x))
-    return bool(result.success or polished.success)
+    stage_success["slsqp_polish"] = bool(polished.success)
 
 
 _RUNNERS = {
@@ -296,41 +361,53 @@ def run_method(method: str, *, seed: int, budget: int = 768) -> MethodResult:
 
     if method not in _RUNNERS:
         raise ValueError(f"unknown method: {method}")
+    if isinstance(seed, bool) or not isinstance(seed, Integral):
+        raise TypeError("seed must be an integer")
+    seed = int(seed)
+    if seed < 0:
+        raise ValueError("seed must be nonnegative")
+    if isinstance(budget, bool) or not isinstance(budget, Integral):
+        raise TypeError("budget must be an integer")
+    budget = int(budget)
     if budget < 1:
         raise ValueError("budget must be positive")
 
     oracle = _CachedOracle(budget)
     started_at = perf_counter()
-    solver_success = False
+    stage_success = dict.fromkeys(METHOD_STAGE_PATHS[method], False)
     exhausted = False
     try:
-        solver_success = _RUNNERS[method](oracle, seed)
+        _RUNNERS[method](oracle, seed, stage_success)
     except _BudgetExhausted:
         exhausted = True
 
     point = oracle.best_point()
     objective = coverage(point)
     verification = verify_solution(point, reported_objective=objective)
+    stages_passed = all(stage_success.values())
+    solver_success = not exhausted and stages_passed and verification.verified
     failure = None
     if exhausted:
-        solver_success = False
         failure = "evaluation_budget_exhausted"
-    elif not solver_success:
+    elif not stages_passed:
         failure = "solver_did_not_converge"
     elif not verification.verified:
         failure = "independent_verification_failed"
 
     return MethodResult(
         method=method,
+        seed=seed,
         x=(float(point[0]), float(point[1])),
         objective=objective,
         evaluation_count=oracle.evaluation_count,
         budget=budget,
-        solver_success=solver_success and verification.verified,
+        solver_success=solver_success,
         budget_exhausted=exhausted,
         verified=verification.verified and not exhausted,
+        passed_manual_case=verification.verified and not exhausted,
         gap=verification.gap,
         failure=failure,
+        stage_success=stage_success,
         runtime_s=perf_counter() - started_at,
     )
 
