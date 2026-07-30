@@ -1,0 +1,161 @@
+"""Tests for the isolated Q4 synthetic online/offline scheduling toy."""
+
+from __future__ import annotations
+
+import random
+from dataclasses import FrozenInstanceError, replace
+from time import perf_counter
+
+import pytest
+
+import experiments.toy_demos.q4_scheduling as q4
+from experiments.toy_demos.common import ToyRunRecord
+
+
+def test_manual_instance_has_eighteen_combinations_and_unique_offline_optimum() -> None:
+    batches = q4.default_batches()
+    result = q4.enumerate_offline(batches, seed=2026)
+
+    assert result.combinations_checked == 18
+    assert result.selected_ids == ("T1-short", "T2-long")
+    assert result.objective == 19
+    assert result.converged and not result.unresolved
+    assert result.verified
+    assert isinstance(result.record, ToyRunRecord)
+    assert result.record.passed_manual_case
+
+
+def test_scipy_milp_matches_independent_enumeration_and_is_verified() -> None:
+    batches = q4.default_batches()
+    exact = q4.enumerate_offline(batches, seed=3)
+    result = q4.solve_offline_milp(batches, seed=3)
+
+    assert result.selected_ids == exact.selected_ids
+    assert result.objective == exact.objective == 19
+    assert result.converged and result.verified
+    assert result.record.metadata["interpretation"] == "hindsight_upper_bound"
+
+
+def test_rolling_zero_forecast_commits_whole_packages_and_scores_thirteen() -> None:
+    result = q4.solve_rolling_zero_forecast(q4.default_batches(), seed=17)
+
+    assert result.selected_ids == ("T1-long", "T3-only")
+    assert result.objective == 13
+    assert result.converged and result.verified
+    assert tuple(trace.visible_threat_ids for trace in result.trace) == (
+        ("T1",),
+        ("T1", "T2"),
+        ("T1", "T2", "T3"),
+    )
+    assert result.trace[0].selected_package_id == "T1-long"
+
+
+def test_causal_density_greedy_scores_eighteen_with_stable_tie_break() -> None:
+    first = q4.solve_causal_greedy(q4.default_batches(), seed=41)
+    second = q4.solve_causal_greedy(q4.default_batches(), seed=41)
+
+    assert first.selected_ids == ("T1-short", "T2-short", "T3-only")
+    assert first.objective == 18
+    assert first == second
+    assert first.record.metadata["rule"] == "value_density_then_value_then_id"
+
+
+def test_verifier_rejects_slot_conflicts_and_two_packages_for_one_threat() -> None:
+    batches = q4.default_batches()
+
+    conflict = q4.verify_selection(batches, ("T1-long", "T2-short"))
+    duplicate = q4.verify_selection(batches, ("T1-long", "T1-short"))
+
+    assert not conflict.valid
+    assert conflict.failure == "slot capacity exceeded at slot 1"
+    assert not duplicate.valid
+    assert duplicate.failure == "more than one package selected for threat T1"
+
+
+def test_t0_decision_is_isolated_from_same_history_different_future() -> None:
+    baseline = q4.default_batches()
+    modified = (
+        baseline[0],
+        replace(
+            baseline[1],
+            packages=tuple(replace(package, value=1000) for package in baseline[1].packages),
+        ),
+        replace(
+            baseline[2],
+            packages=tuple(replace(package, value=2000) for package in baseline[2].packages),
+        ),
+    )
+
+    first = q4.solve_rolling_zero_forecast(baseline, seed=8)
+    second = q4.solve_rolling_zero_forecast(modified, seed=8)
+
+    assert first.trace[0].visible_threat_ids == second.trace[0].visible_threat_ids == ("T1",)
+    assert first.trace[0].selected_package_id == second.trace[0].selected_package_id
+
+
+def test_milp_failure_is_structured_and_never_silently_falls_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Failed:
+        success = False
+        message = "synthetic solver failure"
+        x = None
+
+    monkeypatch.setattr(q4.optimize, "milp", lambda **_: Failed())
+
+    result = q4.solve_offline_milp(q4.default_batches(), seed=5)
+
+    assert not result.converged
+    assert result.unresolved
+    assert not result.verified
+    assert result.selected_ids == ()
+    assert result.failure == "MILP failed: synthetic solver failure"
+    assert result.record.failure_reason == result.failure
+
+
+def test_milp_enumeration_mismatch_is_a_hard_verification_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_milp = q4.optimize.milp
+
+    def wrong_solution(**kwargs: object) -> object:
+        result = real_milp(**kwargs)
+        result.x[:] = 0
+        result.x[0] = 1
+        return result
+
+    monkeypatch.setattr(q4.optimize, "milp", wrong_solution)
+
+    with pytest.raises(RuntimeError, match="MILP/enumeration mismatch"):
+        q4.solve_offline_milp(q4.default_batches(), seed=5)
+
+
+def test_inputs_are_strict_immutable_and_seed_does_not_pollute_random_state() -> None:
+    package = q4.TaskPackage("X-a", "X", (0,), 1)
+    with pytest.raises(FrozenInstanceError):
+        package.value = 2  # type: ignore[misc]
+    with pytest.raises(TypeError):
+        q4.TaskPackage("bad", "X", (0,), True)
+    with pytest.raises(ValueError):
+        q4.ThreatBatch("X", -1, (package,))
+    with pytest.raises(ValueError):
+        q4.enumerate_offline(q4.default_batches(), seed=-1)
+
+    random.seed(9182)
+    state_before = random.getstate()
+    q4.solve_causal_greedy(q4.default_batches(), seed=6)
+    assert random.getstate() == state_before
+
+
+def test_demo_is_isolated_and_runs_under_thirty_seconds() -> None:
+    started = perf_counter()
+    result = q4.run_demo(seed=2026)
+
+    assert perf_counter() - started < 30
+    assert result["offline_milp"].objective >= result["greedy"].objective
+    assert result["offline_milp"].objective >= result["rolling"].objective
+    assert all(
+        set(item.selected_ids)
+        <= {"T1-long", "T1-short", "T2-long", "T2-short", "T3-only"}
+        for item in result.values()
+    )
