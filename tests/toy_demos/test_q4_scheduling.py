@@ -72,6 +72,29 @@ def test_rolling_builds_a_fresh_milp_each_epoch_without_future_variables(
     ]
 
 
+def test_rolling_skips_milp_but_records_trace_for_empty_release_gap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    batches = (
+        q4.ThreatBatch("T1", 0, (q4.TaskPackage("T1", "T1", (0,), 2),)),
+        q4.ThreatBatch("T2", 2, (q4.TaskPackage("T2", "T2", (2,), 3),)),
+    )
+    real_milp = q4.optimize.milp
+    calls = 0
+
+    def count(**kwargs: object) -> object:
+        nonlocal calls
+        calls += 1
+        return real_milp(**kwargs)
+
+    monkeypatch.setattr(q4.optimize, "milp", count)
+    result = q4.solve_rolling_zero_forecast(batches)
+
+    assert calls == 2
+    assert tuple(item.time for item in result.trace) == (0, 1, 2)
+    assert result.trace[1].selected_package_ids == ()
+
+
 def test_causal_density_greedy_scores_eighteen_with_stable_tie_break() -> None:
     first = q4.solve_causal_greedy(q4.default_batches(), seed=41)
     second = q4.solve_causal_greedy(q4.default_batches(), seed=41)
@@ -80,6 +103,19 @@ def test_causal_density_greedy_scores_eighteen_with_stable_tie_break() -> None:
     assert first.objective == 18
     assert first == second
     assert first.record.metadata["rule"] == "value_density_then_value_then_id"
+
+
+def test_greedy_accepts_multiple_nonconflicting_threats_released_same_epoch() -> None:
+    batches = (
+        q4.ThreatBatch("A", 0, (q4.TaskPackage("A", "A", (0,), 5),)),
+        q4.ThreatBatch("B", 0, (q4.TaskPackage("B", "B", (1,), 4),)),
+    )
+
+    result = q4.solve_causal_greedy(batches)
+
+    assert result.selected_ids == ("A", "B")
+    assert result.trace[0].selected_package_ids == ("A", "B")
+    assert result.objective == 9
 
 
 def test_verifier_rejects_slot_conflicts_and_two_packages_for_one_threat() -> None:
@@ -182,6 +218,53 @@ def test_milp_accepts_a_different_selection_with_the_same_optimal_objective(
     assert result.objective == 5
 
 
+@pytest.mark.parametrize(
+    "bad_x",
+    [
+        (1.0,),
+        (float("nan"),) * 5,
+        (0.5,) + (0.0,) * 4,
+        (1.2,) + (0.0,) * 4,
+        (1.0, 0.0, 1.0, 0.0, 0.0),
+    ],
+)
+def test_offline_rejects_malformed_or_constraint_violating_milp_vectors(
+    monkeypatch: pytest.MonkeyPatch,
+    bad_x: tuple[float, ...],
+) -> None:
+    class Invalid:
+        success = True
+        message = "claimed success"
+        x = bad_x
+
+    monkeypatch.setattr(q4.optimize, "milp", lambda **_: Invalid())
+
+    with pytest.raises(RuntimeError, match="invalid MILP solution"):
+        q4.solve_offline_milp(q4.default_batches())
+
+
+def test_rolling_rejects_solver_selection_for_a_zero_upper_bound(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_milp = q4.optimize.milp
+    call = 0
+
+    def violate_bound(**kwargs: object) -> object:
+        nonlocal call
+        call += 1
+        result = real_milp(**kwargs)
+        if call == 2:
+            result.x[:] = 0
+            result.x[0] = 1
+        return result
+
+    monkeypatch.setattr(q4.optimize, "milp", violate_bound)
+    result = q4.solve_rolling_zero_forecast(q4.default_batches())
+
+    assert not result.converged and result.unresolved
+    assert result.failure == "invalid_milp_solution:variable outside bounds"
+
+
 def test_milp_enumeration_mismatch_is_a_hard_verification_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -214,6 +297,27 @@ def test_inputs_are_strict_immutable_and_seed_does_not_pollute_random_state() ->
     state_before = random.getstate()
     q4.solve_causal_greedy(q4.default_batches(), seed=6)
     assert random.getstate() == state_before
+
+
+def test_result_contracts_deep_freeze_and_reject_inconsistent_status() -> None:
+    record = q4.enumerate_offline(q4.default_batches()).record
+    result = q4.ScheduleResult(
+        ["T1-short"],  # type: ignore[arg-type]
+        5,
+        True,
+        False,
+        True,
+        None,
+        record,
+        trace=[q4.DecisionTrace(0, ("T1",), ("T1-short",), (0,))],  # type: ignore[arg-type]
+    )
+
+    assert result.selected_ids == ("T1-short",)
+    assert isinstance(result.trace, tuple)
+    with pytest.raises(ValueError):
+        q4.ScheduleResult((), 0, True, True, True, None, record)
+    with pytest.raises(ValueError):
+        q4.VerificationResult(True, float("nan"), None)
 
 
 def test_demo_is_isolated_and_runs_under_thirty_seconds() -> None:

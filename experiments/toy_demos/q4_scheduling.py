@@ -103,7 +103,7 @@ class DecisionTrace:
 
     time: int
     visible_threat_ids: tuple[str, ...]
-    selected_package_id: str | None
+    selected_package_ids: tuple[str, ...]
     committed_slots: tuple[int, ...]
 
     def __post_init__(self) -> None:
@@ -112,8 +112,10 @@ class DecisionTrace:
             not isinstance(item, str) or not item.strip() for item in self.visible_threat_ids
         ):
             raise TypeError("visible_threat_ids must be a tuple of nonempty strings")
-        if self.selected_package_id is not None:
-            _nonempty(self.selected_package_id, "selected_package_id")
+        if not isinstance(self.selected_package_ids, tuple) or any(
+            not isinstance(item, str) or not item.strip() for item in self.selected_package_ids
+        ):
+            raise TypeError("selected_package_ids must be a tuple of nonempty strings")
         if not isinstance(self.committed_slots, tuple):
             raise TypeError("committed_slots must be a tuple")
         object.__setattr__(
@@ -122,12 +124,30 @@ class DecisionTrace:
             tuple(_integer(slot, "committed slot") for slot in self.committed_slots),
         )
 
+    @property
+    def selected_package_id(self) -> str | None:
+        """Compatibility view for earlier single-selection traces."""
+
+        return self.selected_package_ids[0] if self.selected_package_ids else None
+
 
 @dataclass(frozen=True, slots=True)
 class VerificationResult:
     valid: bool
     objective: float
     failure: str | None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.valid, bool):
+            raise TypeError("valid must be boolean")
+        if isinstance(self.objective, bool) or not isinstance(self.objective, Real):
+            raise TypeError("objective must be real")
+        normalized = float(self.objective)
+        if not math.isfinite(normalized):
+            raise ValueError("objective must be finite")
+        object.__setattr__(self, "objective", normalized)
+        if self.valid is (self.failure is not None):
+            raise ValueError("valid and failure must be consistent")
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,6 +163,72 @@ class ScheduleResult:
     record: ToyRunRecord = field(compare=False, repr=False)
     trace: tuple[DecisionTrace, ...] = ()
     combinations_checked: int = 0
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.selected_ids, (tuple, list)) or any(
+            not isinstance(item, str) or not item.strip() for item in self.selected_ids
+        ):
+            raise TypeError("selected_ids must contain nonempty strings")
+        object.__setattr__(self, "selected_ids", tuple(self.selected_ids))
+        if isinstance(self.objective, bool) or not isinstance(self.objective, Real):
+            raise TypeError("objective must be real")
+        objective = float(self.objective)
+        if not math.isfinite(objective):
+            raise ValueError("objective must be finite")
+        object.__setattr__(self, "objective", objective)
+        for name in ("converged", "unresolved", "verified"):
+            if not isinstance(getattr(self, name), bool):
+                raise TypeError(f"{name} must be boolean")
+        if self.converged and self.unresolved:
+            raise ValueError("converged and unresolved cannot both be true")
+        if self.converged and self.failure is not None:
+            raise ValueError("a converged result cannot have a failure")
+        if self.unresolved and self.failure is None:
+            raise ValueError("an unresolved result must have a failure")
+        if not isinstance(self.trace, (tuple, list)) or any(
+            not isinstance(item, DecisionTrace) for item in self.trace
+        ):
+            raise TypeError("trace must contain DecisionTrace values")
+        object.__setattr__(self, "trace", tuple(self.trace))
+        object.__setattr__(
+            self,
+            "combinations_checked",
+            _integer(self.combinations_checked, "combinations_checked"),
+        )
+        if not isinstance(self.record, ToyRunRecord):
+            raise TypeError("record must be a ToyRunRecord")
+
+
+def _validated_binary_vector(
+    raw: object,
+    *,
+    count: int,
+    lower: np.ndarray,
+    upper: np.ndarray,
+    matrix: np.ndarray,
+    constraint_lower: np.ndarray,
+    constraint_upper: np.ndarray,
+) -> tuple[np.ndarray | None, str | None]:
+    try:
+        vector = np.asarray(raw, dtype=float)
+    except (TypeError, ValueError):
+        return None, "not numeric"
+    if vector.ndim != 1 or len(vector) != count:
+        return None, "wrong vector length"
+    if not np.all(np.isfinite(vector)):
+        return None, "non-finite variable"
+    tolerance = 1e-7
+    if np.any(vector < lower - tolerance) or np.any(vector > upper + tolerance):
+        return None, "variable outside bounds"
+    rounded = np.rint(vector)
+    if np.any(np.abs(vector - rounded) > tolerance):
+        return None, "non-binary variable"
+    residual = matrix @ rounded
+    if np.any(residual < constraint_lower - tolerance) or np.any(
+        residual > constraint_upper + tolerance
+    ):
+        return None, "linear constraint violated"
+    return rounded.astype(int), None
 
 
 def default_batches() -> tuple[ThreatBatch, ...]:
@@ -322,17 +408,18 @@ def solve_offline_milp(
         [float(package.threat_id == threat) for package in packages] for threat in threats
     ]
     rows.extend([float(slot in package.slots) for package in packages] for slot in slots)
-    constraint = optimize.LinearConstraint(
-        np.asarray(rows),
-        lb=np.zeros(len(rows)),
-        ub=np.ones(len(rows)),
-    )
+    matrix = np.asarray(rows)
+    constraint_lower = np.zeros(len(rows))
+    constraint_upper = np.ones(len(rows))
+    lower_bounds = np.zeros(len(packages))
+    upper_bounds = np.ones(len(packages))
+    constraint = optimize.LinearConstraint(matrix, lb=constraint_lower, ub=constraint_upper)
     started_at = perf_counter()
     try:
         result = optimize.milp(
             c=-np.asarray([package.value for package in packages]),
             integrality=np.ones(len(packages)),
-            bounds=optimize.Bounds(np.zeros(len(packages)), np.ones(len(packages))),
+            bounds=optimize.Bounds(lower_bounds, upper_bounds),
             constraints=constraint,
             options={"time_limit": 10.0},
         )
@@ -378,10 +465,21 @@ def solve_offline_milp(
                 metadata={"interpretation": "hindsight_upper_bound"},
             ),
         )
+    vector, vector_failure = _validated_binary_vector(
+        result.x,
+        count=len(packages),
+        lower=lower_bounds,
+        upper=upper_bounds,
+        matrix=matrix,
+        constraint_lower=constraint_lower,
+        constraint_upper=constraint_upper,
+    )
+    if vector_failure is not None or vector is None:
+        raise RuntimeError(f"invalid MILP solution: {vector_failure}")
     selected_ids = tuple(
         package.package_id
-        for package, decision in zip(packages, result.x, strict=True)
-        if decision > 0.5
+        for package, decision in zip(packages, vector, strict=True)
+        if decision == 1
     )
     verification = verify_selection(normalized, selected_ids)
     oracle = enumerate_offline(normalized, seed=normalized_seed)
@@ -435,24 +533,30 @@ def _causal_result(
             for package in batch.packages
             if not committed_slots.intersection(package.slots)
         )
-        candidate = min(
+        ordered_candidates = sorted(
             feasible,
             key=lambda item: (
                 -(item.value / len(item.slots)),
                 -item.value,
                 item.package_id,
             ),
-            default=None,
         )
-        if candidate is not None:
+        epoch_selected: list[str] = []
+        for candidate in ordered_candidates:
+            if (
+                candidate.threat_id in assigned_threats
+                or committed_slots.intersection(candidate.slots)
+            ):
+                continue
             selected.append(candidate.package_id)
+            epoch_selected.append(candidate.package_id)
             assigned_threats.add(candidate.threat_id)
             committed_slots.update(candidate.slots)
         trace.append(
             DecisionTrace(
                 now,
                 tuple(batch.threat_id for batch in visible),
-                candidate.package_id if candidate is not None else None,
+                tuple(epoch_selected),
                 tuple(sorted(committed_slots)),
             )
         )
@@ -505,6 +609,16 @@ def solve_rolling_zero_forecast(
             batch for batch in visible if batch.threat_id not in assigned_threats
         )
         packages = tuple(package for batch in unresolved for package in batch.packages)
+        if not packages:
+            trace.append(
+                DecisionTrace(
+                    now,
+                    tuple(batch.threat_id for batch in visible),
+                    (),
+                    tuple(sorted(committed_slots)),
+                )
+            )
+            continue
         threats = tuple(batch.threat_id for batch in unresolved)
         slots = tuple(sorted({slot for package in packages for slot in package.slots}))
         rows = [
@@ -514,11 +628,15 @@ def solve_rolling_zero_forecast(
         rows.extend(
             [float(slot in package.slots) for package in packages] for slot in slots
         )
+        matrix = np.asarray(rows)
+        constraint_lower = np.zeros(len(rows))
+        constraint_upper = np.ones(len(rows))
         constraint = optimize.LinearConstraint(
-            np.asarray(rows),
-            lb=np.zeros(len(rows)),
-            ub=np.ones(len(rows)),
+            matrix,
+            lb=constraint_lower,
+            ub=constraint_upper,
         )
+        lower_bounds = np.zeros(len(packages))
         upper_bounds = np.asarray(
             [
                 float(
@@ -532,7 +650,7 @@ def solve_rolling_zero_forecast(
             result = optimize.milp(
                 c=-np.asarray([package.value for package in packages]),
                 integrality=np.ones(len(packages)),
-                bounds=optimize.Bounds(np.zeros(len(packages)), upper_bounds),
+                bounds=optimize.Bounds(lower_bounds, upper_bounds),
                 constraints=constraint,
                 options={"time_limit": 10.0},
             )
@@ -588,11 +706,53 @@ def solve_rolling_zero_forecast(
                 ),
                 trace=tuple(trace),
             )
+        vector, vector_failure = _validated_binary_vector(
+            result.x,
+            count=len(packages),
+            lower=lower_bounds,
+            upper=upper_bounds,
+            matrix=matrix,
+            constraint_lower=constraint_lower,
+            constraint_upper=constraint_upper,
+        )
+        if vector_failure is not None or vector is None:
+            runtime_s = perf_counter() - started_at
+            failure = f"invalid_milp_solution:{vector_failure}"
+            verification = verify_selection(normalized, tuple(selected))
+            return ScheduleResult(
+                tuple(selected),
+                verification.objective,
+                False,
+                True,
+                False,
+                failure,
+                _record(
+                    solver="rolling zero-forecast MILP",
+                    seed=normalized_seed,
+                    objective=verification.objective,
+                    runtime_s=runtime_s,
+                    converged=False,
+                    passed=False,
+                    failure=failure,
+                    metadata={
+                        "information": "released_threats_only",
+                        "failed_epoch": now,
+                    },
+                ),
+                trace=tuple(trace),
+            )
         epoch_selected = tuple(
             package
-            for package, decision in zip(packages, result.x, strict=True)
-            if decision > 0.5
+            for package, decision in zip(packages, vector, strict=True)
+            if decision == 1
         )
+        if any(
+            package.threat_id not in {batch.threat_id for batch in visible}
+            or any(slot < now for slot in package.slots)
+            or committed_slots.intersection(package.slots)
+            for package in epoch_selected
+        ):
+            raise RuntimeError("invalid MILP solution: causal information violation")
         for package in epoch_selected:
             selected.append(package.package_id)
             assigned_threats.add(package.threat_id)
@@ -601,7 +761,7 @@ def solve_rolling_zero_forecast(
             DecisionTrace(
                 now,
                 tuple(batch.threat_id for batch in visible),
-                epoch_selected[0].package_id if epoch_selected else None,
+                tuple(package.package_id for package in epoch_selected),
                 tuple(sorted(committed_slots)),
             )
         )
