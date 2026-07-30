@@ -7,9 +7,12 @@ from itertools import product
 from time import perf_counter
 
 import pytest
+from deap import base, creator
 
+from experiments.toy_demos import q3_multiobjective as q3_module
 from experiments.toy_demos.common import ToyRunRecord
 from experiments.toy_demos.q3_multiobjective import (
+    Portfolio,
     assess_nsga2,
     enumerate_portfolios,
     exact_pareto_front,
@@ -23,6 +26,60 @@ EXPECTED_FRONT = (
     ("AAA", 22, 6),
     ("ABD", 24, 7),
 )
+
+
+def test_portfolio_shallow_inputs_are_frozen_and_objectives_are_recomputed() -> None:
+    genes = [0, 0, 0]
+    portfolio = Portfolio(genes, 22, 6)  # type: ignore[arg-type]
+    genes[0] = 3
+
+    assert portfolio.genes == (0, 0, 0)
+    assert portfolio.code == "AAA"
+    with pytest.raises(ValueError, match="do not match"):
+        Portfolio((0, 0, 0), 21, 6)
+    with pytest.raises(ValueError, match="do not match"):
+        Portfolio((0, 0, 0), 22, 7)
+
+
+@pytest.mark.parametrize(
+    ("genes", "benefit", "risk", "error"),
+    [
+        ((0, 0), 0, 0, ValueError),
+        ((0, 0, 4), 0, 0, ValueError),
+        ((0, True, 0), 0, 0, TypeError),
+        ((0, 0, 0), float("nan"), 6, ValueError),
+        ((0, 0, 0), 22, -1, ValueError),
+    ],
+)
+def test_portfolio_rejects_invalid_genes_and_objective_fields(
+    genes: object,
+    benefit: object,
+    risk: object,
+    error: type[Exception],
+) -> None:
+    with pytest.raises(error):
+        Portfolio(genes, benefit, risk)  # type: ignore[arg-type]
+
+
+def test_deap_creator_collision_with_reverse_weights_fails_loudly() -> None:
+    fitness_name = q3_module._FITNESS_CLASS_NAME
+    individual_name = q3_module._INDIVIDUAL_CLASS_NAME
+    saved_fitness = getattr(creator, fitness_name, None)
+    saved_individual = getattr(creator, individual_name, None)
+    if saved_individual is not None:
+        delattr(creator, individual_name)
+    if saved_fitness is not None:
+        delattr(creator, fitness_name)
+    creator.create(fitness_name, base.Fitness, weights=(-1.0, 1.0))
+    try:
+        with pytest.raises(RuntimeError, match="incompatible DEAP fitness"):
+            q3_module._deap_types()
+    finally:
+        delattr(creator, fitness_name)
+        if saved_fitness is not None:
+            setattr(creator, fitness_name, saved_fitness)
+        if saved_individual is not None:
+            setattr(creator, individual_name, saved_individual)
 
 
 def _front_signature(front: tuple[object, ...]) -> tuple[tuple[str, int, int], ...]:
@@ -111,6 +168,14 @@ def test_underbudgeted_nsga2_is_labeled_heuristic_incomplete_not_globally_conver
         "heuristic incomplete: not all exact Pareto points found"
     )
     assert result.dominated_count > 0
+
+
+def test_partial_exact_front_hit_is_not_a_passed_manual_case() -> None:
+    result = run_nsga2(seed=2, population_size=4, generations=1)
+
+    assert result.coverage == 0.25
+    assert result.precision == 1.0
+    assert not result.record.passed_manual_case
 
 
 def test_multiseed_assessment_reports_coverage_precision_and_stability() -> None:

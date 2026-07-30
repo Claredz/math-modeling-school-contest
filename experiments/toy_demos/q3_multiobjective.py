@@ -26,6 +26,8 @@ _CHOICES = (
     (((1, 2), 2), ((3, 4), 4), ((0, 5), 3), ((2, 4), 5)),
     (((4, 5), 2), ((0, 3), 4), ((1, 4), 3), ((2, 5), 1)),
 )
+_FITNESS_CLASS_NAME = "MathModelSchoolContestQ3FitnessV1_20260731"
+_INDIVIDUAL_CLASS_NAME = "MathModelSchoolContestQ3IndividualV1_20260731"
 
 
 def _seed(value: object) -> int:
@@ -53,6 +55,27 @@ class Portfolio:
     genes: tuple[int, int, int]
     benefit: int
     risk: int
+
+    def __post_init__(self) -> None:
+        normalized_genes = _normalize_genes(self.genes)
+        supplied_values = (self.benefit, self.risk)
+        for field_name, value in zip(("benefit", "risk"), supplied_values, strict=True):
+            if isinstance(value, bool) or not isinstance(value, Real):
+                raise TypeError(f"{field_name} must be a real number")
+            if not math.isfinite(float(value)):
+                raise ValueError(f"{field_name} must be finite")
+            if float(value) < 0.0:
+                raise ValueError(f"{field_name} must be nonnegative")
+
+        expected_benefit, expected_risk = _objective_values(normalized_genes)
+        if (float(self.benefit), float(self.risk)) != (
+            float(expected_benefit),
+            float(expected_risk),
+        ):
+            raise ValueError("benefit and risk do not match the selected genes")
+        object.__setattr__(self, "genes", normalized_genes)
+        object.__setattr__(self, "benefit", expected_benefit)
+        object.__setattr__(self, "risk", expected_risk)
 
     @property
     def code(self) -> str:
@@ -98,22 +121,36 @@ class MultiSeedAssessment:
     backend: str
 
 
-def _evaluate_genes(genes: tuple[int, int, int]) -> Portfolio:
-    if (
-        len(genes) != 3
-        or any(isinstance(gene, bool) or not isinstance(gene, Integral) for gene in genes)
-        or any(int(gene) not in range(4) for gene in genes)
-    ):
-        raise ValueError("genes must contain three candidate indices in [0, 3]")
-    normalized = tuple(int(gene) for gene in genes)
+def _normalize_genes(genes: object) -> tuple[int, int, int]:
+    try:
+        raw_genes = tuple(genes)  # type: ignore[arg-type]
+    except TypeError as error:
+        raise TypeError("genes must be an iterable of integers") from error
+    if len(raw_genes) != 3:
+        raise ValueError("genes must contain exactly three candidate indices")
+    if any(isinstance(gene, bool) or not isinstance(gene, Integral) for gene in raw_genes):
+        raise TypeError("genes must contain only non-boolean integers")
+    normalized = tuple(int(gene) for gene in raw_genes)
+    if any(gene not in range(4) for gene in normalized):
+        raise ValueError("candidate indices must be in [0, 3]")
+    return normalized  # type: ignore[return-value]
+
+
+def _objective_values(genes: tuple[int, int, int]) -> tuple[int, int]:
     covered: set[int] = set()
     risk = 0
-    for uav, gene in enumerate(normalized):
+    for uav, gene in enumerate(genes):
         target_indices, candidate_risk = _CHOICES[uav][gene]
         covered.update(target_indices)
         risk += candidate_risk
     benefit = sum(_WEIGHTS[index] for index in covered)
-    return Portfolio(normalized, benefit, risk)  # type: ignore[arg-type]
+    return benefit, risk
+
+
+def _evaluate_genes(genes: tuple[int, int, int]) -> Portfolio:
+    normalized = _normalize_genes(genes)
+    benefit, risk = _objective_values(normalized)
+    return Portfolio(normalized, benefit, risk)
 
 
 def enumerate_portfolios() -> tuple[Portfolio, ...]:
@@ -184,13 +221,31 @@ def solve_epsilon(risk_limit: float) -> EpsilonResult:
 
 
 def _deap_types() -> tuple[type[Any], type[Any]]:
-    fitness_name = "Q3ToyFitnessMaxBenefitMinRisk"
-    individual_name = "Q3ToyIndividual"
-    if not hasattr(creator, fitness_name):
-        creator.create(fitness_name, base.Fitness, weights=(1.0, -1.0))
-    if not hasattr(creator, individual_name):
-        creator.create(individual_name, list, fitness=getattr(creator, fitness_name))
-    return getattr(creator, fitness_name), getattr(creator, individual_name)
+    expected_weights = (1.0, -1.0)
+    if not hasattr(creator, _FITNESS_CLASS_NAME):
+        creator.create(_FITNESS_CLASS_NAME, base.Fitness, weights=expected_weights)
+    fitness_type = getattr(creator, _FITNESS_CLASS_NAME)
+    if (
+        not isinstance(fitness_type, type)
+        or not issubclass(fitness_type, base.Fitness)
+        or tuple(getattr(fitness_type, "weights", ())) != expected_weights
+    ):
+        raise RuntimeError("incompatible DEAP fitness creator class already registered")
+
+    if not hasattr(creator, _INDIVIDUAL_CLASS_NAME):
+        creator.create(_INDIVIDUAL_CLASS_NAME, list, fitness=fitness_type)
+    individual_type = getattr(creator, _INDIVIDUAL_CLASS_NAME)
+    try:
+        compatible_individual = (
+            isinstance(individual_type, type)
+            and issubclass(individual_type, list)
+            and isinstance(individual_type().fitness, fitness_type)
+        )
+    except (AttributeError, TypeError):
+        compatible_individual = False
+    if not compatible_individual:
+        raise RuntimeError("incompatible DEAP individual creator class already registered")
+    return fitness_type, individual_type
 
 
 def run_nsga2(
@@ -284,7 +339,7 @@ def run_nsga2(
         objective=max((item.benefit for item in approximate_front), default=0),
         runtime_s=runtime_s,
         converged=converged,
-        passed_manual_case=precision == 1.0,
+        passed_manual_case=coverage == 1.0 and precision == 1.0,
         failure_reason=failure_reason,
         metadata={
             "coverage": coverage,
