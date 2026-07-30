@@ -208,6 +208,30 @@ def test_grid_bounds_reject_forged_values_and_provenance() -> None:
             GridBounds(**(shared | changes))
 
 
+def test_solvers_recompute_grid_optimum_and_reject_nonoptimal_certificate() -> None:
+    legitimate = enumerate_grid_bounds(grid_step=0.25)
+    nonoptimal_schedule = BombSchedule(("A",), (0.0,))
+    nonoptimal_lower = verify_schedule_exactly(nonoptimal_schedule).objective
+    fine_step = 0.0625
+    forged = GridBounds(
+        schedule=nonoptimal_schedule,
+        lower_bound=nonoptimal_lower,
+        global_upper_bound=(
+            nonoptimal_lower + legitimate.lipschitz_constant * fine_step
+        ),
+        grid_step=fine_step,
+        lipschitz_constant=legitimate.lipschitz_constant,
+        evaluated_schedules=1,
+        bound_source=GRID_BOUND_SOURCE,
+    )
+
+    assert forged.global_upper_bound < legitimate.lower_bound
+    with pytest.raises(ValueError, match="recomputed exhaustive grid optimum"):
+        solve_candidate_polish(seed=3, global_bounds=forged)
+    with pytest.raises(ValueError, match="recomputed exhaustive grid optimum"):
+        solve_separation_oracle(seed=3, global_bounds=forged, max_iterations=0)
+
+
 def test_minimize_failure_is_propagated_and_never_labelled_converged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

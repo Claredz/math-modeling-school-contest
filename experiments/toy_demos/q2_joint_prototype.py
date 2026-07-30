@@ -22,6 +22,7 @@ import itertools
 import math
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from functools import lru_cache
 from numbers import Integral, Real
 from time import perf_counter
 from types import MappingProxyType
@@ -373,6 +374,7 @@ def _objective_lipschitz_constant() -> float:
     ) / minimum_demand
 
 
+@lru_cache(maxsize=16)
 def enumerate_grid_bounds(*, grid_step: float = 0.25) -> GridBounds:
     """Exhaust a feasible time grid and certify a global coarse upper bound.
 
@@ -415,6 +417,44 @@ def enumerate_grid_bounds(*, grid_step: float = 0.25) -> GridBounds:
         evaluated_schedules=evaluated,
         bound_source=GRID_BOUND_SOURCE,
     )
+
+
+def _expected_grid_schedule_count(grid_step: float) -> int:
+    """Count the exhaustive schedule grid without trusting a supplied certificate."""
+
+    step = _validate_grid_step(grid_step)
+    point_count = round(HORIZON / step) + 1
+    minimum_index_gap = round(MIN_SEPARATION / step)
+    return sum(
+        math.perm(len(BOMB_PARAMETERS), bomb_count)
+        * math.comb(
+            point_count - (bomb_count - 1) * (minimum_index_gap - 1),
+            bomb_count,
+        )
+        for bomb_count in range(1, len(BOMB_PARAMETERS) + 1)
+    )
+
+
+def _recompute_and_validate_global_bounds(
+    global_bounds: GridBounds | None,
+) -> GridBounds:
+    """Accept only a certificate identical to a cached exhaustive recomputation."""
+
+    if global_bounds is None:
+        return enumerate_grid_bounds(grid_step=0.25)
+    if not isinstance(global_bounds, GridBounds):
+        raise TypeError("global_bounds must be a GridBounds")
+    expected_count = _expected_grid_schedule_count(global_bounds.grid_step)
+    if global_bounds.evaluated_schedules != expected_count:
+        raise ValueError(
+            "global_bounds differs from the recomputed exhaustive grid optimum"
+        )
+    recomputed = enumerate_grid_bounds(grid_step=global_bounds.grid_step)
+    if global_bounds != recomputed:
+        raise ValueError(
+            "global_bounds differs from the recomputed exhaustive grid optimum"
+        )
+    return recomputed
 
 
 def _candidate_times() -> tuple[float, ...]:
@@ -575,9 +615,7 @@ def solve_candidate_polish(
     """Search candidate combinations, then polish burst times with SLSQP."""
 
     rng = seeded_rng(seed)
-    bounds = enumerate_grid_bounds() if global_bounds is None else global_bounds
-    if not isinstance(bounds, GridBounds):
-        raise TypeError("global_bounds must be a GridBounds")
+    bounds = _recompute_and_validate_global_bounds(global_bounds)
     started = perf_counter()
 
     candidates: list[tuple[float, BombSchedule]] = [
@@ -739,9 +777,7 @@ def solve_separation_oracle(
     normalized_tolerance = float(tolerance)
     if not math.isfinite(normalized_tolerance) or normalized_tolerance <= 0.0:
         raise ValueError("tolerance must be positive and finite")
-    bounds = enumerate_grid_bounds() if global_bounds is None else global_bounds
-    if not isinstance(bounds, GridBounds):
-        raise TypeError("global_bounds must be a GridBounds")
+    bounds = _recompute_and_validate_global_bounds(global_bounds)
     started = perf_counter()
 
     witnesses: list[float] = [time for time, _ in DEMAND_NODES]
