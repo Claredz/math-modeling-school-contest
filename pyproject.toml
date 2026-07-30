@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.12",
     "PyYAML>=6.0",
     "scipy>=1.16",
+    "shapely>=2.1",
 ]
 
 [project.optional-dependencies]
