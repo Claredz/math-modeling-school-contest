@@ -13,7 +13,10 @@
   },
   "mode": "standard",
   "started_at": "2026-07-31T00:20:55+08:00",
-  "current_stage": 4,
+  "current_stage": 3,
+  "next_stage": 4,
+  "gate_b_status": "pending_human_approval",
+  "stage_4_started": false,
   "budget": {
     "tokens_used": 0,
     "tokens_cap": 200000,
@@ -164,28 +167,28 @@
           "id": "Q1",
           "type": "continuous_nonconvex_hybrid",
           "decision": "单机连续轨迹、指令/投放时刻与投放坐标",
-          "goal": "严格全探测窗口覆盖；不可行时报告认证最大连续覆盖",
+          "goal": "优先实现严格全窗口覆盖；严格不可行后依次最大化认证覆盖总时长、最小化最大连续裸露、最大化最小覆盖裕度，最后最小化航程或资源",
           "difficulty": "hard"
         },
         {
           "id": "Q2",
           "type": "mixed_discrete_continuous_SIP",
           "decision": "单机轨迹、1-3枚弹的使用/顺序/投放时空点",
-          "goal": "最大化最长无空档完整覆盖，再优化资源与鲁棒裕度",
+          "goal": "优先实现严格全窗口覆盖；其后依次最大化最长无空档连续覆盖和认证有效遮蔽总时长、最小化最大连续裸露与总裸露、最大化联合覆盖裕度，最后最小化弹药和航程",
           "difficulty": "hard"
         },
         {
           "id": "Q3",
           "type": "multiobjective_cooperative_optimization",
           "decision": "三机轨迹、三枚弹投放时空点与协同起爆",
-          "goal": "词典序成功优先，ε-约束比较裕度、容错和能耗",
+          "goal": "优先实现严格协同防御成功；其后依次最大化认证覆盖能力、最小化最大裸露或失效风险、最大化单点失效容错，最后最小化能耗与冲突风险",
           "difficulty": "hard"
         },
         {
           "id": "Q4",
           "type": "dynamic_resource_scheduling",
           "decision": "威胁选择、UAV-弹药-任务分配、轨迹与重调度",
-          "goal": "最大化高损失威胁认证防御，再最小资源并最大稳定性",
+          "goal": "依次最大化认证防御的高损失威胁数与认证防御威胁总价值，再最小化未防御损失、资源消耗和重调度波动",
           "difficulty": "hard"
         }
       ],
@@ -224,10 +227,43 @@
         "Q4五机、每机最多3枚、因果信息和资源不重叠"
       ],
       "objective_per_subproblem": {
-        "Q1": "lexicographic(strict_success, min_resource, max_certified_margin_or_duration)",
-        "Q2": "max longest_gap_free_full_coverage; then min bombs/energy and max robustness",
-        "Q3": "lexicographic success with epsilon-constraint tradeoff among margin, single-failure tolerance, energy",
-        "Q4": "lexicographic certified defense of high-loss threats, resource use, stability"
+        "Q1": "achieve strict full-window coverage; maximize certified total coverage duration; minimize maximum continuous exposure; maximize minimum coverage margin; minimize travel or resources",
+        "Q2": "achieve strict full-window coverage; maximize longest gap-free continuous coverage; maximize certified total effective coverage; minimize maximum continuous exposure; minimize total exposure; maximize joint coverage margin; minimize bombs; minimize travel",
+        "Q3": "achieve strict cooperative defense success; maximize certified coverage capability; minimize maximum exposure or failure risk; maximize single-point-failure tolerance; minimize energy and conflict risk",
+        "Q4": "maximize certified high-loss threats; maximize total certified threat value; minimize unprotected loss; minimize resource use; minimize rescheduling volatility"
+      },
+      "objective_hierarchies": {
+        "Q1": [
+          "strict_full_window_coverage",
+          "max_certified_total_coverage_duration",
+          "min_max_continuous_exposure",
+          "max_min_coverage_margin",
+          "min_travel_or_resources"
+        ],
+        "Q2": [
+          "strict_full_window_coverage",
+          "max_longest_gap_free_continuous_coverage",
+          "max_certified_total_effective_coverage",
+          "min_max_continuous_exposure",
+          "min_total_exposure",
+          "max_joint_coverage_margin",
+          "min_bombs",
+          "min_travel"
+        ],
+        "Q3": [
+          "strict_cooperative_defense_success",
+          "max_certified_coverage_capability",
+          "min_max_exposure_or_failure_risk",
+          "max_single_point_failure_tolerance",
+          "min_energy_and_conflict_risk"
+        ],
+        "Q4": [
+          "max_certified_high_loss_threats",
+          "max_total_certified_threat_value",
+          "min_unprotected_loss",
+          "min_resource_use",
+          "min_rescheduling_volatility"
+        ]
       },
       "data_schema": {
         "source": "B题：舰船烟幕遮蔽干扰优化.docx",
@@ -319,7 +355,7 @@
             "Sobol_trust_constr_plus_polish",
             "SHGO_plus_polish"
           ],
-          "recommended": "analytic_reduction_DE_local_polish_independent_verifier"
+          "recommended": "analytic_reduction_multi_route_exploration_local_polish_independent_verifier"
         },
         {
           "module": "Q2_algorithm",
@@ -330,7 +366,7 @@
             "LBBD",
             "metaheuristic_with_independent_continuous_certification"
           ],
-          "recommended": "spatiotemporal_SIP_constraint_generation_independent_certification"
+          "recommended": "priority_research_spatiotemporal_SIP_constraint_generation_independent_certification"
         },
         {
           "module": "Q3_algorithm",
@@ -351,14 +387,40 @@
             "LBBD",
             "two_stage_robust_CCG"
           ],
-          "recommended": "certified_packages_causal_rolling_horizon_MILP"
+          "recommended": "certified_packages_causal_online_rolling_research_framework"
         }
       ],
       "selected_per_subproblem": {
-        "Q1": "analytic_reduction_DE_local_polish_independent_verifier",
-        "Q2": "spatiotemporal_SIP_constraint_generation_independent_certification",
-        "Q3": "success_first_lexicographic_epsilon_constraint",
-        "Q4": "certified_packages_causal_rolling_horizon_MILP"
+        "Q1": {
+          "framework": "analytic_reduction_multi_route_exploration_local_polish_independent_verifier",
+          "candidates": [
+            "multistart_SLSQP",
+            "Sobol_trust_constr_or_SLSQP",
+            "SHGO",
+            "DE_candidate_generation",
+            "PSO_heuristic_baseline"
+          ],
+          "status": "framework_pending_formal_benchmark",
+          "approval": "pending_human_approval"
+        },
+        "Q2": {
+          "framework": "spatiotemporal_SIP_constraint_generation_continuous_separation_independent_verifier",
+          "formal_oracle_ready": false,
+          "status": "priority_research_route_pending_oracle",
+          "approval": "pending_human_approval"
+        },
+        "Q3": {
+          "framework": "success_first_lexicographic_epsilon_constraint",
+          "nsga2_role": "pareto_coverage_baseline_only",
+          "status": "framework_pending_human_approval",
+          "approval": "pending_human_approval"
+        },
+        "Q4": {
+          "framework": "certified_packages_causal_online_rolling_optimization_with_mandatory_baselines",
+          "current_rolling_baseline": "zero_forecast_whole_package_commitment_weak_baseline",
+          "status": "research_framework_pending_formal_benchmark",
+          "approval": "pending_human_approval"
+        }
       },
       "rejection_log": [
         "旧Q1有限候选库只作warm start，不称局部或全局最优。",
@@ -371,7 +433,8 @@
         "离线全知调度仅作hindsight上界，不作在线策略。",
         "外题10m、20s、下沉等参数永久隔离。"
       ],
-      "toy_demos_passed": true,
+      "toy_demos_completed": true,
+      "toy_demo_conclusion": "mixed evidence; Q2 routes unresolved and Q4 rolling weaker than greedy",
       "toy_demo_scope": {
         "artifact_root": "experiments/toy_demos",
         "formal_result": false,
@@ -401,12 +464,12 @@
           "response": "oracle必须报告精度和unresolved；未决区间进入风险上界。"
         },
         {
-          "attack": "DE+SLSQP不能证明Q1唯一或全局最优。",
-          "response": "DE只生成候选，正式措辞保持当前最好已知方案。"
+          "attack": "Q1 toy不能支持预先冻结DE。",
+          "response": "只批准多路线框架；DE、Sobol、SHGO和multi-start进入正式benchmark。"
         },
         {
           "attack": "Q4 toy中rolling MILP 13低于greedy 18。",
-          "response": "推荐的是可表达约束与重调度的架构；贪心保留为强制基线。"
+          "response": "zero-forecast整包承诺是弱基线；至少两个改进版本进入正式benchmark，贪心保留为强制基线。"
         },
         {
           "attack": "认证任务包会再次把连续空间压成有限库。",
@@ -414,7 +477,7 @@
         }
       ],
       "model_family_consistency": "四问共享解释层、动力学层、连续覆盖层和三值认证层；solver生成候选，independent verifier认证。Q1只为Q2/Q3提供warm start；Q4只消费认证任务包且保留跨威胁共享与直接联合反事实。",
-      "gate_status": "Gate B pending human approval; current_stage=4 only identifies the next stage and does not mean Stage 4 has started."
+      "gate_status": "pending_human_approval; current_stage=3; next_stage=4; stage_4_started=false"
     },
     "4": {
       "_label": "foundation",
@@ -677,7 +740,13 @@
       {
         "ts": "2026-07-31T01:45:00+08:00",
         "type": "gate_b_stop",
-        "detail": "current_stage=4仅标识下一阶段；Stage4未执行，未冻结模型合同，未生成正式Q1-Q4结果。"
+        "detail": "Gate B等待人工批准；current_stage=3，next_stage=4，stage_4_started=false；未冻结模型合同，未生成正式Q1-Q4结果。"
+      },
+      {
+        "ts": "2026-07-31T02:42:03+08:00",
+        "type": "gate_b_revision",
+        "stage": 3,
+        "detail": "按审查修正四问独立目标层级；Q1只批多路线框架，Q2降为优先研究路线，Q4将zero-forecast整包承诺标为弱基线；继续等待人工批准。"
       }
     ]
   }

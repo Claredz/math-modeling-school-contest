@@ -208,8 +208,9 @@ PSO+SLSQP、Sobol+trust-constr 和 `shgo` 小规模确定性对照。
 
 **Step 4:** 加载 anti-patterns，执行 red-team；失败候选降级或否决。
 
-**Step 5:** 完成 Stage 3 L1，设置 `toy_demos_passed` 和 `current_stage=4`，
-明确“仅表示下一阶段待开始”。
+**Step 5:** 完成 Stage 3 L1，设置 `toy_demos_completed=true`、
+`current_stage=3`、`next_stage=4`、`gate_b_status=pending_human_approval` 和
+`stage_4_started=false`。不得用当前阶段字段表示下一阶段。
 
 ### Task 13: Gate B 完整验证与发布
 

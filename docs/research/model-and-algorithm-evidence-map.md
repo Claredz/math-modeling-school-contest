@@ -41,7 +41,10 @@
 | 低维确定性全局方法 | P03/P06 的全局思想 | 仅在低维、可界定问题下 | toy 中给上下界或最优性 gap |
 
 推荐前提：先做 Q1 审计，确认旧实现是否真正调用连续优化器。任何算法输出都需
-单独连续时间验证。
+单独连续时间验证。当前 synthetic toy 只支持“解析降维 + 多路线候选探索 +
+局部精修 + 独立 verifier”的框架；Multi-start、Sobol、SHGO 和 DE 进入正式
+主路线 benchmark，PSO 仅作启发式对照、不作为默认主方法。不能预先指定 DE 或
+其他单一路线为正式主求解器。
 
 ### Q2
 
@@ -53,8 +56,12 @@
 | MINLP + separation oracle | P03–P06 | 全局保证成本高，局部 MINLP 无证书 | 小实例上下界/运行时间 |
 | 元启发式 + 独立认证 | N01 | 只产候选 | 可行率、种子稳定性、unresolved |
 
-当前证据优先级：`SIP + constraint generation + independent verifier`。这是
-Stage 3 主候选，不是已经冻结的正式算法。
+当前证据把 `SIP + constraint generation + continuous separation +
+independent verifier` 列为第一优先研究路线，而不是已验证正式算法。SIP 是结构
+判断；正式 master 与 separation oracle 尚未实现和认证，二者都可能是非凸全局
+优化问题。oracle 未解析必须返回 `unresolved`；正式停止准则和误差界通过前不得
+确定主算法。候选组合保留为 warm start/基线，MINLP、LBBD 和确定性全局方法保留
+为反事实或下界工具。
 
 ### Q3
 
@@ -77,8 +84,11 @@ Stage 3 主候选，不是已经冻结的正式算法。
 | 两阶段鲁棒/CCG | C03 | 需明确不确定集和两阶段语义 | 无数据时只做有界案例 |
 | 在线重规划 | 题面 P21–P22；滚动调度结构 | 性能需竞争比或仿真证据 | 三批人工场景、离线值作上界 |
 
-当前证据优先级：认证任务包 + 滚动 MILP；LBBD/CCG 是条件升级候选。任务包方法
-不得排除跨威胁共享烟幕和直接联合优化的反事实基准。
+当前证据只支持“认证任务包 + 因果在线决策 + 滚动时域研究框架 + 因果贪心强制
+基线 + 离线全知上界”。现有 zero-forecast、whole-package-commitment rolling
+是弱基线，不能据此选择正式主算法；正式 benchmark 至少比较两个带预测、终端
+价值/惩罚、资源储备、机会成本或可撤销重排机制的改进版本，并报告 regret 与
+hindsight gap。任务包方法不得排除跨威胁共享烟幕和原始连续联合优化反事实。
 
 ## 4. 最优性措辞映射
 

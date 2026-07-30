@@ -64,15 +64,17 @@ Stage 3 至少比较：
 - Q3：分层分配+连续优化、ε-约束、NSGA-II、事件参数化 MINLP；
 - Q4：任务包 MILP、滚动 MILP、LBBD、鲁棒/在线调度。
 
-候选只有在题意适配、参数可辨识、文献支持、toy demo 通过和独立验证可行
-五方面同时成立时，才能成为推荐主候选。本轮推荐不等于 Stage 4 冻结。
+候选只有在题意适配、参数可辨识、文献支持、toy demo 证据边界和独立验证可行
+五方面同时成立时，才能进入后续正式 benchmark。本轮只推荐算法框架、候选集合
+或优先研究路线，不等于 Stage 4 冻结，也不冻结具体主求解器。
 
 ## 5. Toy demo 边界
 
-每个 demo 使用真实题面量纲的简化场景，固定随机种子，记录环境、变量、
-求解器状态、目标、耗时和人工可判定结论。
+每个 toy 使用人工可判定的 synthetic 代理问题；在适用时保留题面结构或量纲，
+但不得声称其为正式题面实例。固定随机种子，记录环境、变量、求解器状态、目标、
+耗时和人工可判定结论，并统一标记 `synthetic=true`、`formal_result=false`。
 
-- Q1：比较四类连续优化器的同预算表现；
+- Q1：比较 Multi-start、Sobol、SHGO、DE、PSO 五条路线的同预算表现，只选框架；
 - Q2-SIP：有限主问题与最坏违反点分离迭代；
 - Q2-Joint：少量离散组合与连续时刻联合原型；
 - Q3：ε-约束与 NSGA-II/枚举的可解释对照；
@@ -82,14 +84,21 @@ Stage 3 至少比较：
 
 ## 6. Gate B 判定
 
-Gate B 通过要求：
+Gate B 可提交人工批准的要求：
 
-1. Stage 0–3 的 L1 各维不低于 7，且加权均值不低于 8；
-2. 文献数量与分类门槛满足，DOI/稳定 URL 可核验；
-3. Q1 审计逐项给出证据等级；
-4. 每个关键模块至少三个候选；
-5. 五类 toy demo 均运行并记录；失败 demo 必须导致候选降级或否决；
-6. 基线测试、ruff、schema、场景生成和 `git diff --check` 通过；
-7. Draft PR 明确本轮未进入正式实现；
-8. 通过后 `current_stage` 停在 4（表示 Stage 3 已完成、下一步是 Stage 4），
-   但不得执行 Stage 4。
+1. Q1–Q4 使用与题面一致的四套独立目标层级；
+2. Q1 只批准解析降维、多路线探索、局部精修和独立认证框架，不预先冻结 DE；
+3. Q2 只批准时空 SIP 为第一优先研究路线，正式 master/oracle 尚未认证；
+4. Q4 只批准因果滚动研究框架，zero-forecast 整包承诺明确为弱基线；
+5. `current_stage=3`、`next_stage=4`、
+   `gate_b_status=pending_human_approval`、`stage_4_started=false`；
+6. 旧假设、契约、架构和 Q1 解析文档均标为已解冻历史快照；
+7. toy 设计承诺与实际 synthetic 抽象程度一致，且均为
+   `synthetic=true`、`formal_result=false`；
+8. 文献矩阵数量、分类、唯一 DOI/稳定 URL 和引用映射未被破坏；
+9. PR #5 保持关闭且未合并；
+10. Stage 4 未开始，未冻结新模型契约；
+11. `src/smoke_defense/` 中正式 Q1–Q4 求解逻辑未修改；
+12. 正式 `results/q1/` 未覆盖，未生成 Q2–Q4 正式结果；
+13. 全部 pytest、ruff、schema、场景、toy artifact 和 `git diff --check`
+    质量检查通过。
