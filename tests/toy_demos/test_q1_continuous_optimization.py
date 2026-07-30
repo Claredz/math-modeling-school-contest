@@ -1,5 +1,6 @@
 import json
 import math
+from dataclasses import FrozenInstanceError
 
 import numpy as np
 import pytest
@@ -67,8 +68,14 @@ def test_all_five_methods_respect_a_common_budget_and_pass_verification() -> Non
         assert not result.budget_exhausted
         assert result.verified
         assert result.passed_manual_case
-        assert tuple(result.stage_success) == METHOD_STAGE_PATHS[method]
-        assert all(result.stage_success.values())
+        assert result.stage_path == METHOD_STAGE_PATHS[method]
+        assert result.stage_audit.candidate_generation_completed
+        assert result.stage_audit.verifier_passed
+        assert result.stage_audit.native_message
+        if method == "multistart_slsqp":
+            assert result.stage_audit.polish_success is None
+        else:
+            assert result.stage_audit.polish_success
         assert result.failure is None
         assert result.objective == pytest.approx(10.0, abs=2e-5)
         assert result.gap <= 2e-5
@@ -126,7 +133,7 @@ def test_method_result_adapts_to_common_record_and_standard_json() -> None:
     assert record.solver == result.method
     assert record.seed == 23
     assert record.passed_manual_case
-    assert record.metadata["stage_success"] == result.stage_success
+    assert record.metadata["stage_audit"] == result.stage_audit.as_dict()
     assert json.loads(record.to_json())["metadata"]["evaluation_count"] <= 768
 
 
@@ -170,3 +177,43 @@ def test_surrogate_has_explicit_q1_coverage_meaning_and_nonformal_units() -> Non
         "objective": "dimensionless event-coverage utility surrogate",
         "upper_bound": "10 from nonnegative loss; not seconds and not a formal result",
     }
+
+
+def test_native_solver_status_is_not_conflated_with_hybrid_success() -> None:
+    differential_evolution = run_method("de_slsqp", seed=19, budget=768)
+    particle_swarm = run_method("pso_slsqp", seed=19, budget=768)
+
+    assert differential_evolution.solver_success
+    assert differential_evolution.stage_audit.native_success is False
+    assert (
+        "maximum number of iterations"
+        in differential_evolution.stage_audit.native_message.lower()
+    )
+    assert differential_evolution.stage_audit.polish_success is True
+
+    assert particle_swarm.solver_success
+    assert particle_swarm.stage_audit.native_success is None
+    assert "no native convergence certificate" in particle_swarm.stage_audit.native_message
+    assert particle_swarm.stage_audit.polish_success is True
+
+
+def test_frozen_result_deeply_freezes_stage_audit() -> None:
+    result = run_method("de_slsqp", seed=19, budget=768)
+
+    with pytest.raises(FrozenInstanceError):
+        result.stage_audit.native_success = True  # type: ignore[misc]
+    with pytest.raises(FrozenInstanceError):
+        result.stage_audit.native_message = "converged"  # type: ignore[misc]
+
+
+def test_toy_record_adapter_defensively_copies_stage_audit() -> None:
+    result = run_method("de_slsqp", seed=19, budget=768)
+    record = result.to_toy_record()
+    detached = record.to_dict()
+
+    detached["metadata"]["stage_audit"]["native_success"] = True
+    detached["metadata"]["stage_audit"]["native_message"] = "mutated"
+
+    assert result.stage_audit.native_success is False
+    assert record.metadata["stage_audit"]["native_success"] is False
+    assert record.metadata["stage_audit"]["native_message"] == result.stage_audit.native_message

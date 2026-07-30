@@ -161,6 +161,28 @@ class _CachedOracle:
 
 
 @dataclass(frozen=True, slots=True)
+class StageAudit:
+    """Immutable distinction between native status and hybrid completion."""
+
+    candidate_generation_completed: bool
+    native_success: bool | None
+    native_message: str
+    polish_success: bool | None
+    verifier_passed: bool
+
+    def as_dict(self) -> dict[str, bool | str | None]:
+        return asdict(self)
+
+
+@dataclass(slots=True)
+class _StageAuditBuilder:
+    candidate_generation_completed: bool = False
+    native_success: bool | None = None
+    native_message: str = "native stage not completed"
+    polish_success: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class MethodResult:
     method: str
     seed: int
@@ -174,7 +196,8 @@ class MethodResult:
     passed_manual_case: bool
     gap: float
     failure: str | None
-    stage_success: dict[str, bool]
+    stage_path: tuple[str, ...]
+    stage_audit: StageAudit
     runtime_s: float
 
     def as_dict(self, *, exclude_runtime: bool = False) -> dict[str, Any]:
@@ -203,7 +226,8 @@ class MethodResult:
                 "budget_exhausted": self.budget_exhausted,
                 "verified": self.verified,
                 "gap": self.gap,
-                "stage_success": self.stage_success,
+                "stage_path": list(self.stage_path),
+                "stage_audit": self.stage_audit.as_dict(),
                 "surrogate": SURROGATE_DESCRIPTION,
             },
         )
@@ -227,19 +251,20 @@ def _polish_slsqp(oracle: _CachedOracle, start: np.ndarray) -> Any:
 def _multistart_slsqp(
     oracle: _CachedOracle,
     seed: int,
-    stage_success: dict[str, bool],
+    audit: _StageAuditBuilder,
 ) -> None:
     starts = qmc.Sobol(d=2, scramble=True, seed=seed).random_base2(m=3)
     starts = qmc.scale(starts, [item[0] for item in BOUNDS], [item[1] for item in BOUNDS])
-    stage_success["sobol_multistart"] = True
+    audit.candidate_generation_completed = True
     successes = []
     for start in starts:
         if _ellipse_margin(start) >= 0.0:
             successes.append(bool(_polish_slsqp(oracle, start).success))
-    stage_success["slsqp"] = any(successes)
+    audit.native_success = any(successes)
+    audit.native_message = f"{sum(successes)}/{len(successes)} multistart SLSQP runs converged"
 
 
-def _de_slsqp(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) -> None:
+def _de_slsqp(oracle: _CachedOracle, seed: int, audit: _StageAuditBuilder) -> None:
     result = differential_evolution(
         oracle.loss,
         BOUNDS,
@@ -252,14 +277,16 @@ def _de_slsqp(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) 
         updating="immediate",
         workers=1,
     )
-    stage_success["differential_evolution"] = bool(
+    audit.candidate_generation_completed = bool(
         np.isfinite(result.fun) and _ellipse_margin(result.x) >= -1e-8
     )
+    audit.native_success = bool(result.success)
+    audit.native_message = str(result.message)
     polished = _polish_slsqp(oracle, np.asarray(result.x))
-    stage_success["slsqp_polish"] = bool(polished.success)
+    audit.polish_success = bool(polished.success)
 
 
-def _pso_slsqp(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) -> None:
+def _pso_slsqp(oracle: _CachedOracle, seed: int, audit: _StageAuditBuilder) -> None:
     rng = np.random.default_rng(seed)
     particle_count = 18
     positions = rng.uniform(
@@ -295,21 +322,23 @@ def _pso_slsqp(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool])
             [item[0] for item in BOUNDS],
             [item[1] for item in BOUNDS],
         )
-    stage_success["particle_swarm"] = bool(np.isfinite(global_value))
+    audit.candidate_generation_completed = bool(np.isfinite(global_value))
+    audit.native_success = None
+    audit.native_message = "no native convergence certificate; fixed-iteration heuristic"
     polished = _polish_slsqp(oracle, global_best)
-    stage_success["slsqp_polish"] = bool(polished.success)
+    audit.polish_success = bool(polished.success)
 
 
 def _sobol_trust_constr(
     oracle: _CachedOracle,
     seed: int,
-    stage_success: dict[str, bool],
+    audit: _StageAuditBuilder,
 ) -> None:
     samples = qmc.Sobol(d=2, scramble=True, seed=seed).random_base2(m=7)
     samples = qmc.scale(samples, [item[0] for item in BOUNDS], [item[1] for item in BOUNDS])
     feasible_samples = [sample for sample in samples if _ellipse_margin(sample) >= 0.0]
     start = min(feasible_samples, key=oracle.loss)
-    stage_success["sobol_screen"] = True
+    audit.candidate_generation_completed = True
     result = minimize(
         oracle.loss,
         start,
@@ -326,12 +355,13 @@ def _sobol_trust_constr(
         ),
         options={"gtol": 1e-10, "maxiter": 100},
     )
-    stage_success["trust_constr"] = bool(result.success)
+    audit.native_success = bool(result.success)
+    audit.native_message = str(result.message)
     polished = _polish_slsqp(oracle, np.asarray(result.x))
-    stage_success["slsqp_polish"] = bool(polished.success)
+    audit.polish_success = bool(polished.success)
 
 
-def _shgo(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) -> None:
+def _shgo(oracle: _CachedOracle, seed: int, audit: _StageAuditBuilder) -> None:
     del seed
     result = shgo(
         oracle.loss,
@@ -342,9 +372,11 @@ def _shgo(oracle: _CachedOracle, seed: int, stage_success: dict[str, bool]) -> N
         sampling_method="simplicial",
         options={"minimize_every_iter": True},
     )
-    stage_success["shgo"] = bool(result.success)
+    audit.candidate_generation_completed = bool(np.isfinite(result.fun))
+    audit.native_success = bool(result.success)
+    audit.native_message = str(result.message)
     polished = _polish_slsqp(oracle, np.asarray(result.x))
-    stage_success["slsqp_polish"] = bool(polished.success)
+    audit.polish_success = bool(polished.success)
 
 
 _RUNNERS = {
@@ -374,25 +406,39 @@ def run_method(method: str, *, seed: int, budget: int = 768) -> MethodResult:
 
     oracle = _CachedOracle(budget)
     started_at = perf_counter()
-    stage_success = dict.fromkeys(METHOD_STAGE_PATHS[method], False)
+    audit_builder = _StageAuditBuilder()
     exhausted = False
     try:
-        _RUNNERS[method](oracle, seed, stage_success)
+        _RUNNERS[method](oracle, seed, audit_builder)
     except _BudgetExhausted:
         exhausted = True
+        if audit_builder.native_message == "native stage not completed":
+            audit_builder.native_message = "native stage stopped by evaluation budget"
 
     point = oracle.best_point()
     objective = coverage(point)
     verification = verify_solution(point, reported_objective=objective)
-    stages_passed = all(stage_success.values())
-    solver_success = not exhausted and stages_passed and verification.verified
+    verifier_passed = verification.verified and not exhausted
+    if audit_builder.polish_success is None:
+        hybrid_completed = audit_builder.native_success is True
+    else:
+        hybrid_completed = audit_builder.polish_success is True
+    pipeline_completed = audit_builder.candidate_generation_completed and hybrid_completed
+    solver_success = not exhausted and pipeline_completed and verifier_passed
     failure = None
     if exhausted:
         failure = "evaluation_budget_exhausted"
-    elif not stages_passed:
+    elif not pipeline_completed:
         failure = "solver_did_not_converge"
     elif not verification.verified:
         failure = "independent_verification_failed"
+    stage_audit = StageAudit(
+        candidate_generation_completed=audit_builder.candidate_generation_completed,
+        native_success=audit_builder.native_success,
+        native_message=audit_builder.native_message,
+        polish_success=audit_builder.polish_success,
+        verifier_passed=verifier_passed,
+    )
 
     return MethodResult(
         method=method,
@@ -407,7 +453,8 @@ def run_method(method: str, *, seed: int, budget: int = 768) -> MethodResult:
         passed_manual_case=verification.verified and not exhausted,
         gap=verification.gap,
         failure=failure,
-        stage_success=stage_success,
+        stage_path=METHOD_STAGE_PATHS[method],
+        stage_audit=stage_audit,
         runtime_s=perf_counter() - started_at,
     )
 
