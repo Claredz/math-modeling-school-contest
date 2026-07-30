@@ -328,13 +328,35 @@ def solve_offline_milp(
         ub=np.ones(len(rows)),
     )
     started_at = perf_counter()
-    result = optimize.milp(
-        c=-np.asarray([package.value for package in packages]),
-        integrality=np.ones(len(packages)),
-        bounds=optimize.Bounds(np.zeros(len(packages)), np.ones(len(packages))),
-        constraints=constraint,
-        options={"time_limit": 10.0},
-    )
+    try:
+        result = optimize.milp(
+            c=-np.asarray([package.value for package in packages]),
+            integrality=np.ones(len(packages)),
+            bounds=optimize.Bounds(np.zeros(len(packages)), np.ones(len(packages))),
+            constraints=constraint,
+            options={"time_limit": 10.0},
+        )
+    except Exception as error:  # scipy backends may raise before returning a status
+        runtime_s = perf_counter() - started_at
+        failure = f"milp_exception:{type(error).__name__}"
+        return ScheduleResult(
+            (),
+            0.0,
+            False,
+            True,
+            False,
+            failure,
+            _record(
+                solver="scipy.optimize.milp",
+                seed=normalized_seed,
+                objective=0.0,
+                runtime_s=runtime_s,
+                converged=False,
+                passed=False,
+                failure=failure,
+                metadata={"interpretation": "hindsight_upper_bound"},
+            ),
+        )
     runtime_s = perf_counter() - started_at
     if not result.success or result.x is None:
         failure = f"MILP failed: {result.message}"
@@ -366,7 +388,6 @@ def solve_offline_milp(
     if (
         not verification.valid
         or not math.isclose(verification.objective, oracle.objective, abs_tol=1e-8)
-        or selected_ids != oracle.selected_ids
     ):
         raise RuntimeError("MILP/enumeration mismatch: hard verification failure")
     return ScheduleResult(
@@ -393,7 +414,6 @@ def _causal_result(
     batches: tuple[ThreatBatch, ...],
     *,
     seed: int,
-    policy: str,
 ) -> ScheduleResult:
     normalized = _validate_batches(batches)
     normalized_seed = _seed(seed)
@@ -415,22 +435,15 @@ def _causal_result(
             for package in batch.packages
             if not committed_slots.intersection(package.slots)
         )
-        if policy == "rolling":
-            candidate = min(
-                feasible,
-                key=lambda item: (-item.value, item.package_id),
-                default=None,
-            )
-        else:
-            candidate = min(
-                feasible,
-                key=lambda item: (
-                    -(item.value / len(item.slots)),
-                    -item.value,
-                    item.package_id,
-                ),
-                default=None,
-            )
+        candidate = min(
+            feasible,
+            key=lambda item: (
+                -(item.value / len(item.slots)),
+                -item.value,
+                item.package_id,
+            ),
+            default=None,
+        )
         if candidate is not None:
             selected.append(candidate.package_id)
             assigned_threats.add(candidate.threat_id)
@@ -445,17 +458,11 @@ def _causal_result(
         )
     verification = verify_selection(normalized, tuple(selected))
     runtime_s = perf_counter() - started_at
-    solver = "rolling zero-forecast whole-package commitment" if policy == "rolling" else (
-        "causal value-density greedy"
-    )
+    solver = "causal value-density greedy"
     metadata = {
         "information": "released_threats_only",
         "whole_package_commitment": True,
-        "rule": (
-            "released_value_then_id"
-            if policy == "rolling"
-            else "value_density_then_value_then_id"
-        ),
+        "rule": "value_density_then_value_then_id",
     }
     return ScheduleResult(
         tuple(selected),
@@ -483,9 +490,146 @@ def solve_rolling_zero_forecast(
     *,
     seed: int = 0,
 ) -> ScheduleResult:
-    """Commit the highest-value package using released information only."""
+    """Re-solve a released-information MILP and commit whole packages each epoch."""
 
-    return _causal_result(batches, seed=seed, policy="rolling")
+    normalized = _validate_batches(batches)
+    normalized_seed = _seed(seed)
+    started_at = perf_counter()
+    selected: list[str] = []
+    assigned_threats: set[str] = set()
+    committed_slots: set[int] = set()
+    trace: list[DecisionTrace] = []
+    for now in range(max(batch.release_time for batch in normalized) + 1):
+        visible = tuple(batch for batch in normalized if batch.release_time <= now)
+        unresolved = tuple(
+            batch for batch in visible if batch.threat_id not in assigned_threats
+        )
+        packages = tuple(package for batch in unresolved for package in batch.packages)
+        threats = tuple(batch.threat_id for batch in unresolved)
+        slots = tuple(sorted({slot for package in packages for slot in package.slots}))
+        rows = [
+            [float(package.threat_id == threat) for package in packages]
+            for threat in threats
+        ]
+        rows.extend(
+            [float(slot in package.slots) for package in packages] for slot in slots
+        )
+        constraint = optimize.LinearConstraint(
+            np.asarray(rows),
+            lb=np.zeros(len(rows)),
+            ub=np.ones(len(rows)),
+        )
+        upper_bounds = np.asarray(
+            [
+                float(
+                    not committed_slots.intersection(package.slots)
+                    and all(slot >= now for slot in package.slots)
+                )
+                for package in packages
+            ]
+        )
+        try:
+            result = optimize.milp(
+                c=-np.asarray([package.value for package in packages]),
+                integrality=np.ones(len(packages)),
+                bounds=optimize.Bounds(np.zeros(len(packages)), upper_bounds),
+                constraints=constraint,
+                options={"time_limit": 10.0},
+            )
+        except Exception as error:  # scipy backends may raise before returning a status
+            runtime_s = perf_counter() - started_at
+            failure = f"milp_exception:{type(error).__name__}"
+            verification = verify_selection(normalized, tuple(selected))
+            return ScheduleResult(
+                tuple(selected),
+                verification.objective,
+                False,
+                True,
+                False,
+                failure,
+                _record(
+                    solver="rolling zero-forecast MILP",
+                    seed=normalized_seed,
+                    objective=verification.objective,
+                    runtime_s=runtime_s,
+                    converged=False,
+                    passed=False,
+                    failure=failure,
+                    metadata={
+                        "information": "released_threats_only",
+                        "failed_epoch": now,
+                    },
+                ),
+                trace=tuple(trace),
+            )
+        if not result.success or result.x is None:
+            runtime_s = perf_counter() - started_at
+            failure = f"MILP failed at epoch {now}: {result.message}"
+            verification = verify_selection(normalized, tuple(selected))
+            return ScheduleResult(
+                tuple(selected),
+                verification.objective,
+                False,
+                True,
+                False,
+                failure,
+                _record(
+                    solver="rolling zero-forecast MILP",
+                    seed=normalized_seed,
+                    objective=verification.objective,
+                    runtime_s=runtime_s,
+                    converged=False,
+                    passed=False,
+                    failure=failure,
+                    metadata={
+                        "information": "released_threats_only",
+                        "failed_epoch": now,
+                    },
+                ),
+                trace=tuple(trace),
+            )
+        epoch_selected = tuple(
+            package
+            for package, decision in zip(packages, result.x, strict=True)
+            if decision > 0.5
+        )
+        for package in epoch_selected:
+            selected.append(package.package_id)
+            assigned_threats.add(package.threat_id)
+            committed_slots.update(package.slots)
+        trace.append(
+            DecisionTrace(
+                now,
+                tuple(batch.threat_id for batch in visible),
+                epoch_selected[0].package_id if epoch_selected else None,
+                tuple(sorted(committed_slots)),
+            )
+        )
+    verification = verify_selection(normalized, tuple(selected))
+    runtime_s = perf_counter() - started_at
+    return ScheduleResult(
+        tuple(selected),
+        verification.objective,
+        verification.valid,
+        not verification.valid,
+        verification.valid,
+        verification.failure,
+        _record(
+            solver="rolling zero-forecast MILP",
+            seed=normalized_seed,
+            objective=verification.objective,
+            runtime_s=runtime_s,
+            converged=verification.valid,
+            passed=verification.valid,
+            failure=verification.failure,
+            metadata={
+                "information": "released_threats_only",
+                "whole_package_commitment": True,
+                "epochs_solved": len(trace),
+            },
+        ),
+        trace=tuple(trace),
+    )
 
 
 def solve_causal_greedy(
@@ -495,7 +639,7 @@ def solve_causal_greedy(
 ) -> ScheduleResult:
     """Use a deterministic density/value/id rule on newly released packages."""
 
-    return _causal_result(batches, seed=seed, policy="greedy")
+    return _causal_result(batches, seed=seed)
 
 
 def run_demo(*, seed: int = 2026) -> dict[str, ScheduleResult]:

@@ -50,6 +50,28 @@ def test_rolling_zero_forecast_commits_whole_packages_and_scores_thirteen() -> N
     assert result.trace[0].selected_package_id == "T1-long"
 
 
+def test_rolling_builds_a_fresh_milp_each_epoch_without_future_variables(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_milp = q4.optimize.milp
+    objective_vectors: list[tuple[float, ...]] = []
+
+    def inspect_model(**kwargs: object) -> object:
+        objective_vectors.append(tuple(float(item) for item in kwargs["c"]))  # type: ignore[index]
+        return real_milp(**kwargs)
+
+    monkeypatch.setattr(q4.optimize, "milp", inspect_model)
+
+    result = q4.solve_rolling_zero_forecast(q4.default_batches(), seed=17)
+
+    assert result.objective == 13
+    assert objective_vectors == [
+        (-8.0, -5.0),
+        (-14.0, -8.0),
+        (-14.0, -8.0, -5.0),
+    ]
+
+
 def test_causal_density_greedy_scores_eighteen_with_stable_tie_break() -> None:
     first = q4.solve_causal_greedy(q4.default_batches(), seed=41)
     second = q4.solve_causal_greedy(q4.default_batches(), seed=41)
@@ -111,6 +133,53 @@ def test_milp_failure_is_structured_and_never_silently_falls_back(
     assert result.selected_ids == ()
     assert result.failure == "MILP failed: synthetic solver failure"
     assert result.record.failure_reason == result.failure
+
+
+@pytest.mark.parametrize("solver", [q4.solve_offline_milp, q4.solve_rolling_zero_forecast])
+def test_milp_exception_is_structured_and_not_propagated(
+    monkeypatch: pytest.MonkeyPatch,
+    solver: object,
+) -> None:
+    def explode(**_: object) -> object:
+        raise RuntimeError("backend exploded")
+
+    monkeypatch.setattr(q4.optimize, "milp", explode)
+
+    result = solver(q4.default_batches(), seed=5)  # type: ignore[operator]
+
+    assert not result.converged
+    assert result.unresolved
+    assert not result.verified
+    assert result.failure == "milp_exception:RuntimeError"
+    assert result.record.failure_reason == result.failure
+
+
+def test_milp_accepts_a_different_selection_with_the_same_optimal_objective(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    batches = (
+        q4.ThreatBatch(
+            "T1",
+            0,
+            (
+                q4.TaskPackage("T1-a", "T1", (0,), 5),
+                q4.TaskPackage("T1-b", "T1", (1,), 5),
+            ),
+        ),
+    )
+
+    class AlternateOptimum:
+        success = True
+        message = "ok"
+        x = (0.0, 1.0)
+
+    monkeypatch.setattr(q4.optimize, "milp", lambda **_: AlternateOptimum())
+
+    result = q4.solve_offline_milp(batches, seed=5)
+
+    assert result.converged and result.verified
+    assert result.selected_ids == ("T1-b",)
+    assert result.objective == 5
 
 
 def test_milp_enumeration_mismatch_is_a_hard_verification_failure(
