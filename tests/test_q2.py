@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 import numpy as np
@@ -19,12 +20,20 @@ from smoke_defense.q2 import (
     PathNode,
     SmokeReleaseEvent,
     branch_and_bound_q2_combinations,
+    build_q2_scenario_sets,
     enumerate_q2_combinations,
     generate_q2_candidate_library,
+    physical_time_improvement,
     prune_q2_candidates,
     q2_plan_rank_key,
     select_best_q2_plan,
+    solve_q2_scenario,
+    solve_q2_scenarios,
+    summarize_q2_geometries,
+    write_q2_markdown_summary,
+    write_q2_results,
 )
+from smoke_defense.scenario_matrix import generate_q1_q3_matrix
 from smoke_defense.smoke import detonation_position
 from smoke_defense.verification import certify_multi_smoke_coverage
 
@@ -34,9 +43,7 @@ def make_release_event(
     *,
     release_x_m: float | None = None,
 ) -> SmokeReleaseEvent:
-    release_x = (
-        28.0 * release_time_s if release_x_m is None else release_x_m
-    )
+    release_x = 28.0 * release_time_s if release_x_m is None else release_x_m
     return SmokeReleaseEvent(
         candidate_id=f"candidate-{release_time_s}",
         command_time_s=0.0,
@@ -148,16 +155,12 @@ def test_ordered_path_is_continuous_fixed_speed_and_visits_releases():
     assert path.flight_distance_m == pytest.approx(28.0 * 15.5)
     assert all(segment.speed_mps == pytest.approx(28.0) for segment in path.segments)
     for release in releases:
-        assert path.position(release.release_time_s) == pytest.approx(
-            release.release_position_m
-        )
+        assert path.position(release.release_time_s) == pytest.approx(release.release_position_m)
         burst = detonation_position(
             release.release_position_m,
             path.velocity(release.release_time_s),
         )
-        assert burst == pytest.approx(
-            release.release_position_m + 98.0 * release.heading_unit
-        )
+        assert burst == pytest.approx(release.release_position_m + 98.0 * release.heading_unit)
 
 
 def test_takeoff_wait_is_shipborne_and_not_counted_as_flight_distance():
@@ -180,12 +183,8 @@ def test_takeoff_wait_is_shipborne_and_not_counted_as_flight_distance():
     )
 
     assert path.position(3.0) == pytest.approx(ship.position(3.0))
-    assert path.position(takeoff_time_s) == pytest.approx(
-        ship.position(takeoff_time_s)
-    )
-    assert path.flight_distance_m == pytest.approx(
-        28.0 * (18.5 - takeoff_time_s)
-    )
+    assert path.position(takeoff_time_s) == pytest.approx(ship.position(takeoff_time_s))
+    assert path.flight_distance_m == pytest.approx(28.0 * (18.5 - takeoff_time_s))
 
 
 def test_individually_reachable_releases_can_be_jointly_unlinkable():
@@ -230,15 +229,10 @@ def test_q2_candidate_library_preserves_spatial_and_time_diversity():
     ship, library = make_candidate_library()
 
     assert len(library.candidates) > 3
-    assert len(
-        {round(candidate.coverage_center_time_s, 6) for candidate in library.candidates}
-    ) > 1
-    assert len(
-        {round(candidate.takeoff_time_s, 6) for candidate in library.candidates}
-    ) > 1
-    assert any(
-        abs(candidate.lateral_offset_m) > 0.0 for candidate in library.candidates
-    )
+    assert len(library.candidates) <= 9
+    assert len({round(candidate.coverage_center_time_s, 6) for candidate in library.candidates}) > 1
+    assert len({round(candidate.takeoff_time_s, 6) for candidate in library.candidates}) > 1
+    assert any(abs(candidate.lateral_offset_m) > 0.0 for candidate in library.candidates)
     assert any(
         not np.allclose(
             candidate.release.burst_center_m,
@@ -247,8 +241,7 @@ def test_q2_candidate_library_preserves_spatial_and_time_diversity():
         for candidate in library.candidates
     )
     assert all(
-        candidate.scenario_hash == "scenario-hash"
-        and candidate.constants_hash == "constants-hash"
+        candidate.scenario_hash == "scenario-hash" and candidate.constants_hash == "constants-hash"
         for candidate in library.candidates
     )
 
@@ -287,9 +280,7 @@ def test_q2_pruning_removes_only_duplicate_physical_events():
 def make_joint_only_candidates() -> tuple[MultiSmokeCandidate, ...]:
     common_release = np.array([0.0, np.sqrt(98.0**2 - 50.0**2)])
     candidates = []
-    for index, (center_x_m, release_time_s) in enumerate(
-        ((-50.0, 10.0), (50.0, 11.0))
-    ):
+    for index, (center_x_m, release_time_s) in enumerate(((-50.0, 10.0), (50.0, 11.0))):
         burst_center = np.array([center_x_m, 0.0])
         heading = (burst_center - common_release) / 98.0
         release = SmokeReleaseEvent(
@@ -405,8 +396,7 @@ def test_path_incompatible_combination_is_rejected_before_verification():
     )
 
     assert any(
-        evaluation.status == "rejected"
-        and "unreachable" in evaluation.reason
+        evaluation.status == "rejected" and "unreachable" in evaluation.reason
         for evaluation in result.evaluations
         if len(evaluation.candidate_ids) == 2
     )
@@ -414,9 +404,7 @@ def test_path_incompatible_combination_is_rejected_before_verification():
 
 def test_combination_rechecks_release_to_burst_geometry():
     candidate = make_joint_only_candidates()[0]
-    invalid_release = candidate.release.model_copy(
-        update={"burst_center_m": (999.0, 999.0)}
-    )
+    invalid_release = candidate.release.model_copy(update={"burst_center_m": (999.0, 999.0)})
     invalid_candidate = candidate.model_copy(update={"release": invalid_release})
 
     result = enumerate_q2_combinations(
@@ -435,18 +423,14 @@ def test_combination_rechecks_release_to_burst_geometry():
 
 def test_q2_lexicographic_order_cannot_be_overridden_by_shorter_distance():
     lower_exposure = SimpleNamespace(
-        coverage_certificate=SimpleNamespace(
-            status=CertificationStatus.CERTIFIED_INFEASIBLE
-        ),
+        coverage_certificate=SimpleNamespace(status=CertificationStatus.CERTIFIED_INFEASIBLE),
         maximum_exposed_interval_s=1.0,
         minimum_joint_margin_m=-5.0,
         smoke_count=3,
         uav_total_distance_m=1000.0,
     )
     shorter_but_worse = SimpleNamespace(
-        coverage_certificate=SimpleNamespace(
-            status=CertificationStatus.CERTIFIED_INFEASIBLE
-        ),
+        coverage_certificate=SimpleNamespace(status=CertificationStatus.CERTIFIED_INFEASIBLE),
         maximum_exposed_interval_s=2.0,
         minimum_joint_margin_m=10.0,
         smoke_count=1,
@@ -458,9 +442,7 @@ def test_q2_lexicographic_order_cannot_be_overridden_by_shorter_distance():
 
 def test_q2_lexicographic_ties_use_margin_then_bombs_then_distance():
     base = {
-        "coverage_certificate": SimpleNamespace(
-            status=CertificationStatus.CERTIFIED_INFEASIBLE
-        ),
+        "coverage_certificate": SimpleNamespace(status=CertificationStatus.CERTIFIED_INFEASIBLE),
         "maximum_exposed_interval_s": 1.0,
     }
     plans = (
@@ -495,9 +477,7 @@ def test_q2_lexicographic_ties_use_margin_then_bombs_then_distance():
 
 def test_q2_rank_ignores_sub_nanosecond_exposure_noise():
     common = {
-        "coverage_certificate": SimpleNamespace(
-            status=CertificationStatus.CERTIFIED_INFEASIBLE
-        ),
+        "coverage_certificate": SimpleNamespace(status=CertificationStatus.CERTIFIED_INFEASIBLE),
         "minimum_joint_margin_m": 0.0,
         "smoke_count": 2,
     }
@@ -532,7 +512,142 @@ def test_branch_and_bound_matches_small_exhaustive_enumeration():
 
     assert exhaustive.best_plan is not None
     assert bounded.best_plan is not None
-    assert (
-        exhaustive.best_plan.selected_smokes
-        == bounded.best_plan.selected_smokes
+    assert exhaustive.best_plan.selected_smokes == bounded.best_plan.selected_smokes
+
+
+def test_q2_scenario_sets_separate_144_formal_and_16_ablation():
+    formal, ablation = build_q2_scenario_sets()
+
+    assert len(formal) == 144
+    assert len(ablation) == 16
+    assert all(scenario.model_layer == "formal" for scenario in formal)
+    assert all(scenario.model_layer == "ablation" for scenario in ablation)
+
+
+def test_q2_scenario_result_is_traceable_and_independently_verified():
+    scenario = generate_q1_q3_matrix()[0]
+
+    result = solve_q2_scenario(scenario)
+
+    assert result.scenario_id == scenario.scenario_id
+    assert result.scenario_hash
+    assert result.constants_hash
+    assert result.assumption_ids == tuple(f"A-{index:03d}" for index in range(1, 23))
+    assert result.candidate_library_size > 1
+    assert result.combination_enumerated_count >= result.combination_retained_count
+    assert result.selected_plan is not None
+    assert result.selected_plan.verifier_trace.method == ("event_split_polygon_lipschitz")
+    assert result.selected_plan.coverage_certificate.status is result.strict_status
+
+
+def test_q2_scenario_solution_is_deterministic():
+    scenario = generate_q1_q3_matrix()[0]
+
+    first = solve_q2_scenario(scenario)
+    second = solve_q2_scenario(scenario)
+
+    assert first.selected_plan is not None
+    assert second.selected_plan is not None
+    assert tuple(
+        candidate.candidate_id for candidate in first.selected_plan.selected_smokes
+    ) == tuple(candidate.candidate_id for candidate in second.selected_plan.selected_smokes)
+    assert first.selected_plan.maximum_exposed_interval_s == pytest.approx(
+        second.selected_plan.maximum_exposed_interval_s
     )
+
+
+def test_q2_results_keep_formal_and_ablation_layers_separate(tmp_path):
+    formal_scenario = generate_q1_q3_matrix()[0]
+    formal_result = solve_q2_scenario(formal_scenario)
+    output = tmp_path / "q2_results.json"
+    summary = tmp_path / "README.md"
+
+    write_q2_results(
+        formal_results=(formal_result,),
+        ablation_results=(),
+        output_path=output,
+        git_sha="test-sha",
+        random_seed=20260730,
+    )
+    write_q2_markdown_summary(
+        formal_results=(formal_result,),
+        ablation_results=(),
+        output_path=summary,
+    )
+
+    def reject_nonstandard_constant(value: str) -> None:
+        raise AssertionError(f"non-standard JSON constant: {value}")
+
+    payload = json.loads(
+        output.read_text(encoding="utf-8"),
+        parse_constant=reject_nonstandard_constant,
+    )
+
+    assert payload["git_sha"] == "test-sha"
+    assert payload["random_seed"] == 20260730
+    assert payload["formal"]["scenario_count"] == 1
+    assert payload["ablation"]["scenario_count"] == 0
+    assert len(payload["formal"]["maximum_exposed_interval_range_s"]) == 2
+    assert len(payload["formal"]["minimum_joint_margin_range_m"]) == 2
+    assert len(payload["formal"]["uav_total_distance_range_m"]) == 2
+    assert payload["solver_config"]["method"] == "exhaustive_enumeration"
+    assert payload["verifier_config"]["spatial_tolerance_m"] > 0.0
+    summary_text = summary.read_text(encoding="utf-8")
+    assert "Q2" in summary_text
+    assert "16 组基础几何" in summary_text
+    assert "UAV 总航程范围" in summary_text
+
+
+def test_q2_runner_uses_frozen_seed_and_result_paths():
+    from scripts.run_q2 import (
+        DEFAULT_OUTPUT,
+        DEFAULT_SUMMARY_OUTPUT,
+        DEFAULT_WORKERS,
+        RANDOM_SEED,
+    )
+
+    assert RANDOM_SEED == 20260730
+    assert DEFAULT_OUTPUT.as_posix() == "results/q2/q2_results.json"
+    assert DEFAULT_SUMMARY_OUTPUT.as_posix() == "results/q2/README.md"
+    assert DEFAULT_WORKERS >= 1
+
+
+def test_parallel_q2_solver_preserves_scenario_order_and_results():
+    scenarios = generate_q1_q3_matrix()[:2]
+
+    serial = solve_q2_scenarios(scenarios, workers=1)
+    parallel = solve_q2_scenarios(scenarios, workers=2)
+
+    assert tuple(result.scenario_id for result in parallel) == tuple(
+        scenario.scenario_id for scenario in scenarios
+    )
+    assert tuple(
+        result.selected_plan.maximum_exposed_interval_s
+        for result in parallel
+        if result.selected_plan is not None
+    ) == pytest.approx(
+        tuple(
+            result.selected_plan.maximum_exposed_interval_s
+            for result in serial
+            if result.selected_plan is not None
+        )
+    )
+
+
+def test_physical_time_improvement_clamps_sub_nanosecond_noise():
+    assert physical_time_improvement(10.0, 10.0 + 4e-10) == 0.0
+    assert physical_time_improvement(10.0, 8.0) == pytest.approx(2.0)
+
+
+def test_geometry_summary_reports_nine_parameter_worst_case_and_sensitivity():
+    scenarios = generate_q1_q3_matrix()[:2]
+    results = solve_q2_scenarios(scenarios, workers=1)
+
+    summaries = summarize_q2_geometries(results)
+
+    assert len(summaries) == 1
+    summary = summaries[0]
+    assert summary["scenario_count"] == 2
+    assert summary["worst_case_scenario_id"] in {scenario.scenario_id for scenario in scenarios}
+    assert len(summary["maximum_exposed_interval_range_s"]) == 2
+    assert "parameter_sensitive" in summary
