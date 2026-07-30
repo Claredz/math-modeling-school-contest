@@ -174,9 +174,10 @@ def exact_pareto_front() -> tuple[Portfolio, ...]:
     return _nondominated(enumerate_portfolios())
 
 
-def solve_epsilon(risk_limit: float) -> EpsilonResult:
+def solve_epsilon(risk_limit: float, *, seed: int = 0) -> EpsilonResult:
     """Maximize benefit subject to an explicit synthetic risk budget."""
 
+    normalized_seed = _seed(seed)
     if isinstance(risk_limit, bool) or not isinstance(risk_limit, Real):
         raise TypeError("risk_limit must be a real number")
     normalized_limit = float(risk_limit)
@@ -198,7 +199,7 @@ def solve_epsilon(risk_limit: float) -> EpsilonResult:
     record = ToyRunRecord(
         demo_name="q3_multiobjective_epsilon",
         solver="exact enumeration epsilon constraint",
-        seed=0,
+        seed=normalized_seed,
         objective=float(selected.benefit if selected is not None else 0.0),
         runtime_s=runtime_s,
         converged=selected is not None,
@@ -209,6 +210,7 @@ def solve_epsilon(risk_limit: float) -> EpsilonResult:
             "selected_code": selected.code if selected is not None else None,
             "selected_risk": selected.risk if selected is not None else None,
             "enumerated_portfolios": 64,
+            "provenance_seed": normalized_seed,
         },
     )
     return EpsilonResult(

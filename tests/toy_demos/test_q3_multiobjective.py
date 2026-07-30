@@ -137,6 +137,13 @@ def test_epsilon_limit_below_structural_minimum_is_reported_infeasible() -> None
     assert result.record.failure_reason == result.failure_reason
 
 
+def test_epsilon_record_preserves_the_caller_provenance_seed() -> None:
+    result = solve_epsilon(6, seed=917)
+
+    assert result.record.seed == 917
+    assert result.record.metadata["provenance_seed"] == 917
+
+
 def test_nsga2_same_seed_is_reproducible_and_every_gene_is_legal() -> None:
     first = run_nsga2(seed=2026, population_size=40, generations=30)
     second = run_nsga2(seed=2026, population_size=40, generations=30)
@@ -212,6 +219,8 @@ def test_multiseed_assessment_reports_coverage_precision_and_stability() -> None
         (run_nsga2, {"seed": 1, "population_size": 6}, ValueError),
         (run_nsga2, {"seed": 1, "generations": 0}, ValueError),
         (solve_epsilon, {"risk_limit": float("nan")}, ValueError),
+        (solve_epsilon, {"risk_limit": 6, "seed": True}, TypeError),
+        (solve_epsilon, {"risk_limit": 6, "seed": -1}, ValueError),
         (assess_nsga2, {"seeds": ()}, ValueError),
         (assess_nsga2, {"seeds": (1, 1)}, ValueError),
     ],
