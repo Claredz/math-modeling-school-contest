@@ -13,7 +13,7 @@
   },
   "mode": "standard",
   "started_at": "2026-07-31T00:20:55+08:00",
-  "current_stage": 3,
+  "current_stage": 4,
   "budget": {
     "tokens_used": 0,
     "tokens_cap": 200000,
@@ -271,12 +271,148 @@
     },
     "3": {
       "_label": "model_selection",
-      "candidate_models": [],
-      "selected_per_subproblem": {},
-      "rejection_log": [],
-      "toy_demos_passed": false,
-      "red_team": [],
-      "model_family_consistency": ""
+      "candidate_models": [
+        {
+          "module": "missile_dynamics",
+          "candidates": [
+            "instantaneous_pure_pursuit",
+            "first_order_lag_pure_pursuit",
+            "proportional_navigation"
+          ],
+          "recommended": "minimum_parameter_pure_pursuit_with_interpretation_envelope"
+        },
+        {
+          "module": "shielding_geometry",
+          "candidates": [
+            "full_ship_disk_covered_by_smoke_union",
+            "single_smoke_disk_containment",
+            "line_of_sight_blocking",
+            "transmittance_threshold"
+          ],
+          "recommended": "continuous_full_ship_disk_union_coverage"
+        },
+        {
+          "module": "smoke_evolution",
+          "candidates": [
+            "fixed_center_prompt_piecewise_radius",
+            "deterministic_drift_puff",
+            "bounded_drift_and_radius_error"
+          ],
+          "recommended": "prompt_piecewise_radius_with_bounded_drift_extension"
+        },
+        {
+          "module": "uav_path",
+          "candidates": [
+            "event_parameterized_piecewise_linear",
+            "dubins_finite_turn",
+            "direct_collocation_multiple_shooting"
+          ],
+          "recommended": "event_parameterized_baseline_with_finite_turn_counterfactual"
+        },
+        {
+          "module": "Q1_algorithm",
+          "candidates": [
+            "multistart_SLSQP",
+            "DE_plus_SLSQP",
+            "PSO_plus_SLSQP",
+            "Sobol_trust_constr_plus_polish",
+            "SHGO_plus_polish"
+          ],
+          "recommended": "analytic_reduction_DE_local_polish_independent_verifier"
+        },
+        {
+          "module": "Q2_algorithm",
+          "candidates": [
+            "SIP_constraint_generation_separation",
+            "candidate_combination_continuous_polish",
+            "discrete_mode_local_master_oracle",
+            "LBBD"
+          ],
+          "recommended": "spatiotemporal_SIP_constraint_generation_independent_certification"
+        },
+        {
+          "module": "Q3_algorithm",
+          "candidates": [
+            "lexicographic_epsilon_constraint",
+            "NSGA_II",
+            "hierarchical_assignment_continuous_optimization",
+            "joint_event_MINLP"
+          ],
+          "recommended": "success_first_lexicographic_epsilon_constraint"
+        },
+        {
+          "module": "Q4_algorithm",
+          "candidates": [
+            "certified_packages_causal_rolling_MILP",
+            "offline_hindsight_MILP",
+            "causal_density_greedy",
+            "LBBD",
+            "two_stage_robust_CCG"
+          ],
+          "recommended": "certified_packages_causal_rolling_horizon_MILP"
+        }
+      ],
+      "selected_per_subproblem": {
+        "Q1": "analytic_reduction_DE_local_polish_independent_verifier",
+        "Q2": "spatiotemporal_SIP_constraint_generation_independent_certification",
+        "Q3": "success_first_lexicographic_epsilon_constraint",
+        "Q4": "certified_packages_causal_rolling_horizon_MILP"
+      },
+      "rejection_log": [
+        "旧Q1有限候选库只作warm start，不称局部或全局最优。",
+        "PR #5固定9候选、129组合、伪branch-and-bound及全部数值结论拒绝继承。",
+        "旧一阶惯性纯追踪九组参数无题面标定，不进入正式基准。",
+        "80m只作等效被探测半径，不作命中或毁伤判据。",
+        "单烟幕包含关系不得收缩Q2/Q3联合烟幕原始空间。",
+        "DE、PSO、NSGA-II不得表述为提供全局最优保证。",
+        "无转弯半径的Dubins、无风场的漂移、无不确定集的CCG暂缓。",
+        "离线全知调度仅作hindsight上界，不作在线策略。",
+        "外题10m、20s、下沉等参数永久隔离。"
+      ],
+      "toy_demos_passed": true,
+      "toy_demo_scope": {
+        "artifact_root": "experiments/toy_demos",
+        "formal_result": false,
+        "modules": 5,
+        "standard_records": 17,
+        "q1_methods": 5,
+        "q2_constraint_initial_violation": 1.0,
+        "q2_joint_global_gap_approximately": 1.176,
+        "q3_exact_pareto_points": 4,
+        "q3_nsga2_mean_coverage": 0.9375,
+        "q4_offline_upper_bound": 19.0,
+        "q4_rolling_value": 13.0,
+        "q4_greedy_value": 18.0,
+        "warning": "全部数值均来自synthetic toy，不得外推为正式题目结论。"
+      },
+      "red_team": [
+        {
+          "attack": "初始状态、导航比、转弯半径和风场缺失，物理模型可能只是想象。",
+          "response": "只推荐最小参数基准与结构反事实；缺失量在Gate B批准前不得固化。"
+        },
+        {
+          "attack": "人工toy不能证明正式模型有效。",
+          "response": "同意；toy只验证算法链、失败传播、独立验证和因果隔离。"
+        },
+        {
+          "attack": "Q2非凸SIP的separation也可能找不到全局最坏点。",
+          "response": "oracle必须报告精度和unresolved；未决区间进入风险上界。"
+        },
+        {
+          "attack": "DE+SLSQP不能证明Q1唯一或全局最优。",
+          "response": "DE只生成候选，正式措辞保持当前最好已知方案。"
+        },
+        {
+          "attack": "Q4 toy中rolling MILP 13低于greedy 18。",
+          "response": "推荐的是可表达约束与重调度的架构；贪心保留为强制基线。"
+        },
+        {
+          "attack": "认证任务包会再次把连续空间压成有限库。",
+          "response": "任务包只作可行内近似，保留共享烟幕和直接联合反事实。"
+        }
+      ],
+      "model_family_consistency": "四问共享解释层、动力学层、连续覆盖层和三值认证层；solver生成候选，independent verifier认证。Q1只为Q2/Q3提供warm start；Q4只消费认证任务包且保留跨威胁共享与直接联合反事实。",
+      "gate_status": "Gate B pending human approval; current_stage=4 only identifies the next stage and does not mean Stage 4 has started."
     },
     "4": {
       "_label": "foundation",
@@ -346,6 +482,16 @@
         "所有正式Q1坐标/时序需在未来Stage4后重算"
       ],
       "pr5_root_cause_reviewed": true
+    },
+    "toy_demos": {
+      "completed_at": "2026-07-31T01:45:00+08:00",
+      "root": "experiments/toy_demos",
+      "synthetic": true,
+      "formal_result": false,
+      "modules": 5,
+      "standard_records": 17,
+      "result_check": "python experiments/toy_demos/run_all.py --check",
+      "guarantee_boundary": "只验证算法行为、接口、失败状态、独立验证和因果隔离；不提供正式Q1-Q4数值或模型有效性证明。"
     }
   },
   "scores": {
@@ -403,7 +549,24 @@
         "evidence": "原题DOCX 22段重读；四问完整卡片、23个统一变量、连续时空覆盖骨架、无数值附件schema和跨问依赖均已记录。"
       }
     ],
-    "3": [],
+    "3": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_candidate_diversity": 9,
+          "2_selection_rationale": 9,
+          "3_named_model_variants": 8,
+          "4_solver_feasibility": 9,
+          "5_literature_support": 9
+        },
+        "min": 8,
+        "mean": 8.8,
+        "weighted_mean": 8.8,
+        "verdict": "pass",
+        "ts": "2026-07-31T01:45:00+08:00",
+        "evidence": "八模块各至少三候选；十维矩阵、29篇文献、Q1/PR5审计、五类synthetic toy、独立verifier与red-team共同支撑；不等于Stage4冻结。"
+      }
+    ],
     "4": [],
     "5": [],
     "5_per_qi": [],
@@ -416,7 +579,7 @@
     "0": 1,
     "1": 1,
     "2": 1,
-    "3": 0,
+    "3": 1,
     "4": 0,
     "5": 0,
     "5_per_qi": 0,
@@ -495,6 +658,24 @@
         "ts": "2026-07-31T00:47:06+08:00",
         "type": "pr5_root_cause_complete",
         "detail": "确认固定9候选、无连续精修、伪B&B与unresolved风险上界缺陷；全部Q2数值继续失效。"
+      },
+      {
+        "ts": "2026-07-31T01:45:00+08:00",
+        "type": "toy_demos_complete",
+        "stage": 3,
+        "detail": "五类synthetic toy形成17条统一记录；Q2联合路线保留unresolved，Q3保留启发式未完整覆盖，Q4严格隔离未来信息。"
+      },
+      {
+        "ts": "2026-07-31T01:45:00+08:00",
+        "type": "stage_complete",
+        "stage": 3,
+        "verdict": "pass",
+        "detail": "八模块候选、十维选型矩阵、拒绝台账、模型族一致性和六项red-team完成；进入Gate B人工审批。"
+      },
+      {
+        "ts": "2026-07-31T01:45:00+08:00",
+        "type": "gate_b_stop",
+        "detail": "current_stage=4仅标识下一阶段；Stage4未执行，未冻结模型合同，未生成正式Q1-Q4结果。"
       }
     ]
   }
