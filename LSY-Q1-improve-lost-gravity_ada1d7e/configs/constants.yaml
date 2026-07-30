@@ -1,0 +1,25 @@
+constants_version: "b-problem-v2"
+
+ship:
+  speed_mps: 7.71
+  effective_radius_m: 80.0
+
+uav:
+  speed_mps: 28.0
+  operation_radius_m: 12000.0
+  max_payload_count: 3
+
+missile:
+  nominal_speed_mps: 320.0
+  detection_range_m: 8000.0
+  field_of_view_half_angle_deg: 15.0
+
+countermeasure:
+  release_response_min_s: 2.0
+  minimum_release_interval_s: 1.0
+  detonation_delay_s: 3.5
+
+smoke:
+  maximum_radius_m: 120.0
+  hold_duration_s: 18.0
+  decay_duration_s: 5.0
