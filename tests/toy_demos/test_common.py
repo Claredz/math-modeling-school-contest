@@ -138,14 +138,18 @@ def test_seeded_rng_repeats_the_same_sequence() -> None:
 
 
 def test_seeded_rng_does_not_change_numpy_global_random_state() -> None:
-    np.random.seed(23)
-    expected = np.random.random(4)
-    np.random.seed(23)
+    original_state = np.random.get_state()
+    try:
+        np.random.seed(23)
+        expected = np.random.random(4)
+        np.random.seed(23)
 
-    seeded_rng(17).normal(size=10)
-    actual = np.random.random(4)
+        seeded_rng(17).normal(size=10)
+        actual = np.random.random(4)
 
-    np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(actual, expected)
+    finally:
+        np.random.set_state(original_state)
 
 
 def test_timed_call_returns_result_and_nonnegative_runtime() -> None:
