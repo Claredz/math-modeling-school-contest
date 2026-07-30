@@ -119,6 +119,11 @@ def test_write_and_check_detect_missing_or_stale_artifacts(tmp_path: Path) -> No
         for issue in issues
         if stale.name in issue
     )
+    assert any(
+        "actual=-1" in issue and "expected=19.0" in issue
+        for issue in issues
+        if stale.name in issue
+    )
 
 
 def test_cli_check_returns_nonzero_for_missing_artifacts(tmp_path: Path) -> None:
