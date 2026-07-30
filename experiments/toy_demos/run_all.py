@@ -9,6 +9,7 @@ import copy
 import json
 import sys
 from collections.abc import Mapping, Sequence
+from math import isclose
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -31,6 +32,8 @@ from experiments.toy_demos.q4_scheduling import run_demo as run_q4
 
 DEFAULT_SEED = 20260731
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "results"
+FLOAT_CHECK_ABS_TOL = 5e-5
+FLOAT_CHECK_REL_TOL = 1e-9
 _TOP_LEVEL_FIELDS = {
     "schema_version",
     "module",
@@ -290,7 +293,15 @@ def _difference_descriptions(
                     _difference_descriptions(actual[index], expected[index], prefix=path)
                 )
         return tuple(paths)
-    if actual == expected:
+    if isinstance(actual, float) and isinstance(expected, float):
+        if isclose(
+            actual,
+            expected,
+            rel_tol=FLOAT_CHECK_REL_TOL,
+            abs_tol=FLOAT_CHECK_ABS_TOL,
+        ):
+            return ()
+    elif actual == expected:
         return ()
     path = prefix or "<root>"
     return (f"{path} (actual={actual!r}, expected={expected!r})",)
@@ -426,11 +437,11 @@ def check_artifacts(
             continue
         normalized_actual = normalize_for_check(actual_payload)
         normalized_expected = normalize_for_check(expected_payload)
-        if normalized_actual != normalized_expected:
-            differences = _difference_descriptions(
-                normalized_actual,
-                normalized_expected,
-            )
+        differences = _difference_descriptions(
+            normalized_actual,
+            normalized_expected,
+        )
+        if differences:
             preview = ", ".join(differences[:8])
             if len(differences) > 8:
                 preview += f", ... (+{len(differences) - 8} more)"

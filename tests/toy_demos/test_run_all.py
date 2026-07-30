@@ -130,6 +130,44 @@ def test_cli_check_returns_nonzero_for_missing_artifacts(tmp_path: Path) -> None
     assert run_all.main(["--check", "--output-dir", str(tmp_path)]) == 1
 
 
+def test_check_tolerates_cross_platform_float_noise_but_detects_material_drift(
+    tmp_path: Path,
+) -> None:
+    artifacts = run_all.build_artifacts(seed=20260731)
+    run_all.write_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        artifacts=artifacts,
+    )
+    target = tmp_path / "q2_joint_prototype.json"
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    baseline = payload["module_summary"]["routes"][0]["global_gap"]
+
+    payload["module_summary"]["routes"][0]["global_gap"] = baseline + 1e-6
+    target.write_text(json.dumps(payload), encoding="utf-8")
+    ok, issues = run_all.check_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        expected_artifacts=artifacts,
+    )
+    assert ok is True
+    assert issues == ()
+
+    payload["module_summary"]["routes"][0]["global_gap"] = baseline + 1e-3
+    target.write_text(json.dumps(payload), encoding="utf-8")
+    ok, issues = run_all.check_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        expected_artifacts=artifacts,
+    )
+    assert ok is False
+    assert any(
+        "module_summary.routes[0].global_gap" in issue
+        for issue in issues
+        if target.name in issue
+    )
+
+
 def test_check_rejects_invalid_record_schema_before_ignoring_runtime(
     tmp_path: Path,
 ) -> None:
