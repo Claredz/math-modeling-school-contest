@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 from experiments.toy_demos import run_all
@@ -101,3 +103,30 @@ def test_write_and_check_detect_missing_or_stale_artifacts(tmp_path: Path) -> No
 
 def test_cli_check_returns_nonzero_for_missing_artifacts(tmp_path: Path) -> None:
     assert run_all.main(["--check", "--output-dir", str(tmp_path)]) == 1
+
+
+def test_committed_artifacts_are_current_from_module_and_direct_script() -> None:
+    repository_root = Path(__file__).resolve().parents[2]
+    commands = (
+        [sys.executable, "-m", "experiments.toy_demos.run_all", "--check"],
+        [
+            sys.executable,
+            "experiments/toy_demos/run_all.py",
+            "--check",
+        ],
+    )
+
+    completed = [
+        subprocess.run(
+            command,
+            cwd=repository_root,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=120,
+        )
+        for command in commands
+    ]
+
+    assert completed[0].returncode == 0, completed[0].stdout + completed[0].stderr
+    assert completed[1].returncode == 0, completed[1].stdout + completed[1].stderr

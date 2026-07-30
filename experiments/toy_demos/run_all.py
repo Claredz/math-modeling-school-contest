@@ -1,14 +1,22 @@
 """Run and audit every isolated synthetic model-selection demonstration."""
 
+# ruff: noqa: E402
+
 from __future__ import annotations
 
 import argparse
 import copy
 import json
+import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from time import perf_counter
 from typing import Any
+
+if __package__ in (None, ""):
+    repository_root = str(Path(__file__).resolve().parents[2])
+    if repository_root not in sys.path:
+        sys.path.insert(0, repository_root)
 
 from experiments.toy_demos.common import ToyRunRecord
 from experiments.toy_demos.q1_continuous_optimization import run_demo as run_q1
