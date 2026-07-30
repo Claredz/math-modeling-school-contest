@@ -13,15 +13,24 @@
 ## 校赛 B 题
 
 - 题目：[B题：舰船烟幕遮蔽干扰优化.docx](B题：舰船烟幕遮蔽干扰优化.docx)
-- 建模设计：[2026-07-29-b-problem-modeling-design.md](docs/plans/2026-07-29-b-problem-modeling-design.md)
-- 冻结模型契约：[model_contract_v0.1.md](docs/modeling/model_contract_v0.1.md)
-- 实现架构与场景契约：[2026-07-30-b-problem-implementation-design.md](docs/plans/2026-07-30-b-problem-implementation-design.md)
-- 当前实施计划：[2026-07-30-b-problem-implementation-plan.md](docs/plans/2026-07-30-b-problem-implementation-plan.md)
-- 历史执行计划（已被当前实施计划替代）：[2026-07-29-b-problem-execution-plan.md](docs/plans/2026-07-29-b-problem-execution-plan.md)
+- 模型文档索引：[docs/modeling/README.md](docs/modeling/README.md)
+- 当前假设：[assumption_register.md](docs/modeling/assumption_register.md)（v0.3，A-001–A-022）
+- 当前模型契约：[model_contract_v0.1.md](docs/modeling/model_contract_v0.1.md)（正文 v0.2，文件名为兼容旧链接保留）
+- 当前四问架构：[revised_four_problem_architecture.md](docs/modeling/revised_four_problem_architecture.md)
+- 当前修订设计：[2026-07-30-inertial-pursuit-shipborne-launch-design.md](docs/plans/2026-07-30-inertial-pursuit-shipborne-launch-design.md)
+- **当前唯一实施计划**：[2026-07-30-inertial-pursuit-shipborne-launch-implementation-plan.md](docs/plans/2026-07-30-inertial-pursuit-shipborne-launch-implementation-plan.md)
 
-当前题面未给出各主体初始坐标和问题四的具体来袭批次，因此执行计划采用参数化场景，并禁止将基准假设误写成官方数据。
+当前正式模型采用一阶航向惯性纯追踪，9 组
+\((k,\omega_{\max})\) 参数扫描；所有 UAV 可在舰上等待，但只能从实际起飞时刻的舰船位置起飞。瞬时纯追踪只作消融对照。
 
-当前 Implementation Plan 采用分批验收：第一批只执行 Task 1–Task 3；场景契约、常数单一事实源、事件时间语义和配置哈希验收通过前，不得启动 Task 4–Task 11。
+下列计划均已过时并在文件头明确标注，禁止继续执行：
+
+- `2026-07-29-b-problem-modeling-design.md`
+- `2026-07-29-b-problem-execution-plan.md`
+- `2026-07-30-b-problem-implementation-design.md`
+- `2026-07-30-b-problem-implementation-plan.md`
+
+当前仓库仍处于“模型与计划完成、求解代码尚未实现”阶段。题面未给出的初始坐标、Q4来袭批次和设备误差必须作为带来源的场景假设，禁止冒充官方数据。
 
 ## 目录结构
 
