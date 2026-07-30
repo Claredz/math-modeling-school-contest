@@ -134,7 +134,7 @@ class _CachedOracle:
 
     def best_point(self) -> np.ndarray:
         if not self.cache:
-            return np.asarray(KNOWN_OPTIMUM, dtype=float)
+            raise RuntimeError("no evaluated incumbent")
         return np.asarray(min(self.cache, key=self.cache.__getitem__), dtype=float)
 
 
@@ -303,14 +303,10 @@ def run_method(method: str, *, seed: int, budget: int = 768) -> MethodResult:
     started_at = perf_counter()
     solver_success = False
     exhausted = False
-    if budget < 16:
-        oracle.loss(np.asarray(KNOWN_OPTIMUM))
+    try:
+        solver_success = _RUNNERS[method](oracle, seed)
+    except _BudgetExhausted:
         exhausted = True
-    else:
-        try:
-            solver_success = _RUNNERS[method](oracle, seed)
-        except _BudgetExhausted:
-            exhausted = True
 
     point = oracle.best_point()
     objective = coverage(point)

@@ -79,8 +79,10 @@ def test_tiny_budget_returns_a_structured_failure(method: str) -> None:
     result = run_method(method, seed=19, budget=1)
 
     assert result.method == method
-    assert result.evaluation_count <= 1
+    assert result.evaluation_count == 1
     assert result.budget == 1
+    assert result.x != (0.0, 0.0)
+    assert result.objective < 10.0
     assert not result.solver_success
     assert result.budget_exhausted
     assert not result.verified
