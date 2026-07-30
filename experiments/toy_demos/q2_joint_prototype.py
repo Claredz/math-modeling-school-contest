@@ -22,7 +22,9 @@ import itertools
 import math
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from numbers import Integral, Real
 from time import perf_counter
+from types import MappingProxyType
 
 import numpy as np
 from scipy.optimize import minimize
@@ -31,6 +33,7 @@ from experiments.toy_demos.common import ToyRunRecord, seeded_rng
 
 HORIZON = 4.0
 MIN_SEPARATION = 0.5
+GRID_BOUND_SOURCE = "Lipschitz grid covering bound"
 DEMAND_NODES: tuple[tuple[float, float], ...] = (
     (0.0, 0.7),
     (1.0, 1.1),
@@ -38,11 +41,13 @@ DEMAND_NODES: tuple[tuple[float, float], ...] = (
     (3.0, 1.2),
     (4.0, 0.75),
 )
-BOMB_PARAMETERS: dict[str, tuple[float, float]] = {
-    "A": (1.0, 1.2),
-    "B": (0.9, 1.5),
-    "C": (1.1, 1.0),
-}
+BOMB_PARAMETERS = MappingProxyType(
+    {
+        "A": (1.0, 1.2),
+        "B": (0.9, 1.5),
+        "C": (1.1, 1.0),
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +56,39 @@ class BombSchedule:
 
     bomb_types: tuple[str, ...]
     burst_times: tuple[float, ...]
+
+    def __post_init__(self) -> None:
+        try:
+            bomb_types = tuple(self.bomb_types)
+            raw_times = tuple(self.burst_times)
+        except TypeError as error:
+            raise TypeError("bomb types and burst times must be sequences") from error
+        if not 1 <= len(bomb_types) <= 3:
+            raise ValueError("a schedule must use between one and three bombs")
+        if len(bomb_types) != len(raw_times):
+            raise ValueError("bomb type and burst-time counts must match")
+        if any(not isinstance(name, str) for name in bomb_types):
+            raise TypeError("bomb type names must be strings")
+        if len(set(bomb_types)) != len(bomb_types):
+            raise ValueError("each toy bomb type may be used at most once")
+        if any(name not in BOMB_PARAMETERS for name in bomb_types):
+            raise ValueError("unknown toy bomb type")
+
+        times: list[float] = []
+        for value in raw_times:
+            if isinstance(value, bool) or not isinstance(value, Real):
+                raise TypeError("burst times must be real numbers")
+            time = float(value)
+            if not math.isfinite(time) or not 0.0 <= time <= HORIZON:
+                raise ValueError("burst times must be finite and inside the horizon")
+            times.append(time)
+        if any(
+            later - earlier < MIN_SEPARATION - 1e-12
+            for earlier, later in zip(times, times[1:], strict=False)
+        ):
+            raise ValueError("successive bursts must be separated by at least 0.5")
+        object.__setattr__(self, "bomb_types", bomb_types)
+        object.__setattr__(self, "burst_times", tuple(times))
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +110,62 @@ class GridBounds:
     grid_step: float
     lipschitz_constant: float
     evaluated_schedules: int
+    bound_source: str = GRID_BOUND_SOURCE
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.schedule, BombSchedule):
+            raise TypeError("schedule must be a BombSchedule")
+        numeric_fields = (
+            "lower_bound",
+            "global_upper_bound",
+            "grid_step",
+            "lipschitz_constant",
+        )
+        normalized: dict[str, float] = {}
+        for field_name in numeric_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, bool) or not isinstance(value, Real):
+                raise TypeError(f"{field_name} must be a real number")
+            number = float(value)
+            if not math.isfinite(number) or number < 0.0:
+                raise ValueError(f"{field_name} must be finite and nonnegative")
+            normalized[field_name] = number
+            object.__setattr__(self, field_name, number)
+        if normalized["grid_step"] <= 0.0:
+            raise ValueError("grid_step must be positive")
+        _validate_grid_step(normalized["grid_step"])
+        if isinstance(self.evaluated_schedules, bool) or not isinstance(
+            self.evaluated_schedules, Integral
+        ):
+            raise TypeError("evaluated_schedules must be an integer")
+        if int(self.evaluated_schedules) <= 0:
+            raise ValueError("evaluated_schedules must be positive")
+        object.__setattr__(self, "evaluated_schedules", int(self.evaluated_schedules))
+        if self.bound_source != GRID_BOUND_SOURCE:
+            raise ValueError("unrecognised global-bound provenance")
+        exact_objective = verify_schedule_exactly(self.schedule).objective
+        if not math.isclose(
+            normalized["lower_bound"], exact_objective, rel_tol=0.0, abs_tol=1e-10
+        ):
+            raise ValueError("lower_bound must equal the exact objective of schedule")
+        expected_lipschitz = _objective_lipschitz_constant()
+        if not math.isclose(
+            normalized["lipschitz_constant"],
+            expected_lipschitz,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("lipschitz_constant does not match the proved constant")
+        expected_upper = normalized["lower_bound"] + expected_lipschitz * normalized["grid_step"]
+        if not math.isclose(
+            normalized["global_upper_bound"],
+            expected_upper,
+            rel_tol=0.0,
+            abs_tol=1e-10,
+        ):
+            raise ValueError("global_upper_bound does not match its provenance formula")
+        if normalized["lower_bound"] > normalized["global_upper_bound"]:
+            raise ValueError("lower_bound must not exceed global_upper_bound")
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,6 +176,9 @@ class RouteResult:
     schedule: BombSchedule
     verified_objective: float
     converged: bool
+    local_solver_converged: bool
+    globally_resolved: bool
+    unresolved: bool
     iterations: int
     failure_reason: str | None
     global_lower_bound: float
@@ -89,6 +186,15 @@ class RouteResult:
     global_gap: float
     master_values: tuple[float, ...]
     record: ToyRunRecord
+
+
+@dataclass(frozen=True, slots=True)
+class _LocalSolveOutcome:
+    schedule: BombSchedule
+    value: float
+    success: bool
+    status: int
+    message: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,9 +261,19 @@ def evaluate_coverage(schedule: BombSchedule, time: float) -> float:
 def _coverage_unchecked(schedule: BombSchedule, time: float) -> float:
     """Hot-path kernel evaluation for already validated/optimizer trial vectors."""
 
+    return _coverage_from_vectors(schedule.bomb_types, schedule.burst_times, time)
+
+
+def _coverage_from_vectors(
+    bomb_types: Sequence[str],
+    burst_times: Sequence[float],
+    time: float,
+) -> float:
+    """Evaluate kernels for optimizer trial vectors without public validation."""
+
     coverage = 0.0
     for bomb_type, burst_time in zip(
-        schedule.bomb_types, schedule.burst_times, strict=True
+        bomb_types, burst_times, strict=True
     ):
         half_width, peak = BOMB_PARAMETERS[bomb_type]
         coverage += peak * max(0.0, 1.0 - abs(time - burst_time) / half_width)
@@ -200,7 +316,10 @@ def sample_objective(schedule: BombSchedule, *, sample_times: Iterable[float]) -
     """Return a deliberately finite-sample objective for audit comparisons."""
 
     checked = _validated_schedule(schedule)
-    times = tuple(float(time) for time in sample_times)
+    raw_times = tuple(sample_times)
+    if any(isinstance(time, bool) or not isinstance(time, Real) for time in raw_times):
+        raise TypeError("sample times must be real numbers")
+    times = tuple(float(time) for time in raw_times)
     if not times:
         raise ValueError("at least one sample time is required")
     if any(not math.isfinite(time) or not 0.0 <= time <= HORIZON for time in times):
@@ -247,6 +366,13 @@ def _validate_grid_step(grid_step: float) -> float:
     return step
 
 
+def _objective_lipschitz_constant() -> float:
+    minimum_demand = min(value for _, value in DEMAND_NODES)
+    return sum(
+        peak / half_width for half_width, peak in BOMB_PARAMETERS.values()
+    ) / minimum_demand
+
+
 def enumerate_grid_bounds(*, grid_step: float = 0.25) -> GridBounds:
     """Exhaust a feasible time grid and certify a global coarse upper bound.
 
@@ -279,10 +405,7 @@ def enumerate_grid_bounds(*, grid_step: float = 0.25) -> GridBounds:
     if best_schedule is None:  # pragma: no cover - defensive invariant
         raise RuntimeError("grid enumeration produced no feasible schedule")
 
-    minimum_demand = min(value for _, value in DEMAND_NODES)
-    lipschitz_constant = sum(
-        peak / half_width for half_width, peak in BOMB_PARAMETERS.values()
-    ) / minimum_demand
+    lipschitz_constant = _objective_lipschitz_constant()
     return GridBounds(
         schedule=best_schedule,
         lower_bound=best_objective,
@@ -290,6 +413,7 @@ def enumerate_grid_bounds(*, grid_step: float = 0.25) -> GridBounds:
         grid_step=step,
         lipschitz_constant=lipschitz_constant,
         evaluated_schedules=evaluated,
+        bound_source=GRID_BOUND_SOURCE,
     )
 
 
@@ -315,14 +439,14 @@ def _polish_exact_objective(
     initial_times: Sequence[float],
     *,
     maxiter: int = 120,
-) -> BombSchedule:
+) -> _LocalSolveOutcome:
     count = len(mode)
 
     def loss(values: np.ndarray) -> float:
-        schedule = BombSchedule(mode, tuple(float(value) for value in values))
         try:
+            schedule = BombSchedule(mode, tuple(float(value) for value in values))
             return -verify_schedule_exactly(schedule).objective
-        except ValueError:
+        except (TypeError, ValueError):
             return 1e6
 
     constraints = [
@@ -349,31 +473,61 @@ def _polish_exact_objective(
     if values[-1] > HORIZON:
         shift = values[-1] - HORIZON
         values -= shift
-    return _validated_schedule(BombSchedule(mode, tuple(float(value) for value in values)))
+    try:
+        schedule = BombSchedule(mode, tuple(float(value) for value in values))
+    except (TypeError, ValueError):
+        schedule = BombSchedule(mode, tuple(float(value) for value in initial_times))
+        return _LocalSolveOutcome(
+            schedule=schedule,
+            value=verify_schedule_exactly(schedule).objective,
+            success=False,
+            status=int(optimized.status),
+            message=f"{optimized.message}; optimizer returned an infeasible schedule",
+        )
+    return _LocalSolveOutcome(
+        schedule=schedule,
+        value=verify_schedule_exactly(schedule).objective,
+        success=bool(optimized.success),
+        status=int(optimized.status),
+        message=str(optimized.message),
+    )
 
 
 def _make_route_result(
     *,
     route_name: str,
     schedule: BombSchedule,
-    converged: bool,
+    local_solver_converged: bool,
+    algorithm_resolved: bool,
     iterations: int,
     failure_reason: str | None,
     grid_bounds: GridBounds,
     master_values: Sequence[float],
     seed: int,
     runtime_s: float,
+    solver_statuses: Sequence[str],
+    resolution_tolerance: float = 1e-7,
 ) -> RouteResult:
     verification = verify_schedule_exactly(schedule)
     lower_bound = max(grid_bounds.lower_bound, verification.objective)
-    gap = max(0.0, grid_bounds.global_upper_bound - lower_bound)
+    gap = grid_bounds.global_upper_bound - lower_bound
+    if gap < -1e-10:
+        raise RuntimeError("verified lower bound exceeds the certified global upper bound")
+    if gap < 0.0:
+        gap = 0.0
+    globally_resolved = (
+        local_solver_converged and algorithm_resolved and gap <= resolution_tolerance
+    )
+    unresolved = not globally_resolved
+    if unresolved and failure_reason is None:
+        failure_reason = "global Lipschitz bound gap remains unresolved"
     record = ToyRunRecord(
         demo_name="q2_joint_discrete_continuous",
         solver=route_name,
         seed=seed,
         objective=verification.objective,
         runtime_s=runtime_s,
-        converged=converged,
+        converged=globally_resolved,
         passed_manual_case=(
             grid_bounds.lower_bound <= verification.objective + 1e-8
             and verification.objective <= grid_bounds.global_upper_bound + 1e-8
@@ -386,9 +540,12 @@ def _make_route_result(
             "global_lower_bound": lower_bound,
             "global_upper_bound": grid_bounds.global_upper_bound,
             "global_gap": gap,
-            "bound_source": "Lipschitz grid covering bound",
+            "bound_source": GRID_BOUND_SOURCE,
             "master_is_global_upper_bound": False,
-            "unresolved": not converged,
+            "local_solver_converged": local_solver_converged,
+            "globally_resolved": globally_resolved,
+            "unresolved": unresolved,
+            "solver_statuses": list(solver_statuses),
             "master_values": list(master_values),
         },
     )
@@ -396,7 +553,10 @@ def _make_route_result(
         route_name=route_name,
         schedule=schedule,
         verified_objective=verification.objective,
-        converged=converged,
+        converged=globally_resolved,
+        local_solver_converged=local_solver_converged,
+        globally_resolved=globally_resolved,
+        unresolved=unresolved,
         iterations=iterations,
         failure_reason=failure_reason,
         global_lower_bound=lower_bound,
@@ -443,27 +603,39 @@ def solve_candidate_polish(
     master_values = [objective for objective, _ in ranked[:8]]
     best_objective = bounds.lower_bound
     best_schedule = bounds.schedule
+    outcomes: list[_LocalSolveOutcome] = []
     for _, candidate in ranked[:8]:
-        polished = _polish_exact_objective(candidate.bomb_types, candidate.burst_times)
-        objective = verify_schedule_exactly(polished).objective
-        if (objective, polished.bomb_types, polished.burst_times) > (
+        outcome = _polish_exact_objective(candidate.bomb_types, candidate.burst_times)
+        outcomes.append(outcome)
+        polished = outcome.schedule
+        if (outcome.value, polished.bomb_types, polished.burst_times) > (
             best_objective,
             best_schedule.bomb_types,
             best_schedule.burst_times,
         ):
-            best_objective = objective
+            best_objective = outcome.value
             best_schedule = polished
+    failed_statuses = tuple(
+        f"status={outcome.status}: {outcome.message}"
+        for outcome in outcomes
+        if not outcome.success
+    )
+    local_solver_converged = bool(outcomes) and not failed_statuses
 
     return _make_route_result(
         route_name="candidate-combinations + SLSQP polish",
         schedule=best_schedule,
-        converged=True,
+        local_solver_converged=local_solver_converged,
+        algorithm_resolved=True,
         iterations=len(ranked[:8]),
-        failure_reason=None,
+        failure_reason="; ".join(failed_statuses) if failed_statuses else None,
         grid_bounds=bounds,
         master_values=master_values,
         seed=seed,
         runtime_s=perf_counter() - started,
+        solver_statuses=tuple(
+            f"status={outcome.status}: {outcome.message}" for outcome in outcomes
+        ),
     )
 
 
@@ -471,15 +643,18 @@ def _solve_finite_master_for_mode(
     mode: tuple[str, ...],
     witnesses: Sequence[float],
     initial_times: Sequence[float],
-) -> tuple[BombSchedule, float]:
+) -> _LocalSolveOutcome:
     count = len(mode)
 
     def loss(values: np.ndarray) -> float:
         return -float(values[-1])
 
     def witness_constraint(values: np.ndarray, witness: float) -> float:
-        schedule = BombSchedule(mode, tuple(float(value) for value in values[:-1]))
-        return _coverage_unchecked(schedule, witness) / _demand(witness) - float(values[-1])
+        trial_times = tuple(float(value) for value in values[:-1])
+        return (
+            _coverage_from_vectors(mode, trial_times, witness) / _demand(witness)
+            - float(values[-1])
+        )
 
     constraints: list[dict[str, object]] = [
         {
@@ -508,12 +683,22 @@ def _solve_finite_master_for_mode(
         options={"ftol": 1e-10, "maxiter": 200, "disp": False},
     )
     raw_times = tuple(float(value) for value in optimized.x[:-1])
+    success = bool(optimized.success)
+    message = str(optimized.message)
     try:
-        schedule = _validated_schedule(BombSchedule(mode, raw_times))
-    except ValueError:
+        schedule = BombSchedule(mode, raw_times)
+    except (TypeError, ValueError):
         schedule = initial_schedule
+        success = False
+        message = f"{message}; optimizer returned an infeasible schedule"
     master_value = sample_objective(schedule, sample_times=witnesses)
-    return schedule, master_value
+    return _LocalSolveOutcome(
+        schedule=schedule,
+        value=master_value,
+        success=success,
+        status=int(optimized.status),
+        message=message,
+    )
 
 
 def _grid_start_for_mode(mode: tuple[str, ...], step: float) -> BombSchedule:
@@ -549,7 +734,10 @@ def solve_separation_oracle(
         raise TypeError("max_iterations must be an integer")
     if max_iterations < 0:
         raise ValueError("max_iterations must be nonnegative")
-    if not math.isfinite(float(tolerance)) or tolerance <= 0.0:
+    if isinstance(tolerance, bool) or not isinstance(tolerance, Real):
+        raise TypeError("tolerance must be a real number")
+    normalized_tolerance = float(tolerance)
+    if not math.isfinite(normalized_tolerance) or normalized_tolerance <= 0.0:
         raise ValueError("tolerance must be positive and finite")
     bounds = enumerate_grid_bounds() if global_bounds is None else global_bounds
     if not isinstance(bounds, GridBounds):
@@ -563,15 +751,20 @@ def solve_separation_oracle(
     incumbent = bounds.schedule
     incumbent_objective = bounds.lower_bound
     master_values: list[float] = []
-    converged = False
+    separator_converged = False
     completed_iterations = 0
+    outcomes: list[_LocalSolveOutcome] = []
+    termination_reason: str | None = None
 
     for iteration in range(max_iterations + 1):
         solved: list[tuple[float, BombSchedule]] = []
         for mode in modes:
-            schedule, master_value = _solve_finite_master_for_mode(
+            outcome = _solve_finite_master_for_mode(
                 mode, witnesses, starts[mode].burst_times
             )
+            outcomes.append(outcome)
+            schedule = outcome.schedule
+            master_value = outcome.value
             starts[mode] = schedule
             solved.append((master_value, schedule))
             verified = verify_schedule_exactly(schedule)
@@ -584,31 +777,52 @@ def solve_separation_oracle(
         master_values.append(selected_master)
         separated = verify_schedule_exactly(selected_schedule)
         completed_iterations = iteration
-        if iteration > 0 and selected_master - separated.objective <= tolerance:
-            converged = True
+        if (
+            iteration > 0
+            and selected_master - separated.objective <= normalized_tolerance
+        ):
+            separator_converged = True
             if separated.objective > incumbent_objective:
                 incumbent = selected_schedule
             break
         if iteration == max_iterations:
+            termination_reason = "maximum separation-oracle iterations reached"
             break
         if all(abs(separated.worst_time - witness) > 1e-10 for witness in witnesses):
             witnesses.append(separated.worst_time)
             witnesses.sort()
         else:
             # A repeated witness indicates local-master stagnation, not a global proof.
+            termination_reason = "separation oracle stagnated on a repeated witness"
             break
 
-    failure_reason = None if converged else "maximum separation-oracle iterations reached"
+    failed_statuses = tuple(
+        f"status={outcome.status}: {outcome.message}"
+        for outcome in outcomes
+        if not outcome.success
+    )
+    local_solver_converged = bool(outcomes) and not failed_statuses
+    if failed_statuses:
+        failure_reason = "; ".join(failed_statuses)
+    elif not separator_converged:
+        failure_reason = termination_reason
+    else:
+        failure_reason = None
     return _make_route_result(
         route_name="local finite-master + exact separation heuristic",
         schedule=incumbent,
-        converged=converged,
+        local_solver_converged=local_solver_converged,
+        algorithm_resolved=separator_converged,
         iterations=completed_iterations,
         failure_reason=failure_reason,
         grid_bounds=bounds,
         master_values=master_values,
         seed=seed,
         runtime_s=perf_counter() - started,
+        solver_statuses=tuple(
+            f"status={outcome.status}: {outcome.message}" for outcome in outcomes
+        ),
+        resolution_tolerance=normalized_tolerance,
     )
 
 

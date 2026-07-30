@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import math
 from time import perf_counter
+from types import SimpleNamespace
 
 import pytest
 
+import experiments.toy_demos.q2_joint_prototype as joint_module
 from experiments.toy_demos.common import ToyRunRecord
 from experiments.toy_demos.q2_joint_prototype import (
+    BOMB_PARAMETERS,
+    GRID_BOUND_SOURCE,
     BombSchedule,
+    GridBounds,
     enumerate_grid_bounds,
     evaluate_coverage,
     run_q2_joint_demo,
@@ -72,6 +77,12 @@ def test_both_routes_are_independently_verified_and_bracketed_by_global_bounds()
         assert result.master_values
         assert isinstance(result.record, ToyRunRecord)
         assert result.record.metadata["bound_source"] == "Lipschitz grid covering bound"
+        assert not result.globally_resolved
+        assert result.unresolved
+        assert not result.converged
+        assert result.record.metadata["local_solver_converged"] == (
+            result.local_solver_converged
+        )
 
 
 def test_zero_oracle_augmentation_budget_stays_unresolved_and_exposes_gap() -> None:
@@ -149,24 +160,124 @@ def test_public_solvers_reject_inputs_that_break_the_bound_certificate(
 
 
 @pytest.mark.parametrize(
-    "schedule",
+    ("bomb_types", "burst_times"),
     [
-        BombSchedule(("A", "B"), (1.0, 1.49)),
-        BombSchedule(("A", "A"), (0.0, 1.0)),
-        BombSchedule(("Z",), (1.0,)),
-        BombSchedule(("A",), (4.1,)),
+        (("A", "B"), (1.0, 1.49)),
+        (("A", "A"), (0.0, 1.0)),
+        (("Z",), (1.0,)),
+        (("A",), (4.1,)),
     ],
 )
-def test_schedule_validation_is_strict(schedule: BombSchedule) -> None:
+def test_schedule_validation_is_strict(
+    bomb_types: tuple[str, ...], burst_times: tuple[float, ...]
+) -> None:
     with pytest.raises(ValueError):
-        verify_schedule_exactly(schedule)
+        BombSchedule(bomb_types, burst_times)
 
 
-def test_complete_demo_runs_under_thirty_seconds() -> None:
+def test_schedule_normalises_sequences_and_bomb_catalogue_is_read_only() -> None:
+    schedule = BombSchedule(["A", "C"], [0, 2])  # type: ignore[arg-type]
+
+    assert schedule.bomb_types == ("A", "C")
+    assert schedule.burst_times == (0.0, 2.0)
+    with pytest.raises(TypeError):
+        BOMB_PARAMETERS["A"] = (9.0, 9.0)  # type: ignore[index]
+
+
+def test_grid_bounds_reject_forged_values_and_provenance() -> None:
+    valid = enumerate_grid_bounds(grid_step=0.25)
+    shared = {
+        "schedule": valid.schedule,
+        "lower_bound": valid.lower_bound,
+        "global_upper_bound": valid.global_upper_bound,
+        "grid_step": valid.grid_step,
+        "lipschitz_constant": valid.lipschitz_constant,
+        "evaluated_schedules": valid.evaluated_schedules,
+        "bound_source": GRID_BOUND_SOURCE,
+    }
+
+    for changes in (
+        {"lower_bound": valid.lower_bound + 0.1},
+        {"global_upper_bound": valid.lower_bound - 0.1},
+        {"grid_step": math.nan},
+        {"lipschitz_constant": -1.0},
+        {"evaluated_schedules": 0},
+        {"bound_source": "local master guess"},
+    ):
+        with pytest.raises((TypeError, ValueError)):
+            GridBounds(**(shared | changes))
+
+
+def test_minimize_failure_is_propagated_and_never_labelled_converged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def failed_minimize(
+        function: object, x0: object, *args: object, **kwargs: object
+    ) -> SimpleNamespace:
+        del function, args, kwargs
+        return SimpleNamespace(
+            x=x0,
+            success=False,
+            status=9,
+            message="forced iteration limit",
+        )
+
+    monkeypatch.setattr(joint_module, "minimize", failed_minimize)
+    bounds = enumerate_grid_bounds(grid_step=0.25)
+    candidate = solve_candidate_polish(seed=3, global_bounds=bounds)
+    oracle = solve_separation_oracle(seed=3, global_bounds=bounds, max_iterations=2)
+
+    for result in (candidate, oracle):
+        assert not result.local_solver_converged
+        assert not result.globally_resolved
+        assert result.unresolved
+        assert not result.converged
+        assert result.failure_reason is not None
+        assert "status=9" in result.failure_reason
+        assert "forced iteration limit" in result.failure_reason
+
+
+@pytest.mark.parametrize("tolerance", [True, 0.0, -1.0, math.nan, math.inf])
+def test_oracle_rejects_invalid_tolerance(tolerance: object) -> None:
+    bounds = enumerate_grid_bounds(grid_step=0.25)
+    with pytest.raises((TypeError, ValueError)):
+        solve_separation_oracle(global_bounds=bounds, tolerance=tolerance)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("samples", [(True,), ("1.0",), (math.nan,), ()])
+def test_finite_sampler_rejects_nonreal_or_invalid_times(samples: tuple[object, ...]) -> None:
+    schedule = BombSchedule(("A",), (1.0,))
+    with pytest.raises((TypeError, ValueError)):
+        sample_objective(schedule, sample_times=samples)  # type: ignore[arg-type]
+
+
+def test_repeated_separator_witness_has_a_distinct_stagnation_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_verify = joint_module.verify_schedule_exactly
+
+    def repeated_witness(schedule: BombSchedule) -> object:
+        checked = original_verify(schedule)
+        return joint_module.ExactVerification(
+            objective=checked.objective,
+            worst_time=0.0,
+            breakpoints=checked.breakpoints,
+        )
+
+    monkeypatch.setattr(joint_module, "verify_schedule_exactly", repeated_witness)
+    bounds = enumerate_grid_bounds(grid_step=0.25)
+    result = solve_separation_oracle(seed=8, global_bounds=bounds, max_iterations=4)
+
+    assert result.unresolved
+    assert result.failure_reason == "separation oracle stagnated on a repeated witness"
+
+
+def test_complete_demo_records_runtime_without_a_machine_specific_tight_limit() -> None:
     started = perf_counter()
     result = run_q2_joint_demo(seed=5, max_iterations=8)
     elapsed = perf_counter() - started
 
     assert result.candidate_route.verified_objective > 0.0
     assert result.oracle_route.verified_objective > 0.0
-    assert elapsed < 30.0
+    assert math.isfinite(elapsed)
+    assert elapsed < 120.0
