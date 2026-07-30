@@ -1,8 +1,10 @@
-# B题统一模型契约 v0.1
+# B题统一模型契约 v0.2
 
-> 状态：基准假设层已于2026-07-30冻结；实现接口评审稿
+> 状态：2026-07-30 惯性纯追踪与舰载起飞修订后冻结；当前有效契约
+> 文件名保留 `v0.1` 仅为兼容既有链接，正文版本和效力以本页为准。
 > 事实来源：[problem_facts.md](problem_facts.md)
 > 假设来源：[assumption_register.md](assumption_register.md)
+> 修订设计：[惯性纯追踪与舰载起飞模型修订设计](../plans/2026-07-30-inertial-pursuit-shipborne-launch-design.md)
 > 目的：固定四问共享的数学对象、时间语义、输入输出和成功判据。实现不得绕过本契约另写一套判定。
 
 ## 1. 契约原则
@@ -61,7 +63,7 @@ t^e_j=t^d_j+3.5.
 | \(\boldsymbol s(t)\) | 舰船中心位置 | m | 状态 |
 | \(S(t)\) | 舰船完整等效被探测区域 | m²区域 | 派生集合 |
 | \(\boldsymbol m_i(t)\) | 第 \(i\) 枚导弹位置 | m | 状态 |
-| \(\chi_i(t)\) | 导弹速度航向角 | rad | 状态/派生量 |
+| \(\psi_i(t)\) | 导弹实际速度航向角 | rad | 状态 |
 | \(\lambda_i(t)\) | 导弹指向舰船的视线角 | rad | 派生量 |
 | \(\alpha_i(t)\) | 舰船相对导弹探测光轴偏角 | rad | 派生量 |
 | \(\boldsymbol u_u(t)\) | 第 \(u\) 架无人机位置 | m | 状态 |
@@ -92,18 +94,47 @@ S(t)=B(\boldsymbol s(t),r_s)
 
 ## 5. 导弹对象
 
-### 5.1 基准纯追踪模型
+### 5.1 正式惯性纯追踪模型
 
-纯追踪是 A-002，不是题面直接给出的制导律：
+惯性纯追踪是 A-002，不是题面直接给出的制导律。对每枚导弹使用状态
+\((m_{i,x},m_{i,y},\psi_i)\)：
 
 \[
 \dot{\boldsymbol m}_i(t)
 =v_{m,i}
-\frac{\boldsymbol s(t)-\boldsymbol m_i(t)}
-{\|\boldsymbol s(t)-\boldsymbol m_i(t)\|}.
+\begin{bmatrix}
+\cos\psi_i(t)\\
+\sin\psi_i(t)
+\end{bmatrix},
 \]
 
-标准单威胁场景可取 \(v_{m,i}=320\)，问题四允许按 A-012 在场景中覆盖。
+\[
+\dot\psi_i(t)
+=
+\operatorname{clip}
+\left(
+k_i\operatorname{wrap}_{(-\pi,\pi]}
+\bigl(\lambda_i(t)-\psi_i(t)\bigr),
+-\omega_{i,\max},
+\omega_{i,\max}
+\right).
+\]
+
+其中 \(k_i>0\) 是航向响应系数，\(\omega_{i,\max}>0\) 是最大转弯角速度。标准单威胁场景取 \(v_{m,i}=320\)，问题四允许按 A-012 在场景中覆盖。
+
+按 A-021，正式场景扫描：
+
+\[
+k\in\{0.5,1,2\}\ {\rm s^{-1}},
+\qquad
+\omega_{\max}\in\{5^\circ,10^\circ,20^\circ\}/{\rm s}.
+\]
+
+按 A-022，导弹出现时刻的航向为：
+
+\[
+\psi_i(t_i^{\rm app})=\lambda_i(t_i^{\rm app}).
+\]
 
 命中事件定义为：
 
@@ -111,7 +142,7 @@ S(t)=B(\boldsymbol s(t),r_s)
 \|\boldsymbol m_i(t)-\boldsymbol s(t)\|\le r_s.
 \]
 
-进入该闭圆盘的首时刻记为 \(t^{\rm hit}_i\)。
+进入该闭圆盘的首时刻记为 \(t^{\rm hit}_i\)。若出现时已经满足命中条件，应直接记录命中事件，不计算零相对向量下未定义的视线角。
 
 ### 5.2 视线和视场
 
@@ -120,29 +151,34 @@ S(t)=B(\boldsymbol s(t),r_s)
 \bigl(s_y(t)-m_{i,y}(t),s_x(t)-m_{i,x}(t)\bigr).
 \]
 
-若导弹光轴航向为 \(\chi_i(t)\)，则：
+按 A-003，导弹光轴与实际速度方向 \(\psi_i(t)\) 一致，因此：
 
 \[
 \alpha_i(t)=\operatorname{wrap}_{(-\pi,\pi]}
-\bigl(\lambda_i(t)-\chi_i(t)\bigr).
+\bigl(\lambda_i(t)-\psi_i(t)\bigr).
 \]
 
-有效视场条件是 \(|\alpha_i(t)|\le15^\circ\)，不是 \(|\lambda_i(t)|\le15^\circ\)。
+有效视场条件是 \(|\alpha_i(t)|\le15^\circ\)，不是 \(|\lambda_i(t)|\le15^\circ\)。惯性转弯过程中 \(\alpha_i(t)\) 一般不为零，因此距离入口、视场入口、视场出口和命中都必须作为独立事件求解。探测集合允许由多个连续分量组成。
 
-在 A-002 与 A-003 同时成立时，
+### 5.3 瞬时纯追踪消融
+
+原瞬时纯追踪仅作为极限对照：
 
 \[
-\chi_i(t)=\lambda_i(t),\qquad \alpha_i(t)\equiv0,
+\dot{\boldsymbol m}_i(t)
+=v_{m,i}
+\frac{\boldsymbol s(t)-\boldsymbol m_i(t)}
+{\|\boldsymbol s(t)-\boldsymbol m_i(t)\|}.
 \]
 
-因此视场约束退化为恒满足。程序仍保留 \(\alpha_i\)，以便固定光轴或比例导引扩展复用同一探测接口。
+该模型必须标记 `model_layer: ablation`，不得进入正式方案优化或 9 组惯性参数范围统计。
 
-### 5.3 可选比例导引扩展
+### 5.4 可选比例导引扩展
 
 只有在 X-001 获批后才启用。建议使用闭合速度和航向状态：
 
 \[
-\dot\chi_i=
+\dot\psi_i=
 \frac{\operatorname{clip}
 \left(N_iV_{c,i}\dot\lambda_i,-a_{i,\max},a_{i,\max}\right)}
 {v_{m,i}},
@@ -150,7 +186,7 @@ S(t)=B(\boldsymbol s(t),r_s)
 
 \[
 \dot{\boldsymbol m}_i
-=v_{m,i}(\cos\chi_i,\sin\chi_i)^\mathsf T.
+=v_{m,i}(\cos\psi_i,\sin\psi_i)^\mathsf T.
 \]
 
 其中 \(N_i,a_{i,\max}\) 必须来自场景假设；不得把 \(N=4\) 或 \(10g\) 写成题面事实。
@@ -159,35 +195,45 @@ S(t)=B(\boldsymbol s(t),r_s)
 
 ### 6.1 起飞等待与连续路径约束
 
-基准模型使用 A-009、A-019。令 \(t^o_u\) 为第 \(u\) 架无人机起飞时刻：
+基准模型使用 A-009、A-019。令 \(\tau_u\) 为第 \(u\) 架无人机起飞时刻。起飞前 UAV 留在舰上并随舰移动：
 
 \[
-\boldsymbol u_u:[t^o_u,T]\rightarrow\mathbb R^2
+\boldsymbol u_u(t)=\boldsymbol s(t),
+\qquad t<\tau_u,
+\]
+
+\[
+\boldsymbol u_u(\tau_u)=\boldsymbol s(\tau_u).
+\]
+
+场景不得提供 UAV 自由初始坐标或非零发射偏置。起飞后的空中轨迹满足：
+
+\[
+\boldsymbol u_u:[\tau_u,T]\rightarrow\mathbb R^2
 \quad\text{连续且分段可微},
 \]
 
 \[
 \|\dot{\boldsymbol u}_u(t)\|=28,
-\qquad t\in(t^o_u,T)
+\qquad t\in(\tau_u,T)
 \quad\text{（所有飞行航段）}.
 \]
 
 无人机可在起飞前等待，但一旦起飞，基准模型不允许通过令
-\(\|\dot{\boldsymbol u}_u\|=0\) 在空中悬停。等待时间记为 \(t^o_u\)，不计入飞行航程；飞行能耗继续按A-014以实际路径长度代理。
+\(\|\dot{\boldsymbol u}_u\|=0\) 在空中悬停。舰上等待不计入飞行航程；飞行能耗继续按 A-014 以实际路径长度代理。
 
 ### 6.2 无转弯约束的前向可达集
 
-设 \(\boldsymbol \ell_u(\tau)\) 为无人机在时刻 \(\tau\) 起飞时的发射位置；它由场景给出，在舰载起飞场景中可以随舰船运动。允许起飞前等待且起飞后速度固定时，时刻 \(t\) 的可达集写成：
+无人机在时刻 \(\tau\) 的发射位置唯一确定为 \(\boldsymbol s(\tau)\)。允许起飞前等待且起飞后速度固定时，时刻 \(t\) 的可达集写成：
 
 \[
 \mathcal R_u(t)
 =\bigcup_{0\le\tau\le t}
-\mathcal R_u(t\mid t^o_u=\tau,\,
-\boldsymbol u_u(\tau)=\boldsymbol\ell_u(\tau)).
+\mathcal R_u(t\mid \tau_u=\tau,\,
+\boldsymbol u_u(\tau)=\boldsymbol s(\tau)).
 \]
 
-若发射位置固定、允许任意连续分段直线转向且暂不限制转弯率，圆盘
-\(B(\boldsymbol u_{u,0},v_ut)\) 可作为便捷外逼近。若发射位置随舰船移动，则必须对起飞时刻 \(\tau\) 取并集，不能继续把发射点视为固定。
+必须对起飞时刻 \(\tau\) 取并集，不能把发射点视为舰船初始位置或场景中的固定基地。
 
 无论使用哪种解析外逼近，最终都必须显式构造一条起飞后全程速度为28 m/s、无空中悬停的连续分段直线路径。
 
@@ -197,7 +243,7 @@ S(t)=B(\boldsymbol s(t),r_s)
 
 \[
 \|\boldsymbol u_u(t)-\boldsymbol s(t)\|\le12000,
-\qquad t\in[t^o_u,T].
+\qquad t\in[\tau_u,T].
 \]
 
 这是相对运动舰船实时位置的约束，不是相对舰船初始位置、固定基地或累计航程的约束。累计飞行距离只作为A-014的能耗代理另行报告。
@@ -212,7 +258,7 @@ t^d_{j_{k+1}}-t^d_{j_k}\ge1.
 
 单机投弹数不超过 3；Q3 中每机严格等于或不超过 1 枚，以题目具体要求为准。
 
-多机安全约束为：
+仅当两架无人机都已起飞时检查多机安全约束：
 
 \[
 \|\boldsymbol u_{u}(t)-\boldsymbol u_{v}(t)\|
@@ -220,7 +266,7 @@ t^d_{j_{k+1}}-t^d_{j_k}\ge1.
 \quad u\ne v,
 \]
 
-其中 \(d_{\rm safe}\) 是场景参数 A-013。
+其中 \(d_{\rm safe}\) 是场景参数 A-013。若两机同时从同一舰船位置起飞，则起飞瞬间间距为零，方案不可行；仍在舰上的 UAV 不参加空中安全距离检查。
 
 ## 7. 投弹、起爆和烟幕
 
@@ -288,6 +334,14 @@ t\in[0,t_i^{\rm hit}]:
 |\alpha_i(t)|\le15^\circ
 \right\}.
 \]
+
+由于 \(\alpha_i(t)\) 一般不为零，\(\mathcal D_i\) 可写成若干闭区间分量的并：
+
+\[
+\mathcal D_i=\bigcup_{\ell=1}^{L_i}[a_{i,\ell},b_{i,\ell}].
+\]
+
+求解器不得假设 \(L_i=1\)，也不得复用瞬时纯追踪下的固定探测时长界。
 
 本定义采用 A-004 和 A-017：
 
@@ -399,7 +453,7 @@ L_g\le v_s+\max_j
 
 固定中心、半径恒定时 \(L_g\le7.71\)；衰减阶段可取 \(L_g\le31.71\)。若相邻采样间隔为 \(\Delta t\)，只有在端点/中点的负裕度足以覆盖 \(L_g\Delta t/2\) 和空间近似误差时，才能认证整段时间覆盖。
 
-由于题面把起爆建模为半径从0瞬时跳到120 m，\(g_{\mathcal J}(t)\) 在起爆事件处不连续。连续时间认证必须先按所有 \(t^e_j,t^h_j,t^f_j\)、探测入口和命中事件切分时间轴，再仅在每个连续模式内部使用Lipschitz界；事件时刻本身单独按闭区间端点规则检查。
+由于题面把起爆建模为半径从0瞬时跳到120 m，\(g_{\mathcal J}(t)\) 在起爆事件处不连续。连续时间认证必须先按所有 \(t^e_j,t^h_j,t^f_j\)、距离入口、视场入口/出口、探测分量端点和命中事件切分时间轴，再仅在每个连续模式内部使用 Lipschitz 界；事件时刻本身单独按闭区间端点规则检查。
 
 ### 10.3 结果状态
 
@@ -418,6 +472,7 @@ L_g\le v_s+\max_j
 至少包含：
 
 - 场景ID和假设ID集合；
+- `guidance_model`、`model_layer`、\(k\) 和 \(\omega_{\max}\)；
 - \(t^c,t^d,t^e,\boldsymbol p^d,\boldsymbol c_e\)；
 - 无人机连续路径或路径节点；
 - 覆盖起止区间；
@@ -456,16 +511,27 @@ Q1–Q3向Q4提供经过独立验证的任务包：
 - 起止位置和任务持续时间；
 - 认证覆盖率、最大空档、鲁棒裕度；
 - 航程和单点失效指标；
-- 不确定性假设。
+- 不确定性假设；
+- 9 组惯性参数下的中值、范围、最不利组合和参数敏感标记。
 
 Q4不得直接使用未经空间联合覆盖验证的一维时间区间。
 
-## 12. 当前契约冲突
+## 12. 契约版本与过时内容
 
-与原计划相比，v0.1有三项实质修改：
+v0.2 在 v0.1 的联合覆盖、词典序和解析优先原则上增加两项实质修订：
 
-1. Q2、Q3使用严格联合覆盖函数 \(g_{\mathcal J}\)，不再只合并“单烟幕独立覆盖区间”；
-2. Q3不预先固定NSGA-II，优先词典序或 \(\varepsilon\)-约束；
-3. Q1在优化前先运行解析不可行性判定。
+1. Q1–Q4 的正式导弹模型改为带一阶航向惯性和最大转弯率的纯追踪；
+2. Q1–Q4 的 UAV 均可在舰上等待，但只能从实际起飞时刻的舰船位置起飞。
 
-上述基准假设已于2026-07-30获批。下一步需要将本契约同步回写 Implementation Plan；在新计划完成前，旧计划仍不得原样执行。
+以下 v0.1 内容已经过时：
+
+- 瞬时纯追踪作为正式基准；
+- 视场偏角恒为零；
+- 探测窗口必为单个连续区间；
+- UAV 发射位置由场景指定；
+- 非零甲板偏置作为可用扩展；
+- 由瞬时纯追踪直接推得的 24.1677–25.3610 s 正式探测窗口界。
+
+当前实现必须以本契约和
+[惯性模型实施计划](../plans/2026-07-30-inertial-pursuit-shipborne-launch-implementation-plan.md)
+为唯一入口。
