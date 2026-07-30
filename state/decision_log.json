@@ -328,6 +328,24 @@
         "10.1109/ISCAIT69154.2026.11477504"
       ],
       "pollution_rule": "外题10m、20s、下沉等参数禁止进入本题；基准只采用原题P2-P22。"
+    },
+    "q1_audit": {
+      "completed_at": "2026-07-31T00:47:06+08:00",
+      "targeted_tests": "26 passed",
+      "continuous_optimizer_called": false,
+      "actual_method": "有限解析候选生成后按词典序取最大",
+      "strict_results_retained": [
+        "固定中心单烟幕模型下10.3761348898s解析上界",
+        "旧响应语义/无预部署/command=0下5.5s最早形成因果下界",
+        "给定旧模型与容差下的三值连续验证结果"
+      ],
+      "downgraded_results": [
+        "最佳方案降为旧模型下有限候选库最优",
+        "9组惯性参数结果降为团队场景敏感性",
+        "80m命中事件无题面依据",
+        "所有正式Q1坐标/时序需在未来Stage4后重算"
+      ],
+      "pr5_root_cause_reviewed": true
     }
   },
   "scores": {
@@ -467,6 +485,16 @@
         "ts": "2026-07-31T00:39:49+08:00",
         "type": "literature_complete",
         "detail": "29篇核心资料通过配额：烟幕/UAV 8、SIP/连续覆盖10、轨迹/混合9、数值验证2；高污染外题论文排除。"
+      },
+      {
+        "ts": "2026-07-31T00:47:06+08:00",
+        "type": "q1_audit_complete",
+        "detail": "确认连续精修未实施；10.376135s和5.5s仅按前提保留，最佳方案降为有限候选库最优；26个目标测试通过。"
+      },
+      {
+        "ts": "2026-07-31T00:47:06+08:00",
+        "type": "pr5_root_cause_complete",
+        "detail": "确认固定9候选、无连续精修、伪B&B与unresolved风险上界缺陷；全部Q2数值继续失效。"
       }
     ]
   }
