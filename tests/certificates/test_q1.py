@@ -45,3 +45,13 @@ def test_detection_starting_at_earliest_burst_is_not_claimed_feasible():
 
     assert result.status is CertificationStatus.INDETERMINATE
     assert result.unavoidable_exposure_s == pytest.approx(0.0)
+
+
+def test_zero_duration_detection_before_earliest_smoke_is_infeasible():
+    result = certify_earliest_smoke_availability(
+        (ClosedInterval(1.0, 1.0),),
+        command_time_s=0.0,
+    )
+
+    assert result.status is CertificationStatus.CERTIFIED_INFEASIBLE
+    assert result.unavoidable_exposure_s == pytest.approx(0.0)

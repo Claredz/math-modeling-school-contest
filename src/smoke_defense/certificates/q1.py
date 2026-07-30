@@ -91,10 +91,16 @@ def certify_earliest_smoke_availability(
         command_time_s,
         earliest_burst,
     )
+    has_preburst_detection = any(
+        max(component.start_s, command_time_s)
+        <= min(component.end_s, earliest_burst)
+        and max(component.start_s, command_time_s) < earliest_burst
+        for component in components
+    )
     if (
         no_predeployed_smoke
         and full_detection_window_required
-        and unavoidable > tolerance_s
+        and (unavoidable > tolerance_s or has_preburst_detection)
     ):
         return EarliestSmokeCertificate(
             CertificationStatus.CERTIFIED_INFEASIBLE,

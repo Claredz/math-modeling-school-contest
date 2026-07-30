@@ -5,6 +5,7 @@ from smoke_defense.candidates import (
     Q1Candidate,
     build_shipborne_release_path,
     candidate_rank_key,
+    evaluate_smoke_against_detection,
     generate_q1_candidates,
 )
 from smoke_defense.coverage import CertificationStatus
@@ -12,7 +13,7 @@ from smoke_defense.detection import DetectionSet
 from smoke_defense.dynamics import ShipMotion
 from smoke_defense.events import ClosedInterval
 from smoke_defense.path_constraints import certify_operation_radius
-from smoke_defense.smoke import detonation_position
+from smoke_defense.smoke import SmokeCloud, detonation_position
 
 
 def test_release_path_starts_on_moving_ship_and_reaches_burst_center():
@@ -201,3 +202,31 @@ def test_custom_smoke_lifetime_adds_balanced_coverage_center():
     left_exposure = covered.start_s - detection.components[0].start_s
     right_exposure = detection.components[0].end_s - covered.end_s
     assert left_exposure == pytest.approx(right_exposure, abs=1e-6)
+
+
+def test_minimum_margin_includes_smoke_failure_critical_time():
+    ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=7.71)
+    failure_time_s = 1.013
+    smoke = SmokeCloud(
+        burst_time_s=0.0,
+        burst_center_m=np.array([10.0, 0.0]),
+        maximum_radius_m=120.0,
+        hold_duration_s=0.513,
+        decay_duration_s=0.5,
+    )
+    detection = DetectionSet(
+        components=(ClosedInterval(0.98, 1.04),),
+        source_events=(),
+    )
+
+    *_, minimum_margin_m, _status = evaluate_smoke_against_detection(
+        ship=ship,
+        smoke=smoke,
+        detection=detection,
+    )
+
+    expected = -(
+        np.linalg.norm(ship.position(failure_time_s) - smoke.burst_center_m)
+        + 80.0
+    )
+    assert minimum_margin_m == pytest.approx(expected, abs=1e-10)

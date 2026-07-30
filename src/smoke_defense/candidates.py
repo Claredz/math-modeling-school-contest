@@ -248,6 +248,57 @@ def smoke_full_coverage_intervals(
     )
 
 
+def _minimum_smoke_margin(
+    *,
+    ship: ShipMotion,
+    smoke: SmokeCloud,
+    detection: DetectionSet,
+    ship_radius_m: float,
+) -> float:
+    """Return the exact margin infimum over the detection components.
+
+    Within each smoke phase the radius is affine and the negative distance
+    from a constant-velocity ship to the fixed centre is concave. The minimum
+    therefore lies at a phase endpoint. The pre-burst left limit is checked
+    separately because the radius jumps at burst.
+    """
+
+    margins: list[float] = []
+
+    def margin(time_s: float, *, radius_m: float | None = None) -> float:
+        smoke_radius_m = (
+            smoke.radius(time_s) if radius_m is None else radius_m
+        )
+        return -single_smoke_gap(
+            ship.position(time_s),
+            smoke.burst_center_m,
+            smoke_radius_m,
+            ship_radius_m=ship_radius_m,
+        )
+
+    critical_times = (
+        smoke.burst_time_s,
+        smoke.hold_end_time_s,
+        smoke.failure_time_s,
+    )
+    for component in detection.components:
+        times = {component.start_s, component.end_s}
+        times.update(
+            time_s
+            for time_s in critical_times
+            if component.start_s <= time_s <= component.end_s
+        )
+        margins.extend(margin(time_s) for time_s in times)
+        if (
+            component.start_s < smoke.burst_time_s
+            <= component.end_s
+        ):
+            margins.append(
+                margin(smoke.burst_time_s, radius_m=0.0)
+            )
+    return min(margins, default=float("inf"))
+
+
 def evaluate_smoke_against_detection(
     *,
     ship: ShipMotion,
@@ -272,19 +323,12 @@ def evaluate_smoke_against_detection(
     exposed_duration = max(0.0, detection.duration_s - covered_duration)
     maximum_exposed = _maximum_uncovered_interval(detection.components, covered)
 
-    margin_samples = []
-    for component in detection.components:
-        sample_count = max(3, int(np.ceil(component.duration_s / 0.05)) + 1)
-        for time_s in np.linspace(component.start_s, component.end_s, sample_count):
-            margin_samples.append(
-                -single_smoke_gap(
-                    ship.position(float(time_s)),
-                    smoke.burst_center_m,
-                    smoke.radius(float(time_s)),
-                    ship_radius_m=ship_radius_m,
-                )
-            )
-    minimum_margin = min(margin_samples, default=float("inf"))
+    minimum_margin = _minimum_smoke_margin(
+        ship=ship,
+        smoke=smoke,
+        detection=detection,
+        ship_radius_m=ship_radius_m,
+    )
     if exposed_duration > 1e-8:
         strict_status = CertificationStatus.CERTIFIED_INFEASIBLE
     else:
