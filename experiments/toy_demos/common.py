@@ -20,7 +20,10 @@ ResultT = TypeVar("ResultT")
 def _integer_seed(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise TypeError("seed must be an integer")
-    return int(value)
+    normalized = int(value)
+    if normalized < 0:
+        raise ValueError("seed must be nonnegative")
+    return normalized
 
 
 def _finite_number(value: object, field_name: str, *, nonnegative: bool = False) -> float:

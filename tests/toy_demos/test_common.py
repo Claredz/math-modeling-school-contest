@@ -35,6 +35,23 @@ def test_record_requires_an_integer_seed(seed: object) -> None:
         make_record(seed=seed)
 
 
+def test_record_rejects_an_omitted_seed() -> None:
+    with pytest.raises(TypeError):
+        ToyRunRecord(
+            demo_name="missing-seed",
+            solver="analytic",
+            objective=1.0,
+            runtime_s=0.0,
+            converged=True,
+            passed_manual_case=True,
+        )
+
+
+def test_record_rejects_a_negative_seed() -> None:
+    with pytest.raises(ValueError, match="nonnegative"):
+        make_record(seed=-1)
+
+
 @pytest.mark.parametrize("objective", [float("nan"), float("inf"), float("-inf")])
 def test_record_rejects_nonfinite_objective(objective: float) -> None:
     with pytest.raises(ValueError):
