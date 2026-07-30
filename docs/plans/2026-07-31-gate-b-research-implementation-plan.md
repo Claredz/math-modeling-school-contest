@@ -235,4 +235,3 @@ git diff --check
 **Step 4:** 更新 PR 描述中的 Stage、证据、风险和人工决策。
 
 **Step 5:** 在 Gate B 停止，不执行 Stage 4。
-
