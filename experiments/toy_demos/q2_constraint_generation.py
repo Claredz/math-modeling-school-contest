@@ -247,7 +247,6 @@ def run_constraint_generation(
     current_violations: list[float] = []
     best_seen: list[float] = []
     best_seen_violation = math.inf
-    solution = solve_finite_master(witnesses)
 
     for augmentation_count in range(max_iterations + 1):
         solution = solve_finite_master((*witnesses, *added))

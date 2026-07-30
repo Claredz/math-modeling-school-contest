@@ -189,3 +189,28 @@ def test_result_trace_is_immutable() -> None:
 
     with pytest.raises((AttributeError, TypeError)):
         result.current_violations = (1.0,)  # type: ignore[misc]
+
+
+def test_recorded_solver_call_counts_match_actual_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import experiments.toy_demos.q2_constraint_generation as module
+
+    original_master = module.solve_finite_master
+    original_oracle = module.separate_power_distance
+    calls = {"master": 0, "oracle": 0}
+
+    def counted_master(*args: object, **kwargs: object) -> CoverSolution:
+        calls["master"] += 1
+        return original_master(*args, **kwargs)
+
+    def counted_oracle(*args: object, **kwargs: object) -> object:
+        calls["oracle"] += 1
+        return original_oracle(*args, **kwargs)
+
+    monkeypatch.setattr(module, "solve_finite_master", counted_master)
+    monkeypatch.setattr(module, "separate_power_distance", counted_oracle)
+
+    result = module.run_constraint_generation(max_iterations=4)
+
+    assert calls == {"master": result.master_solves, "oracle": result.oracle_calls}
