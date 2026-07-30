@@ -1,6 +1,0 @@
-source: "team_sensitivity_assumption"
-heading_response_rate_per_s: [0.5, 1.0, 2.0]
-max_turn_rate_deg_s: [5.0, 10.0, 20.0]
-reference:
-  heading_response_rate_per_s: 1.0
-  max_turn_rate_deg_s: 10.0
