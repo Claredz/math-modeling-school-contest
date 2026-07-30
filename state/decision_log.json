@@ -13,7 +13,7 @@
   },
   "mode": "standard",
   "started_at": "2026-07-31T00:20:55+08:00",
-  "current_stage": 2,
+  "current_stage": 3,
   "budget": {
     "tokens_used": 0,
     "tokens_cap": 200000,
@@ -159,12 +159,115 @@
     },
     "2": {
       "_label": "analysis",
-      "decomposition": [],
-      "key_variables": [],
-      "key_constraints": [],
-      "objective_per_subproblem": {},
-      "data_schema": {},
-      "subproblem_dependency": {}
+      "decomposition": [
+        {
+          "id": "Q1",
+          "type": "continuous_nonconvex_hybrid",
+          "decision": "单机连续轨迹、指令/投放时刻与投放坐标",
+          "goal": "严格全探测窗口覆盖；不可行时报告认证最大连续覆盖",
+          "difficulty": "hard"
+        },
+        {
+          "id": "Q2",
+          "type": "mixed_discrete_continuous_SIP",
+          "decision": "单机轨迹、1-3枚弹的使用/顺序/投放时空点",
+          "goal": "最大化最长无空档完整覆盖，再优化资源与鲁棒裕度",
+          "difficulty": "hard"
+        },
+        {
+          "id": "Q3",
+          "type": "multiobjective_cooperative_optimization",
+          "decision": "三机轨迹、三枚弹投放时空点与协同起爆",
+          "goal": "词典序成功优先，ε-约束比较裕度、容错和能耗",
+          "difficulty": "hard"
+        },
+        {
+          "id": "Q4",
+          "type": "dynamic_resource_scheduling",
+          "decision": "威胁选择、UAV-弹药-任务分配、轨迹与重调度",
+          "goal": "最大化高损失威胁认证防御，再最小资源并最大稳定性",
+          "difficulty": "hard"
+        }
+      ],
+      "key_variables": [
+        "ship_position_m: state",
+        "missile_position_m: state",
+        "missile_heading_rad: candidate_state",
+        "missile_ship_distance_m: derived",
+        "fov_offset_rad: interpretation_dependent",
+        "detection_time_set_s: derived_set",
+        "uav_position_m: state_or_trajectory_decision",
+        "uav_velocity_mps: control_or_state",
+        "command_time_s: decision",
+        "drop_time_s: decision",
+        "drop_position_m: decision",
+        "burst_time_s: decision_or_derived",
+        "smoke_center_m: candidate_state",
+        "smoke_radius_m: prompt_derived_state",
+        "bomb_used_binary: discrete_decision",
+        "threat_package_assignment_binary: discrete_decision",
+        "worst_coverage_gap_m: verifier_metric",
+        "continuous_coverage_duration_s: objective_metric",
+        "maximum_gap_s: objective_metric",
+        "robust_margin: objective_metric",
+        "uav_energy_or_proxy: undefined_metric",
+        "uav_separation_margin_m: constraint_metric",
+        "threat_loss_weight: scenario_parameter"
+      ],
+      "key_constraints": [
+        "二维水平面与题面速度/半径/时间/资源上限",
+        "距离<=8000m且视场偏角<=15deg的探测集合",
+        "全探测窗口连续时间内舰船80m圆盘属于活动烟幕并集",
+        "UAV可达性、作战半径语义、2s响应与3.5s起爆延时",
+        "同机投弹间隔>=1s且载弹量<=3",
+        "Q3每机仅1枚并满足待定义动态安全距离",
+        "Q4五机、每机最多3枚、因果信息和资源不重叠"
+      ],
+      "objective_per_subproblem": {
+        "Q1": "lexicographic(strict_success, min_resource, max_certified_margin_or_duration)",
+        "Q2": "max longest_gap_free_full_coverage; then min bombs/energy and max robustness",
+        "Q3": "lexicographic success with epsilon-constraint tradeoff among margin, single-failure tolerance, energy",
+        "Q4": "lexicographic certified defense of high-loss threats, resource use, stability"
+      },
+      "data_schema": {
+        "source": "B题：舰船烟幕遮蔽干扰优化.docx",
+        "nonempty_paragraphs": 22,
+        "numeric_table_attachments": 0,
+        "prompt_parameters": "速度、半径、时间和资源上限",
+        "missing_scenario_fields": [
+          "初始坐标与航向",
+          "UAV机动界",
+          "制导律参数",
+          "烟幕中心运动",
+          "Q3安全距离",
+          "能耗函数",
+          "Q4威胁批次与损失"
+        ]
+      },
+      "subproblem_dependency": {
+        "Q1": [
+          "公共动力学与单烟幕覆盖认证原语"
+        ],
+        "Q2": [
+          "复用Q1公共原语；Q1方案仅作warm start，不收缩原始空间"
+        ],
+        "Q3": [
+          "复用Q1/Q2公共与联合覆盖原语；不依赖Q2单机最优顺序"
+        ],
+        "Q4": [
+          "复用Q1-Q3物理/认证接口与未来经认证任务包；不得假定所有包可行"
+        ]
+      },
+      "evidence_layers": [
+        "prompt_fact",
+        "direct_derivation",
+        "unresolved_ambiguity",
+        "interpretation_candidate",
+        "scenario_parameter",
+        "algorithm_assumption",
+        "robust_extension"
+      ],
+      "contract_status": "旧模型契约已解冻；Stage 4 未开始"
     },
     "3": {
       "_label": "model_selection",
@@ -247,7 +350,24 @@
         "evidence": "仅有 B 题原文，未虚构 A/C 对比；对三条真实研究路径完成五维比较，记录团队匹配、七项风险、42h 时间盒和拒绝依据。"
       }
     ],
-    "2": [],
+    "2": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_subproblem_decomposition": 9,
+          "2_key_variable_identification": 9,
+          "3_mathematization": 9,
+          "4_data_alignment": 9,
+          "5_subproblem_dependency": 9
+        },
+        "min": 9,
+        "mean": 9.0,
+        "weighted_mean": 9.0,
+        "verdict": "pass_early",
+        "ts": "2026-07-31T00:30:49+08:00",
+        "evidence": "原题DOCX 22段重读；四问完整卡片、23个统一变量、连续时空覆盖骨架、无数值附件schema和跨问依赖均已记录。"
+      }
+    ],
     "3": [],
     "4": [],
     "5": [],
@@ -260,7 +380,7 @@
   "iterations": {
     "0": 1,
     "1": 1,
-    "2": 0,
+    "2": 1,
     "3": 0,
     "4": 0,
     "5": 0,
@@ -312,6 +432,19 @@
         "stage": 1,
         "verdict": "pass_early",
         "detail": "选题复盘、研究路径比较、风险预案和时间可行性通过；进入 Stage 2。"
+      },
+      {
+        "ts": "2026-07-31T00:30:49+08:00",
+        "type": "contract_unfrozen",
+        "stage": 2,
+        "detail": "旧 assumption/architecture/model contract 仅作历史候选，不再具有 Stage 4 冻结效力。"
+      },
+      {
+        "ts": "2026-07-31T00:30:49+08:00",
+        "type": "stage_complete",
+        "stage": 2,
+        "verdict": "pass_early",
+        "detail": "七层证据、四问原始空间、23变量、数据缺口与依赖完成；进入文献/Q1审计/Stage 3。"
       }
     ]
   }
