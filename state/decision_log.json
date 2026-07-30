@@ -2,7 +2,7 @@
   "_schema_version": "3.0",
   "_doc": "mathmodel-skill 跨阶段决策日志；本轮仅执行 Stage 0-3，并在 Gate B 停止。",
   "competition": "cumcm",
-  "task_type": null,
+  "task_type": "B_optimization_simulation",
   "problem": "2026-school-contest-B",
   "problem_meta": {
     "year": 2026,
@@ -13,7 +13,7 @@
   },
   "mode": "standard",
   "started_at": "2026-07-31T00:20:55+08:00",
-  "current_stage": 1,
+  "current_stage": 2,
   "budget": {
     "tokens_used": 0,
     "tokens_cap": 200000,
@@ -105,11 +105,57 @@
     },
     "1": {
       "_label": "problem_selection",
-      "candidates_assessed": [],
-      "selected": null,
-      "rationale": "",
-      "rejected_alternatives": [],
-      "risks_identified": []
+      "candidates_assessed": [
+        {
+          "candidate": "完整工作流重构至 Gate B",
+          "data_processability": 8,
+          "team_tool_fit": 9,
+          "model_family_fit": 9,
+          "time_feasibility": 8,
+          "innovation_defensibility": 9,
+          "weighted_total": 8.6
+        },
+        {
+          "candidate": "沿用 main 现状",
+          "data_processability": 7,
+          "team_tool_fit": 8,
+          "model_family_fit": 6,
+          "time_feasibility": 9,
+          "innovation_defensibility": 5,
+          "weighted_total": 7.1
+        },
+        {
+          "candidate": "续做已关闭 PR #5",
+          "data_processability": 5,
+          "team_tool_fit": 7,
+          "model_family_fit": 4,
+          "time_feasibility": 6,
+          "innovation_defensibility": 3,
+          "weighted_total": 5.1
+        }
+      ],
+      "selected": "B",
+      "rationale": "用户已用编号 1 锁定仓库唯一提供原文的 B 题。我们擅长数学拆解、文献证据、仿真验证和可复现测试，本题需要连续几何、非凸优化、混合事件仿真与组合调度。选择从题面和文献重建证据链，同时复用 main 中经验证的工程资产；本轮只到 Gate B，避免截止时间前过早进入正式实现。",
+      "rejected_alternatives": [
+        {
+          "candidate": "沿用 main 现状",
+          "reason": "现有测试只证明实现一致性；旧接口可能固化未经文献支持的制导、烟幕和候选空间；无法直接支撑全局最优声明。"
+        },
+        {
+          "candidate": "续做已关闭 PR #5",
+          "reason": "Q2 候选空间过窄、连续精修未落实、未决区间统计不完整，且该 PR 已关闭并明确禁止合并或复制正式结果。"
+        }
+      ],
+      "risks_identified": [
+        "初始坐标与航向缺失：用显式合成场景做 toy demo，不产出正式数值。",
+        "离散采样掩盖连续裸露：采用事件分段、约束生成和反例搜索并报告 unresolved。",
+        "旧代码反向固化模型：每个关键模块至少比较三族候选。",
+        "跨题污染：题面参数只接受原题 P2-P22，拒绝 10m/20s/下沉等外题参数。",
+        "最优性表述过强：严格区分可行、候选最优、局部最优和已认证全局最优。",
+        "范围失控：Gate B 停止，toy demo 不写正式 results。"
+      ],
+      "locked_until": "2026-08-01T00:26:18+08:00",
+      "task_type_rationale": "通用 B_evaluation 映射不适用于本校赛优化/仿真/计算几何/调度题；自定义键由评分脚本回退至 cumcm.default。"
     },
     "2": {
       "_label": "analysis",
@@ -183,7 +229,24 @@
         "evidence": "三主责互备；完整导入与 solver 复核；83 tests/ruff/schema/scenarios/diff fresh exit 0。"
       }
     ],
-    "1": [],
+    "1": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_comparison_depth": 9,
+          "2_team_fit": 9,
+          "3_risk_identification": 9,
+          "4_time_feasibility": 9,
+          "5_decision_record_quality": 9
+        },
+        "min": 9,
+        "mean": 9.0,
+        "weighted_mean": 9.0,
+        "verdict": "pass_early",
+        "ts": "2026-07-31T00:26:18+08:00",
+        "evidence": "仅有 B 题原文，未虚构 A/C 对比；对三条真实研究路径完成五维比较，记录团队匹配、七项风险、42h 时间盒和拒绝依据。"
+      }
+    ],
     "2": [],
     "3": [],
     "4": [],
@@ -196,7 +259,7 @@
   },
   "iterations": {
     "0": 1,
-    "1": 0,
+    "1": 1,
     "2": 0,
     "3": 0,
     "4": 0,
@@ -230,6 +293,25 @@
         "stage": 0,
         "verdict": "pass_early",
         "detail": "工具、角色、时间盒、问题预扫和协作协议通过；进入 Stage 1。"
+      },
+      {
+        "ts": "2026-07-31T00:26:18+08:00",
+        "type": "problem_locked",
+        "stage": 1,
+        "detail": "用户以编号 1 锁定 B 题；仓库无其他题原文，故采用真实研究路径复盘而不虚构多题评分。"
+      },
+      {
+        "ts": "2026-07-31T00:26:18+08:00",
+        "type": "task_type_override",
+        "stage": 1,
+        "detail": "B_evaluation 与本校赛题不符，设为 B_optimization_simulation；评分权重按 cumcm.default 回退。"
+      },
+      {
+        "ts": "2026-07-31T00:26:18+08:00",
+        "type": "stage_complete",
+        "stage": 1,
+        "verdict": "pass_early",
+        "detail": "选题复盘、研究路径比较、风险预案和时间可行性通过；进入 Stage 2。"
       }
     ]
   }
