@@ -31,6 +31,35 @@ from experiments.toy_demos.q4_scheduling import run_demo as run_q4
 
 DEFAULT_SEED = 20260731
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "results"
+_TOP_LEVEL_FIELDS = {
+    "schema_version",
+    "module",
+    "synthetic",
+    "formal_result",
+    "seed",
+    "guarantee_boundary",
+    "records",
+    "module_summary",
+}
+_RECORD_FIELDS = {
+    "demo_name",
+    "solver",
+    "seed",
+    "objective",
+    "runtime_s",
+    "converged",
+    "passed_manual_case",
+    "failure_reason",
+    "metadata",
+}
+_EXPECTED_RECORD_COUNTS = {
+    "q1_continuous_optimization.json": 5,
+    "q2_constraint_generation.json": 1,
+    "q2_joint_prototype.json": 2,
+    "q3_multiobjective.json": 5,
+    "q4_scheduling.json": 4,
+}
+_EXPECTED_TOTAL_RECORDS = 17
 _BOUNDARY = [
     "All instances and parameters in this directory are synthetic.",
     "These records compare algorithm behavior; they are not contest answers.",
@@ -137,7 +166,7 @@ def _q2_joint_artifact(seed: int) -> dict[str, Any]:
 
 def _q3_artifact(seed: int) -> dict[str, Any]:
     exact_front = exact_pareto_front()
-    epsilon = solve_epsilon(risk_limit=8.0)
+    epsilon = solve_epsilon(risk_limit=8.0, seed=seed)
     nsga_seeds = (seed, seed + 1, seed + 2, seed + 3)
     assessment = assess_nsga2(seeds=nsga_seeds)
     records = (epsilon.record, *(run.record for run in assessment.runs))
@@ -146,6 +175,7 @@ def _q3_artifact(seed: int) -> dict[str, Any]:
         seed=seed,
         records=records,
         summary={
+            "base_seed": seed,
             "exact_pareto_front": [
                 {"code": item.code, "benefit": item.benefit, "risk": item.risk}
                 for item in exact_front
@@ -235,6 +265,69 @@ def _json_text(payload: Mapping[str, Any]) -> str:
     )
 
 
+def _validate_artifact_payload(
+    filename: str,
+    payload: Any,
+    *,
+    seed: int,
+) -> int:
+    if not isinstance(payload, dict):
+        raise TypeError("top level must be an object")
+    if set(payload) != _TOP_LEVEL_FIELDS:
+        raise ValueError("top-level fields do not match the artifact contract")
+    if type(payload["schema_version"]) is not int or payload["schema_version"] != 1:
+        raise ValueError("schema_version must be integer 1")
+    expected_module = filename.removesuffix(".json")
+    if payload["module"] != expected_module:
+        raise ValueError(f"module must be {expected_module!r}")
+    if payload["synthetic"] is not True or payload["formal_result"] is not False:
+        raise ValueError("artifact must be explicitly synthetic and non-formal")
+    if type(payload["seed"]) is not int or payload["seed"] != seed:
+        raise ValueError("top-level seed must match the requested integer seed")
+    boundary = payload["guarantee_boundary"]
+    if (
+        not isinstance(boundary, list)
+        or not boundary
+        or any(not isinstance(item, str) or not item.strip() for item in boundary)
+    ):
+        raise ValueError("guarantee_boundary must be a nonempty list of nonempty strings")
+    if not isinstance(payload["module_summary"], dict):
+        raise TypeError("module_summary must be an object")
+    json.dumps(payload["module_summary"], allow_nan=False)
+
+    records = payload["records"]
+    if not isinstance(records, list):
+        raise TypeError("records must be a list")
+    expected_count = _EXPECTED_RECORD_COUNTS.get(filename)
+    if expected_count is None or len(records) != expected_count:
+        raise ValueError(f"record count must be {expected_count}")
+    for index, record in enumerate(records):
+        if not isinstance(record, dict) or set(record) != _RECORD_FIELDS:
+            raise ValueError(f"record {index} fields do not match ToyRunRecord")
+        reconstructed = ToyRunRecord(**record)
+        if filename != "q3_multiobjective.json" and reconstructed.seed != seed:
+            raise ValueError(f"record {index} seed does not match the artifact seed")
+        if filename == "q3_multiobjective.json" and index == 0 and reconstructed.seed != seed:
+            raise ValueError("Q3 epsilon record seed does not match the base seed")
+        original_json = json.dumps(
+            record,
+            ensure_ascii=False,
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        if reconstructed.to_json() != original_json:
+            raise ValueError(f"record {index} is not in normalized ToyRunRecord form")
+    if filename == "q3_multiobjective.json":
+        summary = payload["module_summary"]
+        derived_seeds = [record["seed"] for record in records[1:]]
+        if summary.get("base_seed") != seed:
+            raise ValueError("Q3 module_summary base_seed does not match")
+        if summary.get("nsga2_seeds") != derived_seeds:
+            raise ValueError("Q3 derived NSGA-II seeds do not match their records")
+    return len(records)
+
+
 def write_artifacts(
     *,
     output_dir: Path = DEFAULT_OUTPUT_DIR,
@@ -267,6 +360,7 @@ def check_artifacts(
         else dict(expected_artifacts)
     )
     issues: list[str] = []
+    valid_record_count = 0
     for filename, expected_payload in expected.items():
         path = output_dir / filename
         if not path.is_file():
@@ -277,12 +371,26 @@ def check_artifacts(
         except (OSError, json.JSONDecodeError) as error:
             issues.append(f"invalid artifact {filename}: {type(error).__name__}")
             continue
+        try:
+            valid_record_count += _validate_artifact_payload(
+                filename,
+                actual_payload,
+                seed=seed,
+            )
+        except (TypeError, ValueError) as error:
+            issues.append(f"invalid artifact {filename}: {error}")
+            continue
         if normalize_for_check(actual_payload) != normalize_for_check(expected_payload):
             issues.append(f"stale artifact: {filename}")
     unexpected = sorted(
         path.name for path in output_dir.glob("*.json") if path.name not in expected
     )
     issues.extend(f"unexpected artifact: {filename}" for filename in unexpected)
+    if valid_record_count != _EXPECTED_TOTAL_RECORDS:
+        issues.append(
+            "invalid artifact distribution: "
+            f"expected {_EXPECTED_TOTAL_RECORDS} records, found {valid_record_count}"
+        )
     return not issues, tuple(issues)
 
 

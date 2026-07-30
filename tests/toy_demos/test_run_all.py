@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import math
 import subprocess
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 from experiments.toy_demos import run_all
@@ -42,6 +44,19 @@ def test_build_artifacts_uses_standard_records_and_explicit_toy_boundary() -> No
         assert isinstance(artifact["module_summary"], dict)
         assert len(artifact["records"]) == expected_record_count
         assert all(set(record) == RECORD_FIELDS for record in artifact["records"])
+        if filename != "q3_multiobjective.json":
+            assert all(record["seed"] == artifact["seed"] for record in artifact["records"])
+    q3_records = artifacts["q3_multiobjective.json"]["records"]
+    q3_summary = artifacts["q3_multiobjective.json"]["module_summary"]
+    assert q3_records[0]["seed"] == 20260731
+    assert [record["seed"] for record in q3_records[1:]] == [
+        20260731,
+        20260732,
+        20260733,
+        20260734,
+    ]
+    assert q3_summary["base_seed"] == 20260731
+    assert q3_summary["nsga2_seeds"] == [20260731, 20260732, 20260733, 20260734]
 
 
 def test_normalized_artifacts_are_deterministic_despite_runtime() -> None:
@@ -102,6 +117,63 @@ def test_write_and_check_detect_missing_or_stale_artifacts(tmp_path: Path) -> No
 
 
 def test_cli_check_returns_nonzero_for_missing_artifacts(tmp_path: Path) -> None:
+    assert run_all.main(["--check", "--output-dir", str(tmp_path)]) == 1
+
+
+def test_check_rejects_invalid_record_schema_before_ignoring_runtime(
+    tmp_path: Path,
+) -> None:
+    artifacts = run_all.build_artifacts(seed=20260731)
+    invalid_records = []
+
+    runtime_string = deepcopy(artifacts)
+    runtime_string["q1_continuous_optimization.json"]["records"][0]["runtime_s"] = "fast"
+    invalid_records.append(runtime_string)
+
+    missing_field = deepcopy(artifacts)
+    missing_field["q2_constraint_generation.json"]["records"][0].pop("solver")
+    invalid_records.append(missing_field)
+
+    nan_objective = deepcopy(artifacts)
+    nan_objective["q3_multiobjective.json"]["records"][0]["objective"] = math.nan
+    invalid_records.append(nan_objective)
+
+    negative_runtime = deepcopy(artifacts)
+    negative_runtime["q4_scheduling.json"]["records"][0]["runtime_s"] = -0.1
+    invalid_records.append(negative_runtime)
+
+    for invalid in invalid_records:
+        tmp_path.mkdir(parents=True, exist_ok=True)
+        for filename, payload in invalid.items():
+            (tmp_path / filename).write_text(
+                json.dumps(payload, allow_nan=True),
+                encoding="utf-8",
+            )
+        ok, issues = run_all.check_artifacts(
+            output_dir=tmp_path,
+            seed=20260731,
+            expected_artifacts=artifacts,
+        )
+        assert ok is False
+        assert any("invalid artifact" in issue for issue in issues)
+
+
+def test_cli_check_returns_nonzero_for_invalid_top_level_schema(tmp_path: Path) -> None:
+    artifacts = run_all.build_artifacts(seed=20260731)
+    artifacts["q2_joint_prototype.json"]["unexpected"] = True
+    run_all.write_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        artifacts=artifacts,
+    )
+
+    ok, issues = run_all.check_artifacts(
+        output_dir=tmp_path,
+        seed=20260731,
+        expected_artifacts=run_all.build_artifacts(seed=20260731),
+    )
+    assert ok is False
+    assert any("invalid artifact" in issue for issue in issues)
     assert run_all.main(["--check", "--output-dir", str(tmp_path)]) == 1
 
 

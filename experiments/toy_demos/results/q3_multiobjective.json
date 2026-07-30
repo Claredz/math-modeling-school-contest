@@ -7,6 +7,7 @@
   ],
   "module": "q3_multiobjective",
   "module_summary": {
+    "base_seed": 20260731,
     "epsilon_on_exact_front": true,
     "epsilon_selected_code": "ABD",
     "exact_pareto_front": [
@@ -50,14 +51,15 @@
       "failure_reason": null,
       "metadata": {
         "enumerated_portfolios": 64,
+        "provenance_seed": 20260731,
         "risk_limit": 8.0,
         "selected_code": "ABD",
         "selected_risk": 7
       },
       "objective": 24.0,
       "passed_manual_case": true,
-      "runtime_s": 0.0011442999821156263,
-      "seed": 0,
+      "runtime_s": 0.0010059000342153013,
+      "seed": 20260731,
       "solver": "exact enumeration epsilon constraint"
     },
     {
@@ -75,7 +77,7 @@
       },
       "objective": 24.0,
       "passed_manual_case": false,
-      "runtime_s": 0.05281780002405867,
+      "runtime_s": 0.06116979999933392,
       "seed": 20260731,
       "solver": "DEAP NSGA-II"
     },
@@ -94,7 +96,7 @@
       },
       "objective": 24.0,
       "passed_manual_case": true,
-      "runtime_s": 0.05504159996053204,
+      "runtime_s": 0.05564449995290488,
       "seed": 20260732,
       "solver": "DEAP NSGA-II"
     },
@@ -113,7 +115,7 @@
       },
       "objective": 24.0,
       "passed_manual_case": true,
-      "runtime_s": 0.05291219998616725,
+      "runtime_s": 0.04822309996234253,
       "seed": 20260733,
       "solver": "DEAP NSGA-II"
     },
@@ -132,7 +134,7 @@
       },
       "objective": 24.0,
       "passed_manual_case": true,
-      "runtime_s": 0.05985360004706308,
+      "runtime_s": 0.04942809999920428,
       "seed": 20260734,
       "solver": "DEAP NSGA-II"
     }
