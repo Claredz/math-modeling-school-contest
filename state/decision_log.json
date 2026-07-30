@@ -1,0 +1,236 @@
+{
+  "_schema_version": "3.0",
+  "_doc": "mathmodel-skill 跨阶段决策日志；本轮仅执行 Stage 0-3，并在 Gate B 停止。",
+  "competition": "cumcm",
+  "task_type": null,
+  "problem": "2026-school-contest-B",
+  "problem_meta": {
+    "year": 2026,
+    "letter": "B",
+    "title": "舰船烟幕遮蔽干扰优化",
+    "deadline_iso": "2026-08-01T19:00:00+08:00",
+    "team_size": 3
+  },
+  "mode": "standard",
+  "started_at": "2026-07-31T00:20:55+08:00",
+  "current_stage": 1,
+  "budget": {
+    "tokens_used": 0,
+    "tokens_cap": 200000,
+    "stage_durations_h": {
+      "0": 1.0,
+      "1": 1.0,
+      "2": 4.0,
+      "literature": 5.0,
+      "q1_audit": 4.0,
+      "3": 14.0,
+      "gate_b_review": 4.0,
+      "buffer": 9.0
+    }
+  },
+  "stages": {
+    "0": {
+      "_label": "kickoff",
+      "team_roles": {
+        "A_modeling": {
+          "primary": "题意、假设、数学模型、公式与结果验收",
+          "backup": "协助算法测试",
+          "largest_concern": "现有代码结构反向固化未经文献支持的模型"
+        },
+        "B_writing": {
+          "primary": "论文结构、符号、图表与论据一致性",
+          "backup": "协助文献矩阵",
+          "largest_concern": "把候选库最优或数值稳定误写成全局最优"
+        },
+        "C_simulation": {
+          "primary": "仿真、测试、toy demo、结果和复现",
+          "backup": "协助模型反例",
+          "largest_concern": "连续时间/空间未决区间被离散采样掩盖"
+        }
+      },
+      "tools_ready": [
+        "Python 3.11.9",
+        "NumPy 2.2.6",
+        "CVXPY 1.9.2",
+        "GLPK_MI",
+        "HiGHS",
+        "SciPy",
+        "SALib",
+        "DEAP",
+        "PySwarms",
+        "XeTeX/TeX Live 2025",
+        "Git 2.51.2",
+        "GitHub CLI 2.88.1",
+        "pytest: 83 passed",
+        "ruff: passed",
+        "scenario schema: current",
+        "scenario matrix: 144 formal + 16 ablation"
+      ],
+      "checklist_completed": true,
+      "problem_scan": {
+        "problem_id": "2026-school-contest-B",
+        "domain_keywords": [
+          "几何覆盖",
+          "连续时间认证",
+          "混合事件系统",
+          "非凸优化",
+          "组合调度"
+        ],
+        "data_attachments": [
+          "B题：舰船烟幕遮蔽干扰优化.docx"
+        ],
+        "subproblem_count": 4,
+        "primary_problem_type": "optimization",
+        "secondary_types": [
+          "simulation",
+          "computational_geometry",
+          "scheduling"
+        ],
+        "estimated_difficulty": "high",
+        "data_size_signal": "无数值附件；题面缺少初始场景数据"
+      },
+      "time_budget_h": {
+        "available_at_start": 42.65,
+        "gate_b_scope": 33.0,
+        "buffer": 9.0
+      },
+      "collab_protocol": {
+        "naming": "Python snake_case；文档 kebab-case；量纲写入字段名",
+        "version_control": "每阶段和 Gate 独立提交；禁止合并 main",
+        "sync": "每完成一个 Stage 更新 Draft PR",
+        "escalation": "高严重度问题停止推进并记录；不得补丁式跨 Gate",
+        "multi_agent": "Agent 只处理独立研究/审查；主 Agent 统一核验和写状态"
+      },
+      "notes": "直接基于云端 main@44fd43b83df2c91bf14f40f9a1cb73882694753f；PR #5 已废弃关闭；本轮终点 Gate B。"
+    },
+    "1": {
+      "_label": "problem_selection",
+      "candidates_assessed": [],
+      "selected": null,
+      "rationale": "",
+      "rejected_alternatives": [],
+      "risks_identified": []
+    },
+    "2": {
+      "_label": "analysis",
+      "decomposition": [],
+      "key_variables": [],
+      "key_constraints": [],
+      "objective_per_subproblem": {},
+      "data_schema": {},
+      "subproblem_dependency": {}
+    },
+    "3": {
+      "_label": "model_selection",
+      "candidate_models": [],
+      "selected_per_subproblem": {},
+      "rejection_log": [],
+      "toy_demos_passed": false,
+      "red_team": [],
+      "model_family_consistency": ""
+    },
+    "4": {
+      "_label": "foundation",
+      "assumptions": [],
+      "symbols": [],
+      "terminology": [],
+      "consistency_check": {}
+    },
+    "5": {
+      "_label": "subproblem_loop",
+      "qi_count": 4,
+      "qi_weights": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "qi_status": {},
+      "sub_problems": {},
+      "cross_reference_chain": {},
+      "assumption_change_history": []
+    },
+    "6": {
+      "_label": "robustness"
+    },
+    "7": {
+      "_label": "evaluation"
+    },
+    "8": {
+      "_label": "writing"
+    },
+    "9": {
+      "_label": "review",
+      "submission_ready": false
+    }
+  },
+  "scores": {
+    "0": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_role_clarity": 9,
+          "2_tools_ready": 9,
+          "3_time_planning": 9,
+          "4_problem_scan": 9,
+          "5_collab_protocol": 9
+        },
+        "min": 9,
+        "mean": 9.0,
+        "weighted_mean": 9.0,
+        "verdict": "pass_early",
+        "ts": "2026-07-31T00:24:00+08:00",
+        "evidence": "三主责互备；完整导入与 solver 复核；83 tests/ruff/schema/scenarios/diff fresh exit 0。"
+      }
+    ],
+    "1": [],
+    "2": [],
+    "3": [],
+    "4": [],
+    "5": [],
+    "5_per_qi": [],
+    "6": [],
+    "7": [],
+    "8": [],
+    "9": []
+  },
+  "iterations": {
+    "0": 1,
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 0,
+    "5_per_qi": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0
+  },
+  "events": {
+    "log": [
+      {
+        "ts": "2026-07-31T00:20:55+08:00",
+        "type": "project_restart",
+        "detail": "按真实状态回退到 Stage 0；不承认旧模型冻结状态。"
+      },
+      {
+        "ts": "2026-07-31T00:20:55+08:00",
+        "type": "scope_boundary",
+        "detail": "本轮仅完成 Stage 0-3 与 Gate B；禁止正式重写 Q1 或实现 Q2-Q4。"
+      },
+      {
+        "ts": "2026-07-31T00:20:55+08:00",
+        "type": "problem_scan",
+        "detail": "题面路径：B题：舰船烟幕遮蔽干扰优化.docx；DOCX P1-P22 已可只读解析。"
+      },
+      {
+        "ts": "2026-07-31T00:24:00+08:00",
+        "type": "stage_complete",
+        "stage": 0,
+        "verdict": "pass_early",
+        "detail": "工具、角色、时间盒、问题预扫和协作协议通过；进入 Stage 1。"
+      }
+    ]
+  }
+}
