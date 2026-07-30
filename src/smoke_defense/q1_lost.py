@@ -16,7 +16,7 @@ from smoke_defense.lost_guidance import (
     simulate_lost_coupled_missile,
 )
 from smoke_defense.path_constraints import certify_operation_radius
-from smoke_defense.paths import ShipborneUavPath, UAV_SPEED_MPS
+from smoke_defense.paths import UAV_SPEED_MPS, ShipborneUavPath
 from smoke_defense.scenario import Scenario
 from smoke_defense.smoke import SmokeCloud
 
@@ -48,6 +48,56 @@ class LostQ1OptimizationResult:
     @property
     def feasible(self) -> bool:
         return bool(self.best_candidate and self.best_candidate.successful_defense)
+
+
+def make_custom_q1_scenario(
+    *,
+    scenario_id: str,
+    missile_position_world_m: tuple[float, float],
+    heading_response_rate_per_s: float = 1.0,
+    max_turn_rate_deg_s: float = 5.0,
+    appearance_time_s: float = 0.0,
+) -> Scenario:
+    """Build a validated evaluator scenario from judge-editable parameters."""
+
+    return Scenario.model_validate(
+        {
+            "schema_version": "1.0",
+            "constants_version": "b-problem-v2",
+            "scenario_id": scenario_id,
+            "time_origin": "decision_start",
+            "model_layer": "formal",
+            "assumption_ids": [
+                "A-001",
+                "A-002",
+                "A-003",
+                "A-019",
+                "A-020",
+                "A-021",
+                "A-023",
+                "A-024",
+                "A-025",
+                "A-026",
+            ],
+            "ship": {
+                "initial_position_world_m": (0.0, 0.0),
+                "heading_deg": 0.0,
+            },
+            "uavs": [{"id": "U1", "available_time_s": 0.0}],
+            "missiles": [
+                {
+                    "id": "M1",
+                    "appearance_time_s": appearance_time_s,
+                    "initial_position_world_m": missile_position_world_m,
+                    "guidance_model": "inertial_pure_pursuit",
+                    "heading_response_rate_per_s": heading_response_rate_per_s,
+                    "max_turn_rate_deg_s": max_turn_rate_deg_s,
+                    "optical_axis_model": "velocity_aligned",
+                }
+            ],
+            "constraints": {"safe_distance_m": 100.0},
+        }
+    )
 
 
 def _scenario_geometry(

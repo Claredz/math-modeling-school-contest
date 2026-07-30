@@ -159,12 +159,13 @@ def _rk4_step(
     line_of_sight_rad: float,
     spec: LostGuidanceSpec,
 ) -> np.ndarray:
-    rhs = lambda value: _rhs(
-        value,
-        mode=mode,
-        line_of_sight_rad=line_of_sight_rad,
-        spec=spec,
-    )
+    def rhs(value: np.ndarray) -> np.ndarray:
+        return _rhs(
+            value,
+            mode=mode,
+            line_of_sight_rad=line_of_sight_rad,
+            spec=spec,
+        )
     k1 = rhs(state)
     k2 = rhs(state + 0.5 * dt_s * k1)
     k3 = rhs(state + 0.5 * dt_s * k2)
