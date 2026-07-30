@@ -8,11 +8,11 @@
 | 模块 | 推荐 | 保证边界 | 备用/反事实 |
 |---|---|---|---|
 | 导弹 | 最小参数纯追踪基准 | 只在给定解释下仿真 | 一阶惯性、PN 参数扫描 |
-| 遮蔽 | 舰船圆盘被活动烟幕并集连续覆盖 | verifier 认证给定候选 | 单烟幕解析特例、视线阻断 |
+| 遮蔽 | 舰船圆盘被活动烟幕并集连续覆盖 | verifier 认证给定候选 | 单烟幕特例、视线阻断、轮廓点近似 |
 | 烟幕 | 题面分段半径、固定中心基准 | 不引入无来源风场 | 有界漂移鲁棒层 |
 | UAV | 事件参数化分段直线基准 | 不证明真实转弯可飞 | 有转弯半径后的 Dubins |
 | Q1 | 解析降维 + DE + 局部精修 + verifier | 当前最好已知，不宣称全局 | Multi-start、Sobol、SHGO |
-| Q2 | SIP 约束生成 + separation + verifier | oracle 未认证时保留 unresolved | 联合枚举/局部精修 |
+| Q2 | SIP 约束生成 + separation + verifier | oracle 未认证时保留 unresolved | 联合 MINLP、LBBD、元启发式+认证 |
 | Q3 | 成功优先词典序 + ε-约束 | NSGA-II 仅作覆盖基准 | 分层分配、联合 MINLP |
 | Q4 | 认证任务包 + 因果 rolling MILP | 离线 MILP 仅 hindsight 上界 | 因果贪心、直接联合反事实 |
 

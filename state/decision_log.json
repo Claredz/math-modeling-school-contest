@@ -287,6 +287,7 @@
             "full_ship_disk_covered_by_smoke_union",
             "single_smoke_disk_containment",
             "line_of_sight_blocking",
+            "visible_contour_or_discrete_surface_point_occlusion",
             "transmittance_threshold"
           ],
           "recommended": "continuous_full_ship_disk_union_coverage"
@@ -325,8 +326,9 @@
           "candidates": [
             "SIP_constraint_generation_separation",
             "candidate_combination_continuous_polish",
-            "discrete_mode_local_master_oracle",
-            "LBBD"
+            "joint_MINLP_with_separation_oracle",
+            "LBBD",
+            "metaheuristic_with_independent_continuous_certification"
           ],
           "recommended": "spatiotemporal_SIP_constraint_generation_independent_certification"
         },
@@ -344,7 +346,7 @@
           "module": "Q4_algorithm",
           "candidates": [
             "certified_packages_causal_rolling_MILP",
-            "offline_hindsight_MILP",
+            "certified_task_package_offline_hindsight_MILP",
             "causal_density_greedy",
             "LBBD",
             "two_stage_robust_CCG"
