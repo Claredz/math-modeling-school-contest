@@ -14,6 +14,9 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable
 from dataclasses import dataclass
+from numbers import Integral, Real
+
+from experiments.toy_demos.common import ToyRunRecord
 
 Point = tuple[float, float]
 DEFAULT_WITNESSES: tuple[Point, ...] = ((-1.0, 0.0), (0.0, 0.0), (1.0, 0.0))
@@ -50,20 +53,90 @@ class IndependentVerification:
 class ConstraintGenerationResult:
     """Deterministic trace of the constraint-generation loop.
 
-    ``violation_upper_bounds[k]`` is the smallest nonnegative exact residual
-    observed through iteration ``k``.  It is therefore an attainable upper
-    bound on the best residual among evaluated iterates and is non-increasing;
-    it is deliberately not labelled as the current iterate's violation.
+    ``current_violations`` preserves every iterate's exact residual.
+    ``best_seen_positive_violations`` is its non-increasing running minimum;
+    it describes the best evaluated iterate and is not the current violation.
     """
 
     solution: CoverSolution
     converged: bool
-    iterations: int
+    augmentations: int
+    master_solves: int
+    oracle_calls: int
     initial_witnesses: tuple[Point, ...]
     added_witnesses: tuple[Point, ...]
-    violation_upper_bounds: tuple[float, ...]
+    current_violations: tuple[float, ...]
+    best_seen_positive_violations: tuple[float, ...]
     seed: int
     failure_reason: str | None
+
+    @property
+    def iterations(self) -> int:
+        """Backward-compatible alias for the number of witness augmentations."""
+
+        return self.augmentations
+
+    @property
+    def violation_upper_bounds(self) -> tuple[float, ...]:
+        """Deprecated compatibility alias for best-seen positive violations."""
+
+        return self.best_seen_positive_violations
+
+    def to_toy_record(self, *, runtime_s: float) -> ToyRunRecord:
+        """Adapt the domain trace to the shared, strict result contract."""
+
+        manual_case_passed = (
+            self.converged
+            and abs(self.solution.a) <= 1e-9
+            and abs(self.solution.radius - 1.0) <= 1e-9
+        )
+        return ToyRunRecord(
+            demo_name="q2_constraint_generation",
+            solver="exact_symmetric_master_plus_power_distance_oracle",
+            seed=self.seed,
+            objective=self.solution.objective,
+            runtime_s=runtime_s,
+            converged=self.converged,
+            passed_manual_case=manual_case_passed,
+            failure_reason=self.failure_reason,
+            metadata={
+                "seed_role": "audit_only_deterministic_solver",
+                "augmentations": self.augmentations,
+                "master_solves": self.master_solves,
+                "oracle_calls": self.oracle_calls,
+                "current_violations": self.current_violations,
+                "best_seen_positive_violations": self.best_seen_positive_violations,
+                "added_witnesses": self.added_witnesses,
+            },
+        )
+
+
+def _nonnegative_integer(value: object, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise TypeError(f"{field_name} must be an integer")
+    normalized = int(value)
+    if normalized < 0:
+        raise ValueError(f"{field_name} must be nonnegative")
+    return normalized
+
+
+def _nonnegative_finite(value: object, field_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise TypeError(f"{field_name} must be a real number")
+    normalized = float(value)
+    if not math.isfinite(normalized) or normalized < 0.0:
+        raise ValueError(f"{field_name} must be finite and nonnegative")
+    return normalized
+
+
+def _validate_solution(solution: CoverSolution) -> None:
+    a = _nonnegative_finite(solution.a, "solution.a")
+    radius = _nonnegative_finite(solution.radius, "solution.radius")
+    objective = _nonnegative_finite(solution.objective, "solution.objective")
+    if a > 1.0 + 1e-12:
+        raise ValueError("solution.a must not exceed the unit-disk radius")
+    if not math.isclose(objective, radius * radius, rel_tol=1e-10, abs_tol=1e-12):
+        raise ValueError("solution.objective must equal radius squared")
 
 
 def _normalise_witnesses(witnesses: Iterable[Point]) -> tuple[Point, ...]:
@@ -118,6 +191,8 @@ def separate_power_distance(
     ``1 - 2a|x| + a² - r²``.  Its maximum is attained at either pole.
     """
 
+    _validate_solution(solution)
+    tolerance = _nonnegative_finite(tolerance, "tolerance")
     violation = 1.0 + solution.a * solution.a - solution.radius * solution.radius
     return SeparationResult(
         witness=(0.0, 1.0),
@@ -134,11 +209,15 @@ def verify_cover_independently(
 ) -> IndependentVerification:
     """Verify coverage on an independent deterministic boundary discretisation."""
 
+    _validate_solution(solution)
+    tolerance = _nonnegative_finite(tolerance, "tolerance")
+    boundary_samples = _nonnegative_integer(boundary_samples, "boundary_samples")
     if boundary_samples < 4:
         raise ValueError("boundary_samples must be at least four")
+    angles = {math.tau * index / boundary_samples for index in range(boundary_samples)}
+    angles.update((0.0, math.pi / 2.0, math.pi, 3.0 * math.pi / 2.0))
     maximum = -math.inf
-    for index in range(boundary_samples):
-        angle = math.tau * index / boundary_samples
+    for angle in angles:
         x = math.cos(angle)
         y = math.sin(angle)
         left_power = (x + solution.a) ** 2 + y * y - solution.radius**2
@@ -147,7 +226,7 @@ def verify_cover_independently(
     return IndependentVerification(
         passed=maximum <= tolerance,
         maximum_power_violation=maximum,
-        sample_count=boundary_samples,
+        sample_count=len(angles),
     )
 
 
@@ -160,27 +239,34 @@ def run_constraint_generation(
 ) -> ConstraintGenerationResult:
     """Run deterministic constraint generation with an explicit unresolved state."""
 
-    if max_iterations < 0:
-        raise ValueError("max_iterations must be nonnegative")
+    seed = _nonnegative_integer(seed, "seed")
+    max_iterations = _nonnegative_integer(max_iterations, "max_iterations")
+    tolerance = _nonnegative_finite(tolerance, "tolerance")
     witnesses = _normalise_witnesses(initial_witnesses)
     added: list[Point] = []
-    upper_bounds: list[float] = []
-    incumbent_upper_bound = math.inf
+    current_violations: list[float] = []
+    best_seen: list[float] = []
+    best_seen_violation = math.inf
     solution = solve_finite_master(witnesses)
 
     for augmentation_count in range(max_iterations + 1):
         solution = solve_finite_master((*witnesses, *added))
         separation = separate_power_distance(solution, tolerance=tolerance)
-        incumbent_upper_bound = min(incumbent_upper_bound, max(0.0, separation.violation))
-        upper_bounds.append(incumbent_upper_bound)
+        current_violation = max(0.0, separation.violation)
+        current_violations.append(current_violation)
+        best_seen_violation = min(best_seen_violation, current_violation)
+        best_seen.append(best_seen_violation)
         if not separation.is_violated:
             return ConstraintGenerationResult(
                 solution=solution,
                 converged=True,
-                iterations=augmentation_count,
+                augmentations=augmentation_count,
+                master_solves=augmentation_count + 1,
+                oracle_calls=augmentation_count + 1,
                 initial_witnesses=witnesses,
                 added_witnesses=tuple(added),
-                violation_upper_bounds=tuple(upper_bounds),
+                current_violations=tuple(current_violations),
+                best_seen_positive_violations=tuple(best_seen),
                 seed=seed,
                 failure_reason=None,
             )
@@ -191,10 +277,13 @@ def run_constraint_generation(
     return ConstraintGenerationResult(
         solution=solution,
         converged=False,
-        iterations=max_iterations,
+        augmentations=max_iterations,
+        master_solves=max_iterations + 1,
+        oracle_calls=max_iterations + 1,
         initial_witnesses=witnesses,
         added_witnesses=tuple(added),
-        violation_upper_bounds=tuple(upper_bounds),
+        current_violations=tuple(current_violations),
+        best_seen_positive_violations=tuple(best_seen),
         seed=seed,
         failure_reason="maximum constraint-generation iterations reached",
     )
