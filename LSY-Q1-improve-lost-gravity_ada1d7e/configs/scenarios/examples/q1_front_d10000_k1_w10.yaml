@@ -1,0 +1,33 @@
+schema_version: "1.0"
+constants_version: "b-problem-v2"
+scenario_id: "q1_front_d10000_k1_w10"
+time_origin: "decision_start"
+model_layer: "formal"
+assumption_ids:
+  - "A-001"
+  - "A-002"
+  - "A-003"
+  - "A-019"
+  - "A-020"
+  - "A-021"
+  - "A-022"
+
+ship:
+  initial_position_world_m: [0.0, 0.0]
+  heading_deg: 0.0
+
+uavs:
+  - id: "U1"
+    available_time_s: 0.0
+
+missiles:
+  - id: "M1"
+    appearance_time_s: 0.0
+    initial_position_at_appearance_body_m: [10000.0, 0.0]
+    guidance_model: "inertial_pure_pursuit"
+    heading_response_rate_per_s: 1.0
+    max_turn_rate_deg_s: 10.0
+    optical_axis_model: "velocity_aligned"
+
+constraints:
+  safe_distance_m: 100.0

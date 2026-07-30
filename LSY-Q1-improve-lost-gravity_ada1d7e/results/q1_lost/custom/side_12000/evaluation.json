@@ -1,0 +1,221 @@
+{
+  "missile_position_world_m": [
+    7.347880794884119e-13,
+    12000.0
+  ],
+  "model_parameters": {
+    "initial_heading_error_deg": 10.0,
+    "heading_response_rate_per_s": 1.0,
+    "max_turn_rate_deg_s": 5.0,
+    "tracked_turn_time_constant_s": 0.5,
+    "lost_turn_decay_time_s": 5.0,
+    "reacquisition_confirm_s": 1.0,
+    "burst_search_interval_s": [
+      5.5,
+      35.0
+    ],
+    "coarse_burst_step_s": 0.5,
+    "refined_burst_step_s": 0.05
+  },
+  "defense_successful": true,
+  "conclusion": "存在可达投放方案，可使导弹永久失锁并飞离探测范围",
+  "unique_optimum_on_refined_grid": true,
+  "successful_condition_count": 12,
+  "best_condition": {
+    "takeoff_time_s": 0.0,
+    "release_time_s": 13.050000000000008,
+    "burst_time_s": 16.550000000000008,
+    "release_position_m": [
+      29.600500000000054,
+      0.0
+    ],
+    "burst_center_m": [
+      127.60050000000005,
+      0.0
+    ],
+    "minimum_separation_m": 1815.8544474605997,
+    "escaped_without_reacquisition": true
+  },
+  "successful_conditions": [
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 12.900000000000006,
+      "burst_time_s": 16.400000000000006,
+      "release_position_m": [
+        28.444000000000045,
+        0.0
+      ],
+      "burst_center_m": [
+        126.44400000000005,
+        0.0
+      ],
+      "minimum_separation_m": 1773.5881979604176,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 12.950000000000006,
+      "burst_time_s": 16.450000000000006,
+      "release_position_m": [
+        28.829500000000053,
+        0.0
+      ],
+      "burst_center_m": [
+        126.82950000000005,
+        0.0
+      ],
+      "minimum_separation_m": 1791.1497746893415,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.000000000000007,
+      "burst_time_s": 16.500000000000007,
+      "release_position_m": [
+        29.21500000000006,
+        0.0
+      ],
+      "burst_center_m": [
+        127.21500000000006,
+        0.0
+      ],
+      "minimum_separation_m": 1810.422698155971,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.050000000000008,
+      "burst_time_s": 16.550000000000008,
+      "release_position_m": [
+        29.600500000000054,
+        0.0
+      ],
+      "burst_center_m": [
+        127.60050000000005,
+        0.0
+      ],
+      "minimum_separation_m": 1815.8544474605997,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.100000000000009,
+      "burst_time_s": 16.60000000000001,
+      "release_position_m": [
+        29.98600000000006,
+        0.0
+      ],
+      "burst_center_m": [
+        127.98600000000006,
+        0.0
+      ],
+      "minimum_separation_m": 1814.0171391557315,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.15000000000001,
+      "burst_time_s": 16.65000000000001,
+      "release_position_m": [
+        30.371500000000083,
+        0.0
+      ],
+      "burst_center_m": [
+        128.37150000000008,
+        0.0
+      ],
+      "minimum_separation_m": 1806.7527939922893,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.20000000000001,
+      "burst_time_s": 16.70000000000001,
+      "release_position_m": [
+        30.75700000000009,
+        0.0
+      ],
+      "burst_center_m": [
+        128.7570000000001,
+        0.0
+      ],
+      "minimum_separation_m": 1787.777479712513,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.25000000000001,
+      "burst_time_s": 16.75000000000001,
+      "release_position_m": [
+        31.14250000000007,
+        0.0
+      ],
+      "burst_center_m": [
+        129.14250000000007,
+        0.0
+      ],
+      "minimum_separation_m": 1770.2771532758543,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.300000000000011,
+      "burst_time_s": 16.80000000000001,
+      "release_position_m": [
+        31.528000000000077,
+        0.0
+      ],
+      "burst_center_m": [
+        129.52800000000008,
+        0.0
+      ],
+      "minimum_separation_m": 1737.6012944262434,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.350000000000012,
+      "burst_time_s": 16.850000000000012,
+      "release_position_m": [
+        31.913500000000084,
+        0.0
+      ],
+      "burst_center_m": [
+        129.91350000000008,
+        0.0
+      ],
+      "minimum_separation_m": 1711.9936538871716,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.400000000000013,
+      "burst_time_s": 16.900000000000013,
+      "release_position_m": [
+        32.29900000000009,
+        0.0
+      ],
+      "burst_center_m": [
+        130.2990000000001,
+        0.0
+      ],
+      "minimum_separation_m": 1668.5943368084136,
+      "escaped_without_reacquisition": true
+    },
+    {
+      "takeoff_time_s": 0.0,
+      "release_time_s": 13.450000000000014,
+      "burst_time_s": 16.950000000000014,
+      "release_position_m": [
+        32.6845000000001,
+        0.0
+      ],
+      "burst_center_m": [
+        130.6845000000001,
+        0.0
+      ],
+      "minimum_separation_m": 1636.7387709857426,
+      "escaped_without_reacquisition": true
+    }
+  ]
+}
