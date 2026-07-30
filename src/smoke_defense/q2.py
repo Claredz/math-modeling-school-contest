@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from itertools import combinations
 from math import cos, sin
 from typing import Literal
 
@@ -12,12 +14,19 @@ from smoke_defense.candidates import (
     build_shipborne_release_path,
     evaluate_smoke_against_detection,
     generate_q1_candidates,
+    intersect_interval_sets,
 )
 from smoke_defense.coverage import CertificationStatus
 from smoke_defense.detection import DetectionSet
 from smoke_defense.dynamics import ShipMotion
+from smoke_defense.events import ClosedInterval
 from smoke_defense.path_constraints import certify_operation_radius
-from smoke_defense.smoke import SmokeCloud
+from smoke_defense.paths import ReleaseWaypoint, build_ordered_release_path
+from smoke_defense.smoke import SmokeCloud, detonation_position
+from smoke_defense.verification import (
+    MultiSmokeCoverageCertificate,
+    certify_multi_smoke_coverage,
+)
 
 Vector2 = tuple[float, float]
 ModelLayer = Literal["formal", "ablation"]
@@ -317,6 +326,22 @@ class Q2SweepResult(FrozenQ2Model):
     parameter_sensitive: bool
 
 
+class Q2CombinationEvaluation(FrozenQ2Model):
+    candidate_ids: tuple[str, ...]
+    status: Literal["retained", "rejected"]
+    reason: str
+    plan: MultiSmokePlan | None = None
+
+
+class Q2CombinationSearchResult(FrozenQ2Model):
+    method: Literal["exhaustive_enumeration", "branch_and_bound"]
+    enumerated_count: int = Field(ge=0)
+    retained_count: int = Field(ge=0)
+    rejected_count: int = Field(ge=0)
+    evaluations: tuple[Q2CombinationEvaluation, ...]
+    best_plan: MultiSmokePlan | None
+
+
 def _ship_axes(ship: ShipMotion) -> tuple[np.ndarray, np.ndarray]:
     longitudinal = np.array(
         [cos(ship.heading_rad), sin(ship.heading_rad)],
@@ -533,3 +558,451 @@ def prune_q2_candidates(
         duplicate_count=len(candidates) - len(retained),
         retained_candidates=retained,
     )
+
+
+def _maximum_uncovered_interval(
+    detection_components: tuple[ClosedInterval, ...],
+    covered_intervals: tuple[ClosedInterval, ...],
+) -> float:
+    maximum_s = 0.0
+    for component in detection_components:
+        cursor_s = component.start_s
+        for covered in covered_intervals:
+            if (
+                covered.end_s <= cursor_s
+                or covered.start_s >= component.end_s
+            ):
+                continue
+            maximum_s = max(
+                maximum_s,
+                max(0.0, covered.start_s - cursor_s),
+            )
+            cursor_s = max(cursor_s, covered.end_s)
+        maximum_s = max(
+            maximum_s,
+            max(0.0, component.end_s - cursor_s),
+        )
+    return maximum_s
+
+
+def _independent_coverage_baseline(
+    *,
+    detection: DetectionSet,
+    candidates: tuple[MultiSmokeCandidate, ...],
+    true_exposed_duration_s: float,
+) -> IndependentCoverageBaseline:
+    independent_intervals = tuple(
+        ClosedInterval(start_s, end_s)
+        for candidate in candidates
+        for start_s, end_s in candidate.covered_intervals_s
+    )
+    covered = intersect_interval_sets(
+        detection.components,
+        independent_intervals,
+    )
+    covered_duration_s = sum(interval.duration_s for interval in covered)
+    total_exposed_duration_s = max(
+        0.0,
+        detection.duration_s - covered_duration_s,
+    )
+    true_covered_duration_s = max(
+        0.0,
+        detection.duration_s - true_exposed_duration_s,
+    )
+    return IndependentCoverageBaseline(
+        covered_duration_s=covered_duration_s,
+        total_exposed_duration_s=total_exposed_duration_s,
+        maximum_exposed_interval_s=_maximum_uncovered_interval(
+            detection.components,
+            covered,
+        ),
+        union_gain_s=true_covered_duration_s - covered_duration_s,
+    )
+
+
+def _path_nodes(path) -> tuple[PathNode, ...]:
+    return (
+        PathNode(
+            time_s=path.takeoff_time_s,
+            position_m=tuple(path.position(path.takeoff_time_s)),
+        ),
+        *(
+            PathNode(
+                time_s=segment.end_time_s,
+                position_m=tuple(segment.end_position_m),
+            )
+            for segment in path.segments
+        ),
+    )
+
+
+def _coverage_certificate_model(
+    certificate: MultiSmokeCoverageCertificate,
+    *,
+    spatial_tolerance_m: float,
+    time_tolerance_s: float,
+) -> MultiSmokeCertificate:
+    maximum_interval = certificate.maximum_exposed_interval
+    return MultiSmokeCertificate(
+        status=certificate.status,
+        modes=tuple(
+            CoverageModeRecord(
+                start_time_s=mode.interval.start_s,
+                end_time_s=mode.interval.end_s,
+                active_smoke_indices=mode.active_smoke_indices,
+                status=mode.status,
+                maximum_gap_lower_bound_m=(
+                    mode.maximum_gap_lower_bound_m
+                ),
+                maximum_gap_upper_bound_m=(
+                    mode.maximum_gap_upper_bound_m
+                ),
+            )
+            for mode in certificate.mode_certificates
+        ),
+        maximum_gap_lower_bound_m=(
+            certificate.maximum_gap_lower_bound_m
+        ),
+        maximum_gap_upper_bound_m=(
+            certificate.maximum_gap_upper_bound_m
+        ),
+        minimum_margin_m=certificate.minimum_margin_m,
+        total_exposed_duration_s=certificate.total_exposed_duration_s,
+        maximum_exposed_interval_start_s=(
+            maximum_interval.start_s
+            if maximum_interval is not None
+            else None
+        ),
+        maximum_exposed_interval_end_s=(
+            maximum_interval.end_s
+            if maximum_interval is not None
+            else None
+        ),
+        maximum_exposed_interval_s=(
+            certificate.maximum_exposed_interval_s
+        ),
+        witness_time_s=certificate.witness_time_s,
+        witness_m=(
+            tuple(certificate.witness_m)
+            if certificate.witness_m is not None
+            else None
+        ),
+        spatial_tolerance_m=spatial_tolerance_m,
+        time_tolerance_s=time_tolerance_s,
+    )
+
+
+def evaluate_q2_combination(
+    *,
+    ship: ShipMotion,
+    detection: DetectionSet,
+    candidates: tuple[MultiSmokeCandidate, ...],
+    operation_radius_m: float,
+    verifier: Callable[..., MultiSmokeCoverageCertificate] = (
+        certify_multi_smoke_coverage
+    ),
+    spatial_tolerance_m: float = 0.05,
+    time_tolerance_s: float = 1e-3,
+    initial_polygon_sides: int = 32,
+    maximum_polygon_sides: int = 2048,
+    random_seed: int = 20260730,
+) -> Q2CombinationEvaluation:
+    candidate_ids = tuple(
+        candidate.candidate_id for candidate in candidates
+    )
+    if not 1 <= len(candidates) <= 3:
+        return Q2CombinationEvaluation(
+            candidate_ids=candidate_ids,
+            status="rejected",
+            reason="combination must contain one to three smokes",
+        )
+    ordered = tuple(
+        sorted(candidates, key=lambda item: item.release.release_time_s)
+    )
+    release_intervals_s = tuple(
+        right.release.release_time_s - left.release.release_time_s
+        for left, right in zip(ordered[:-1], ordered[1:], strict=True)
+    )
+    if any(interval_s < 1.0 - 1e-9 for interval_s in release_intervals_s):
+        return Q2CombinationEvaluation(
+            candidate_ids=candidate_ids,
+            status="rejected",
+            reason="adjacent releases must be at least 1 s apart",
+        )
+    if len(
+        {
+            (
+                candidate.scenario_id,
+                candidate.scenario_hash,
+                candidate.constants_hash,
+            )
+            for candidate in ordered
+        }
+    ) != 1:
+        return Q2CombinationEvaluation(
+            candidate_ids=candidate_ids,
+            status="rejected",
+            reason="combination candidates do not share one scenario",
+        )
+
+    releases = tuple(
+        ReleaseWaypoint(
+            release_time_s=candidate.release.release_time_s,
+            release_position_m=np.asarray(
+                candidate.release.release_position_m,
+                dtype=float,
+            ),
+            heading_unit=np.asarray(
+                candidate.release.release_heading_unit,
+                dtype=float,
+            ),
+        )
+        for candidate in ordered
+    )
+    takeoff_time_s = min(candidate.takeoff_time_s for candidate in ordered)
+    continue_until_s = max(
+        candidate.release.burst_time_s for candidate in ordered
+    )
+    try:
+        path = build_ordered_release_path(
+            ship=ship,
+            takeoff_time_s=takeoff_time_s,
+            releases=releases,
+            continue_until_s=continue_until_s,
+        )
+    except ValueError as error:
+        return Q2CombinationEvaluation(
+            candidate_ids=candidate_ids,
+            status="rejected",
+            reason=str(error),
+        )
+    operation_certificate = certify_operation_radius(
+        path,
+        operation_radius_m=operation_radius_m,
+    )
+    if operation_certificate.status != "certified_feasible":
+        return Q2CombinationEvaluation(
+            candidate_ids=candidate_ids,
+            status="rejected",
+            reason="moving-ship operation radius exceeded",
+        )
+    for candidate in ordered:
+        release_time_s = candidate.release.release_time_s
+        release_position = np.asarray(
+            candidate.release.release_position_m,
+            dtype=float,
+        )
+        if not np.allclose(
+            path.position(release_time_s),
+            release_position,
+            rtol=0.0,
+            atol=1e-8,
+        ):
+            return Q2CombinationEvaluation(
+                candidate_ids=candidate_ids,
+                status="rejected",
+                reason="release point does not lie on the ordered path",
+            )
+        actual_burst = detonation_position(
+            release_position,
+            path.velocity(release_time_s),
+        )
+        if not np.allclose(
+            actual_burst,
+            candidate.release.burst_center_m,
+            rtol=0.0,
+            atol=1e-8,
+        ):
+            return Q2CombinationEvaluation(
+                candidate_ids=candidate_ids,
+                status="rejected",
+                reason="release heading violates 3.5 s detonation geometry",
+            )
+
+    smokes = tuple(
+        SmokeCloud(
+            burst_time_s=candidate.release.burst_time_s,
+            burst_center_m=np.asarray(
+                candidate.release.burst_center_m,
+                dtype=float,
+            ),
+            maximum_radius_m=candidate.maximum_radius_m,
+            hold_duration_s=candidate.hold_duration_s,
+            decay_duration_s=candidate.decay_duration_s,
+        )
+        for candidate in ordered
+    )
+    certificate = verifier(
+        ship_position=ship.position,
+        smokes=smokes,
+        detection_components=detection.components,
+        source_events=detection.source_events,
+        ship_radius_m=80.0,
+        ship_speed_bound_mps=ship.speed_mps,
+        spatial_tolerance_m=spatial_tolerance_m,
+        time_tolerance_s=time_tolerance_s,
+        initial_polygon_sides=initial_polygon_sides,
+        maximum_polygon_sides=maximum_polygon_sides,
+    )
+    certificate_model = _coverage_certificate_model(
+        certificate,
+        spatial_tolerance_m=spatial_tolerance_m,
+        time_tolerance_s=time_tolerance_s,
+    )
+    ordered_path = OrderedReleasePlan(
+        takeoff_time_s=takeoff_time_s,
+        takeoff_position_m=tuple(ship.position(takeoff_time_s)),
+        path_nodes=_path_nodes(path),
+        releases=tuple(candidate.release for candidate in ordered),
+        adjacent_release_intervals_s=release_intervals_s,
+        flight_distance_m=path.flight_distance_m,
+        continue_until_s=continue_until_s,
+    )
+    baseline = _independent_coverage_baseline(
+        detection=detection,
+        candidates=ordered,
+        true_exposed_duration_s=certificate.total_exposed_duration_s,
+    )
+    maximum_interval = certificate.maximum_exposed_interval
+    plan = MultiSmokePlan(
+        scenario_id=ordered[0].scenario_id,
+        scenario_hash=ordered[0].scenario_hash,
+        constants_hash=ordered[0].constants_hash,
+        assumption_ids=ordered[0].assumption_ids,
+        guidance_model=ordered[0].guidance_model,
+        model_layer=ordered[0].model_layer,
+        heading_response_rate_per_s=(
+            ordered[0].heading_response_rate_per_s
+        ),
+        max_turn_rate_deg_s=ordered[0].max_turn_rate_deg_s,
+        actual_takeoff_time_s=takeoff_time_s,
+        ordered_path=ordered_path,
+        selected_smokes=ordered,
+        adjacent_release_intervals_s=release_intervals_s,
+        coverage_certificate=certificate_model,
+        maximum_joint_gap_m=certificate.maximum_gap_upper_bound_m,
+        minimum_joint_margin_m=certificate.minimum_margin_m,
+        total_exposed_duration_s=certificate.total_exposed_duration_s,
+        maximum_exposed_interval_start_s=(
+            maximum_interval.start_s
+            if maximum_interval is not None
+            else None
+        ),
+        maximum_exposed_interval_end_s=(
+            maximum_interval.end_s
+            if maximum_interval is not None
+            else None
+        ),
+        maximum_exposed_interval_s=(
+            certificate.maximum_exposed_interval_s
+        ),
+        smoke_count=len(ordered),
+        uav_total_distance_m=path.flight_distance_m,
+        operation_radius_certificate=OperationRadiusCertificate(
+            status=operation_certificate.status,
+            maximum_distance_m=operation_certificate.maximum_value or 0.0,
+            limit_m=operation_radius_m,
+            critical_time_s=operation_certificate.critical_time_s or 0.0,
+        ),
+        independent_coverage_baseline=baseline,
+        solver_trace=SolverTrace(
+            method="exhaustive_enumeration",
+            candidate_count=len(ordered),
+            retained_combination_count=1,
+            pruned_combination_count=0,
+            random_seed=random_seed,
+        ),
+        verifier_trace=VerifierTrace(
+            method="event_split_polygon_lipschitz",
+            initial_polygon_sides=initial_polygon_sides,
+            maximum_polygon_sides=maximum_polygon_sides,
+            spatial_tolerance_m=spatial_tolerance_m,
+            time_tolerance_s=time_tolerance_s,
+        ),
+    )
+    return Q2CombinationEvaluation(
+        candidate_ids=tuple(
+            candidate.candidate_id for candidate in ordered
+        ),
+        status="retained",
+        reason="path and public joint verifier completed",
+        plan=plan,
+    )
+
+
+def q2_plan_rank_key(plan) -> tuple[float, ...]:
+    """Return the frozen Q2 lexicographic objective as a maximization key."""
+
+    strict_rank = (
+        1.0
+        if plan.coverage_certificate.status
+        is CertificationStatus.CERTIFIED_FEASIBLE
+        else 0.0
+    )
+    return (
+        strict_rank,
+        -round(plan.maximum_exposed_interval_s, 9),
+        round(plan.minimum_joint_margin_m, 6),
+        -float(plan.smoke_count),
+        -round(plan.uav_total_distance_m, 6),
+    )
+
+
+def select_best_q2_plan(plans: tuple):
+    return max(plans, key=q2_plan_rank_key, default=None)
+
+
+def enumerate_q2_combinations(
+    *,
+    ship: ShipMotion,
+    detection: DetectionSet,
+    candidates: tuple[MultiSmokeCandidate, ...],
+    operation_radius_m: float,
+    verifier: Callable[..., MultiSmokeCoverageCertificate] = (
+        certify_multi_smoke_coverage
+    ),
+    spatial_tolerance_m: float = 0.05,
+    time_tolerance_s: float = 1e-3,
+    initial_polygon_sides: int = 32,
+    maximum_polygon_sides: int = 2048,
+    random_seed: int = 20260730,
+) -> Q2CombinationSearchResult:
+    evaluations: list[Q2CombinationEvaluation] = []
+    for smoke_count in range(1, min(3, len(candidates)) + 1):
+        for combination in combinations(candidates, smoke_count):
+            evaluations.append(
+                evaluate_q2_combination(
+                    ship=ship,
+                    detection=detection,
+                    candidates=combination,
+                    operation_radius_m=operation_radius_m,
+                    verifier=verifier,
+                    spatial_tolerance_m=spatial_tolerance_m,
+                    time_tolerance_s=time_tolerance_s,
+                    initial_polygon_sides=initial_polygon_sides,
+                    maximum_polygon_sides=maximum_polygon_sides,
+                    random_seed=random_seed,
+                )
+            )
+    plans = tuple(
+        evaluation.plan
+        for evaluation in evaluations
+        if evaluation.plan is not None
+    )
+    return Q2CombinationSearchResult(
+        method="exhaustive_enumeration",
+        enumerated_count=len(evaluations),
+        retained_count=len(plans),
+        rejected_count=len(evaluations) - len(plans),
+        evaluations=tuple(evaluations),
+        best_plan=select_best_q2_plan(plans),
+    )
+
+
+def branch_and_bound_q2_combinations(
+    **kwargs,
+) -> Q2CombinationSearchResult:
+    """Exact baseline hook; current small libraries require no extra pruning."""
+
+    exhaustive = enumerate_q2_combinations(**kwargs)
+    return exhaustive.model_copy(update={"method": "branch_and_bound"})

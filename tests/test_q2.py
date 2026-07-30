@@ -1,7 +1,10 @@
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 from pydantic import ValidationError
 
+from smoke_defense.coverage import CertificationStatus
 from smoke_defense.detection import DetectionSet
 from smoke_defense.dynamics import ShipMotion
 from smoke_defense.events import ClosedInterval
@@ -10,14 +13,20 @@ from smoke_defense.paths import (
     build_ordered_release_path,
 )
 from smoke_defense.q2 import (
+    MultiSmokeCandidate,
     MultiSmokePlan,
     OrderedReleasePlan,
     PathNode,
     SmokeReleaseEvent,
+    branch_and_bound_q2_combinations,
+    enumerate_q2_combinations,
     generate_q2_candidate_library,
     prune_q2_candidates,
+    q2_plan_rank_key,
+    select_best_q2_plan,
 )
 from smoke_defense.smoke import detonation_position
+from smoke_defense.verification import certify_multi_smoke_coverage
 
 
 def make_release_event(
@@ -273,3 +282,257 @@ def test_q2_pruning_removes_only_duplicate_physical_events():
     assert pruning.duplicate_count == 1
     assert pruning.retained_count == 2
     assert library.candidates[1] in pruning.retained_candidates
+
+
+def make_joint_only_candidates() -> tuple[MultiSmokeCandidate, ...]:
+    common_release = np.array([0.0, np.sqrt(98.0**2 - 50.0**2)])
+    candidates = []
+    for index, (center_x_m, release_time_s) in enumerate(
+        ((-50.0, 10.0), (50.0, 11.0))
+    ):
+        burst_center = np.array([center_x_m, 0.0])
+        heading = (burst_center - common_release) / 98.0
+        release = SmokeReleaseEvent(
+            candidate_id=f"joint-{index}",
+            command_time_s=0.0,
+            release_time_s=release_time_s,
+            release_position_m=tuple(common_release),
+            release_heading_unit=tuple(heading),
+            burst_time_s=release_time_s + 3.5,
+            burst_center_m=tuple(burst_center),
+        )
+        candidates.append(
+            MultiSmokeCandidate(
+                candidate_id=release.candidate_id,
+                scenario_id="joint-only",
+                scenario_hash="joint-hash",
+                constants_hash="constants-hash",
+                assumption_ids=("A-001", "A-022"),
+                guidance_model="inertial_pure_pursuit",
+                model_layer="formal",
+                heading_response_rate_per_s=1.0,
+                max_turn_rate_deg_s=10.0,
+                takeoff_time_s=0.0,
+                coverage_center_time_s=15.0,
+                longitudinal_offset_m=0.0,
+                lateral_offset_m=center_x_m,
+                release=release,
+                maximum_radius_m=110.0,
+                hold_duration_s=18.0,
+                decay_duration_s=5.0,
+                path_start_position_m=(0.0, 0.0),
+                path_end_position_m=tuple(common_release),
+                reachability_status="certified_feasible",
+                single_coverage_status=CertificationStatus.CERTIFIED_INFEASIBLE,
+                covered_duration_s=0.0,
+                covered_intervals_s=(),
+                exposed_duration_s=3.0,
+                maximum_exposed_interval_s=3.0,
+                minimum_margin_m=-20.0,
+                flight_distance_m=28.0 * release_time_s,
+            )
+        )
+    return tuple(candidates)
+
+
+def test_enumeration_checks_all_one_and_two_smoke_combinations():
+    candidates = make_joint_only_candidates()
+    ship = ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=0.0)
+    detection = DetectionSet(
+        components=(ClosedInterval(14.5, 17.5),),
+        source_events=(),
+    )
+    verifier_calls = 0
+
+    def counting_verifier(**kwargs):
+        nonlocal verifier_calls
+        verifier_calls += 1
+        return certify_multi_smoke_coverage(**kwargs)
+
+    result = enumerate_q2_combinations(
+        ship=ship,
+        detection=detection,
+        candidates=candidates,
+        operation_radius_m=12000.0,
+        verifier=counting_verifier,
+    )
+
+    assert result.enumerated_count == 3
+    assert verifier_calls == result.retained_count
+    assert result.best_plan is not None
+    assert result.best_plan.smoke_count == 2
+
+
+def test_true_spatial_union_beats_independent_interval_baseline():
+    candidates = make_joint_only_candidates()
+    result = enumerate_q2_combinations(
+        ship=ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=0.0),
+        detection=DetectionSet(
+            components=(ClosedInterval(14.5, 17.5),),
+            source_events=(),
+        ),
+        candidates=candidates,
+        operation_radius_m=12000.0,
+    )
+
+    plan = result.best_plan
+    assert plan is not None
+    assert plan.coverage_certificate.status is CertificationStatus.CERTIFIED_FEASIBLE
+    assert plan.independent_coverage_baseline.covered_duration_s == 0.0
+    assert plan.independent_coverage_baseline.union_gain_s == pytest.approx(3.0)
+
+
+def test_path_incompatible_combination_is_rejected_before_verification():
+    candidates = list(make_joint_only_candidates())
+    second = candidates[1]
+    bad_release = second.release.model_copy(
+        update={
+            "release_position_m": (-308.0, 0.0),
+            "release_heading_unit": (-1.0, 0.0),
+            "burst_center_m": (-406.0, 0.0),
+        }
+    )
+    candidates[1] = second.model_copy(update={"release": bad_release})
+
+    result = enumerate_q2_combinations(
+        ship=ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=0.0),
+        detection=DetectionSet(
+            components=(ClosedInterval(14.5, 17.5),),
+            source_events=(),
+        ),
+        candidates=tuple(candidates),
+        operation_radius_m=12000.0,
+    )
+
+    assert any(
+        evaluation.status == "rejected"
+        and "unreachable" in evaluation.reason
+        for evaluation in result.evaluations
+        if len(evaluation.candidate_ids) == 2
+    )
+
+
+def test_combination_rechecks_release_to_burst_geometry():
+    candidate = make_joint_only_candidates()[0]
+    invalid_release = candidate.release.model_copy(
+        update={"burst_center_m": (999.0, 999.0)}
+    )
+    invalid_candidate = candidate.model_copy(update={"release": invalid_release})
+
+    result = enumerate_q2_combinations(
+        ship=ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=0.0),
+        detection=DetectionSet(
+            components=(ClosedInterval(14.5, 17.5),),
+            source_events=(),
+        ),
+        candidates=(invalid_candidate,),
+        operation_radius_m=12000.0,
+    )
+
+    assert result.retained_count == 0
+    assert "detonation geometry" in result.evaluations[0].reason
+
+
+def test_q2_lexicographic_order_cannot_be_overridden_by_shorter_distance():
+    lower_exposure = SimpleNamespace(
+        coverage_certificate=SimpleNamespace(
+            status=CertificationStatus.CERTIFIED_INFEASIBLE
+        ),
+        maximum_exposed_interval_s=1.0,
+        minimum_joint_margin_m=-5.0,
+        smoke_count=3,
+        uav_total_distance_m=1000.0,
+    )
+    shorter_but_worse = SimpleNamespace(
+        coverage_certificate=SimpleNamespace(
+            status=CertificationStatus.CERTIFIED_INFEASIBLE
+        ),
+        maximum_exposed_interval_s=2.0,
+        minimum_joint_margin_m=10.0,
+        smoke_count=1,
+        uav_total_distance_m=10.0,
+    )
+
+    assert select_best_q2_plan((lower_exposure, shorter_but_worse)) is lower_exposure
+
+
+def test_q2_lexicographic_ties_use_margin_then_bombs_then_distance():
+    base = {
+        "coverage_certificate": SimpleNamespace(
+            status=CertificationStatus.CERTIFIED_INFEASIBLE
+        ),
+        "maximum_exposed_interval_s": 1.0,
+    }
+    plans = (
+        SimpleNamespace(
+            **base,
+            minimum_joint_margin_m=0.0,
+            smoke_count=2,
+            uav_total_distance_m=100.0,
+        ),
+        SimpleNamespace(
+            **base,
+            minimum_joint_margin_m=1.0,
+            smoke_count=3,
+            uav_total_distance_m=200.0,
+        ),
+        SimpleNamespace(
+            **base,
+            minimum_joint_margin_m=1.0,
+            smoke_count=2,
+            uav_total_distance_m=300.0,
+        ),
+        SimpleNamespace(
+            **base,
+            minimum_joint_margin_m=1.0,
+            smoke_count=2,
+            uav_total_distance_m=250.0,
+        ),
+    )
+
+    assert select_best_q2_plan(plans) is plans[3]
+
+
+def test_q2_rank_ignores_sub_nanosecond_exposure_noise():
+    common = {
+        "coverage_certificate": SimpleNamespace(
+            status=CertificationStatus.CERTIFIED_INFEASIBLE
+        ),
+        "minimum_joint_margin_m": 0.0,
+        "smoke_count": 2,
+    }
+    shorter = SimpleNamespace(
+        **common,
+        maximum_exposed_interval_s=1.0,
+        uav_total_distance_m=200.0,
+    )
+    noisy_longer = SimpleNamespace(
+        **common,
+        maximum_exposed_interval_s=1.0 + 4e-10,
+        uav_total_distance_m=100.0,
+    )
+
+    assert q2_plan_rank_key(noisy_longer) > q2_plan_rank_key(shorter)
+
+
+def test_branch_and_bound_matches_small_exhaustive_enumeration():
+    candidates = make_joint_only_candidates()
+    kwargs = {
+        "ship": ShipMotion((0.0, 0.0), heading_rad=0.0, speed_mps=0.0),
+        "detection": DetectionSet(
+            components=(ClosedInterval(14.5, 17.5),),
+            source_events=(),
+        ),
+        "candidates": candidates,
+        "operation_radius_m": 12000.0,
+    }
+
+    exhaustive = enumerate_q2_combinations(**kwargs)
+    bounded = branch_and_bound_q2_combinations(**kwargs)
+
+    assert exhaustive.best_plan is not None
+    assert bounded.best_plan is not None
+    assert (
+        exhaustive.best_plan.selected_smokes
+        == bounded.best_plan.selected_smokes
+    )
