@@ -65,6 +65,8 @@ def _thaw_json(value: Any) -> Any:
 class ToyRunRecord:
     """Immutable, machine-readable outcome of one isolated toy-demo run."""
 
+    __hash__ = None
+
     demo_name: str
     solver: str
     seed: int

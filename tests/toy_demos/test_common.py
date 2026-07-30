@@ -1,4 +1,5 @@
 import json
+from collections.abc import Hashable
 
 import numpy as np
 import pytest
@@ -88,6 +89,28 @@ def test_record_is_frozen() -> None:
         record.seed = 0  # type: ignore[misc]
 
 
+def test_record_explicitly_is_not_hashable() -> None:
+    record = make_record()
+
+    assert not isinstance(record, Hashable)
+    with pytest.raises(TypeError):
+        hash(record)
+
+
+def test_record_deep_freezes_metadata_and_detaches_serialized_copies() -> None:
+    source = {"nested": {"items": [1, 2]}}
+    record = make_record(metadata=source)
+
+    source["nested"]["items"].append(3)
+    with pytest.raises(TypeError):
+        record.metadata["nested"]["extra"] = True
+
+    detached = record.to_dict()
+    detached["metadata"]["nested"]["items"].append(99)
+
+    assert record.to_dict()["metadata"] == {"nested": {"items": [1, 2]}}
+
+
 def test_record_serializes_to_stable_standard_json() -> None:
     first = make_record(metadata={"z": 2, "a": {"y": 1, "x": 0}})
     second = make_record(metadata={"a": {"x": 0, "y": 1}, "z": 2})
@@ -112,6 +135,17 @@ def test_seeded_rng_repeats_the_same_sequence() -> None:
     second = seeded_rng(17).normal(size=4)
 
     np.testing.assert_array_equal(first, second)
+
+
+def test_seeded_rng_does_not_change_numpy_global_random_state() -> None:
+    np.random.seed(23)
+    expected = np.random.random(4)
+    np.random.seed(23)
+
+    seeded_rng(17).normal(size=10)
+    actual = np.random.random(4)
+
+    np.testing.assert_array_equal(actual, expected)
 
 
 def test_timed_call_returns_result_and_nonnegative_runtime() -> None:
