@@ -14,14 +14,14 @@
 | rear | 10000 | 25.361043 | 10.376135 | 14.984908 | certified_infeasible | 否 | `q1_q3_rear_d10000_k0p5_w5` |
 | rear | 12000 | 25.361043 | 10.376135 | 14.984908 | certified_infeasible | 否 | `q1_q3_rear_d12000_k0p5_w5` |
 | rear | 15000 | 25.361043 | 10.376135 | 14.984908 | certified_infeasible | 否 | `q1_q3_rear_d15000_k0p5_w5` |
-| side | 8000 | 24.766938 | 10.376135 | 14.390803 | certified_infeasible | 是 | `q1_q3_side_d8000_k2_w10` |
+| side | 8000 | 24.766938 | 10.376135 | 14.390803 | certified_infeasible | 是 | `q1_q3_side_d8000_k0p5_w5` |
 | side | 10000 | 24.770269 | 10.376135 | 14.394134 | certified_infeasible | 是 | `q1_q3_side_d10000_k0p5_w5` |
 | side | 12000 | 24.772971 | 10.376135 | 14.396836 | certified_infeasible | 是 | `q1_q3_side_d12000_k0p5_w5` |
 | side | 15000 | 24.776259 | 10.376135 | 14.400124 | certified_infeasible | 是 | `q1_q3_side_d15000_k0p5_w5` |
-| oblique | 8000 | 25.187503 | 10.376135 | 14.811369 | certified_infeasible | 是 | `q1_q3_oblique_d8000_k2_w5` |
+| oblique | 8000 | 25.187503 | 10.376135 | 14.811369 | certified_infeasible | 是 | `q1_q3_oblique_d8000_k0p5_w5` |
 | oblique | 10000 | 25.189181 | 10.376135 | 14.813047 | certified_infeasible | 是 | `q1_q3_oblique_d10000_k0p5_w5` |
-| oblique | 12000 | 25.190533 | 10.376135 | 14.814398 | certified_infeasible | 是 | `q1_q3_oblique_d12000_k2_w5` |
-| oblique | 15000 | 25.192165 | 10.376135 | 14.816030 | certified_infeasible | 是 | `q1_q3_oblique_d15000_k2_w5` |
+| oblique | 12000 | 25.190533 | 10.376135 | 14.814398 | certified_infeasible | 是 | `q1_q3_oblique_d12000_k0p5_w5` |
+| oblique | 15000 | 25.192165 | 10.376135 | 14.816030 | certified_infeasible | 是 | `q1_q3_oblique_d15000_k0p5_w5` |
 
 ## 结论
 
