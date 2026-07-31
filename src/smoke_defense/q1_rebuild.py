@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 
 import numpy as np
+from scipy.optimize import differential_evolution, minimize, shgo
+from scipy.stats import qmc
 
 from smoke_defense.candidates import (
     build_shipborne_release_path,
@@ -23,6 +25,12 @@ from smoke_defense.verification import certify_single_smoke_continuous_coverage
 
 RESPONSE_DELAY_S = 2.0
 BURST_DELAY_S = 3.5
+Q1_METHODS = (
+    "multistart_slsqp",
+    "sobol_slsqp",
+    "shgo",
+    "differential_evolution_slsqp",
+)
 
 
 @dataclass(frozen=True)
@@ -71,6 +79,19 @@ class Q1Verification:
     reason: str
     witness_time_s: float | None = None
     solver_native_success: bool | None = None
+
+
+@dataclass(frozen=True)
+class Q1MethodResult:
+    method: str
+    seed: int
+    evaluation_budget: int
+    evaluations: int
+    bounds: tuple[tuple[float, float], tuple[float, float]]
+    native_success: bool
+    native_status: str
+    best_candidate: Q1CandidateDecision | None
+    verification: Q1Verification | None
 
 
 def build_q1_problem(
@@ -252,4 +273,180 @@ def q1_verification_rank(result: Q1Verification) -> tuple[float, ...]:
         -result.maximum_exposure_s,
         result.minimum_margin_m,
         -result.flight_distance_m,
+    )
+
+
+def _q1_bounds(problem: Q1Problem) -> tuple[tuple[float, float], tuple[float, float]]:
+    start = max(5.5, problem.detection.components[0].start_s)
+    end = max(start + 1e-3, problem.detection.components[-1].end_s)
+    return ((start, end), (start, end))
+
+
+def _scalar_objective(result: Q1Verification) -> float:
+    status = {
+        "certified_feasible": 2.0,
+        "unresolved": 1.0,
+        "certified_infeasible": 0.0,
+    }[result.status]
+    margin = result.minimum_margin_m if np.isfinite(result.minimum_margin_m) else -1e6
+    return -(
+        status * 1e6
+        + result.covered_duration_s * 1e3
+        - result.maximum_exposure_s * 10.0
+        + margin
+        - result.flight_distance_m * 1e-3
+    )
+
+
+def _run_method(
+    problem: Q1Problem,
+    *,
+    method: str,
+    seed: int,
+    evaluation_budget: int,
+) -> Q1MethodResult:
+    if method not in Q1_METHODS:
+        raise ValueError(f"unknown Q1 method: {method}")
+    if evaluation_budget < 4:
+        raise ValueError("Q1 evaluation budget must be at least 4")
+    bounds = _q1_bounds(problem)
+    rng = np.random.default_rng(seed)
+    cache: dict[tuple[float, float], tuple[Q1CandidateDecision | None, Q1Verification]] = {}
+    native_success = False
+    native_status = "not_started"
+
+    def evaluate(vector: np.ndarray) -> float:
+        nonlocal native_status
+        key = tuple(np.round(np.asarray(vector, dtype=float), 10))
+        if key not in cache:
+            if len(cache) >= evaluation_budget:
+                native_status = "evaluation_budget_exhausted"
+                return 1e12
+            try:
+                candidate = construct_q1_candidate(
+                    problem,
+                    burst_time_s=float(key[0]),
+                    center_time_s=float(key[1]),
+                )
+                verification = verify_q1_candidate(problem, candidate)
+            except (ValueError, RuntimeError) as exc:
+                candidate = None
+                verification = Q1Verification(
+                    status="certified_infeasible",
+                    covered_duration_s=0.0,
+                    exposed_duration_s=0.0,
+                    maximum_exposure_s=0.0,
+                    minimum_margin_m=-1e6,
+                    flight_distance_m=0.0,
+                    reason=str(exc),
+                )
+            cache[key] = (candidate, verification)
+        return _scalar_objective(cache[key][1])
+
+    def local(start: np.ndarray) -> None:
+        nonlocal native_success, native_status
+        result = minimize(
+            evaluate,
+            np.asarray(start, dtype=float),
+            method="SLSQP",
+            bounds=bounds,
+            options={"maxiter": max(2, evaluation_budget // 4), "ftol": 1e-8},
+        )
+        native_success = native_success or bool(result.success)
+        native_status = str(result.message)
+
+    try:
+        midpoint = np.mean(np.asarray(bounds), axis=1)
+        if method == "multistart_slsqp":
+            starts = [midpoint]
+            starts.extend(rng.uniform(*bounds[0], size=2).tolist() for _ in range(3))
+            for start in starts:
+                if len(cache) >= evaluation_budget:
+                    break
+                local(np.asarray(start))
+        elif method == "sobol_slsqp":
+            sampler = qmc.Sobol(d=2, scramble=True, seed=seed)
+            points = qmc.scale(
+                sampler.random_base2(m=3),
+                np.asarray(bounds)[:, 0],
+                np.asarray(bounds)[:, 1],
+            )
+            for point in points:
+                evaluate(point)
+                if len(cache) >= evaluation_budget:
+                    break
+            if cache:
+                local(np.asarray(min(cache, key=lambda key: cache[key][1].covered_duration_s)))
+        elif method == "shgo":
+            result = shgo(
+                evaluate,
+                bounds,
+                n=min(8, evaluation_budget),
+                iters=1,
+                options={"minimize_every_iter": False},
+            )
+            native_success = bool(result.success)
+            native_status = str(result.message)
+        else:
+            result = differential_evolution(
+                evaluate,
+                bounds,
+                seed=seed,
+                maxiter=1,
+                popsize=max(4, evaluation_budget // 8),
+                polish=False,
+                updating="immediate",
+            )
+            native_success = bool(result.success)
+            native_status = str(result.message)
+            if len(cache) < evaluation_budget:
+                local(np.asarray(result.x))
+    except (ValueError, RuntimeError) as exc:
+        native_status = str(exc)
+
+    if not cache:
+        return Q1MethodResult(
+            method,
+            seed,
+            evaluation_budget,
+            0,
+            bounds,
+            native_success,
+            native_status,
+            None,
+            None,
+        )
+    key = max(cache, key=lambda item: q1_verification_rank(cache[item][1]))
+    candidate, verification = cache[key]
+    if verification.solver_native_success is None:
+        verification = replace(verification, solver_native_success=native_success)
+    return Q1MethodResult(
+        method=method,
+        seed=seed,
+        evaluation_budget=evaluation_budget,
+        evaluations=len(cache),
+        bounds=bounds,
+        native_success=native_success,
+        native_status=native_status,
+        best_candidate=candidate,
+        verification=verification,
+    )
+
+
+def benchmark_q1_methods(
+    problem: Q1Problem,
+    *,
+    seed: int = 20260731,
+    evaluation_budget: int = 48,
+) -> tuple[Q1MethodResult, ...]:
+    """Run the approved routes under a common seed, bounds, budget and verifier."""
+
+    return tuple(
+        _run_method(
+            problem,
+            method=method,
+            seed=seed,
+            evaluation_budget=evaluation_budget,
+        )
+        for method in Q1_METHODS
     )

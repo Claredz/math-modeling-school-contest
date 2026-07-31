@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 
 from smoke_defense.q1_rebuild import (
+    Q1_METHODS,
+    benchmark_q1_methods,
     build_q1_problem,
     construct_q1_candidate,
     q1_verification_rank,
@@ -103,3 +105,40 @@ def test_q1_rank_implements_approved_lexicographic_order(front_problem):
 
     assert max((early, later), key=q1_verification_rank) in {early, later}
     assert len(q1_verification_rank(early)) == 5
+
+
+def test_four_methods_share_budget_seed_bounds_and_verifier(front_problem):
+    results = benchmark_q1_methods(
+        front_problem,
+        seed=20260731,
+        evaluation_budget=24,
+    )
+
+    assert {result.method for result in results} == set(Q1_METHODS)
+    assert all(result.seed == 20260731 for result in results)
+    assert all(result.evaluation_budget == 24 for result in results)
+    assert all(0 < result.evaluations <= 24 for result in results)
+    assert len({result.bounds for result in results}) == 1
+    assert all(result.best_candidate is not None for result in results)
+    assert all(result.verification is not None for result in results)
+    assert all(
+        result.verification.status
+        in {"certified_feasible", "certified_infeasible", "unresolved"}
+        for result in results
+    )
+
+
+def test_native_solver_status_is_not_conflated_with_certification(front_problem):
+    results = benchmark_q1_methods(
+        front_problem,
+        seed=7,
+        evaluation_budget=16,
+    )
+
+    assert all(isinstance(result.native_success, bool) for result in results)
+    assert all(result.native_status for result in results)
+    assert all(
+        result.verification.solver_native_success is result.native_success
+        for result in results
+        if result.verification is not None
+    )
