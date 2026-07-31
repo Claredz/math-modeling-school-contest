@@ -226,6 +226,7 @@
     "model_layer": {
       "enum": [
         "formal",
+        "formal_baseline",
         "ablation"
       ],
       "title": "Model Layer",
