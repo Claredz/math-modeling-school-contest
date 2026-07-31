@@ -1,0 +1,116 @@
+{
+  "generated_at": "2026-07-31T02:29:38.577169+00:00",
+  "git_sha": "e1d155c05dadfb9adcb5eb142dac5cc0a122613b",
+  "formal_baseline": true,
+  "main_interpretation": "three_uavs_exactly_one_bomb_each",
+  "relaxation": "at_most_one_bomb_per_uav_is_not_used_as_main_result",
+  "solver_verifier_separated": true,
+  "scenario_count": 4,
+  "global_optimum_claim": false,
+  "scenarios": [
+    {
+      "scenario_id": "q1_rebuild_front_d8000",
+      "interpretation": "exactly_one_bomb_per_uav",
+      "uav_count": 3,
+      "bomb_count": 3,
+      "burst_times_s": [
+        5.5,
+        14.833854627567,
+        24.166709255134
+      ],
+      "center_times_s": [
+        14.833854627567,
+        24.167709255134,
+        24.167709255134
+      ],
+      "verification_status": "certified_infeasible",
+      "operation_radius_ok": true,
+      "coverage_lower_s": 14.0007819413505,
+      "coverage_upper_s": 14.0007819413505,
+      "total_exposure_lower_s": 10.1669273137835,
+      "total_exposure_upper_s": 10.1669273137835,
+      "maximum_continuous_exposure_s": 10.1669273137835,
+      "joint_gain_s": 14.0007819413505,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes"
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d10000",
+      "interpretation": "exactly_one_bomb_per_uav",
+      "uav_count": 3,
+      "bomb_count": 3,
+      "burst_times_s": [
+        6.10295688261,
+        18.186811510177,
+        30.269666137744
+      ],
+      "center_times_s": [
+        18.186811510177,
+        30.270666137744,
+        30.270666137744
+      ],
+      "verification_status": "certified_infeasible",
+      "operation_radius_ok": true,
+      "coverage_lower_s": 12.083854627567,
+      "coverage_upper_s": 12.083854627567,
+      "total_exposure_lower_s": 12.083854627567,
+      "total_exposure_upper_s": 12.083854627567,
+      "maximum_continuous_exposure_s": 12.083854627567,
+      "joint_gain_s": 12.083854627567,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes"
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d12000",
+      "interpretation": "exactly_one_bomb_per_uav",
+      "uav_count": 3,
+      "bomb_count": 3,
+      "burst_times_s": [
+        12.205913765219,
+        24.289768392786,
+        36.372623020353004
+      ],
+      "center_times_s": [
+        24.289768392786,
+        36.373623020353,
+        36.373623020353
+      ],
+      "verification_status": "certified_infeasible",
+      "operation_radius_ok": true,
+      "coverage_lower_s": 12.083854627567,
+      "coverage_upper_s": 12.083854627567,
+      "total_exposure_lower_s": 12.083854627567,
+      "total_exposure_upper_s": 12.083854627567,
+      "maximum_continuous_exposure_s": 12.083854627567,
+      "joint_gain_s": 12.083854627567,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes"
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d15000",
+      "interpretation": "exactly_one_bomb_per_uav",
+      "uav_count": 3,
+      "bomb_count": 3,
+      "burst_times_s": [
+        21.360349089134,
+        33.444203716701,
+        45.527058344268
+      ],
+      "center_times_s": [
+        33.444203716701,
+        45.528058344268,
+        45.528058344268
+      ],
+      "verification_status": "certified_infeasible",
+      "operation_radius_ok": true,
+      "coverage_lower_s": 12.083854627567,
+      "coverage_upper_s": 12.083854627567,
+      "total_exposure_lower_s": 12.083854627566996,
+      "total_exposure_upper_s": 12.083854627566996,
+      "maximum_continuous_exposure_s": 12.083854627566996,
+      "joint_gain_s": 12.083854627567,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes"
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "generated_at": "2026-07-31T02:22:12.650370+00:00",
+  "git_sha": "e1d155c05dadfb9adcb5eb142dac5cc0a122613b",
+  "formal_baseline": true,
+  "solver_verifier_separated": true,
+  "search_scope": "bounded event-parameterized candidates on four representative Q1 scenarios",
+  "global_optimum_claim": false,
+  "candidate_generation": "Q1 warm starts plus event anchors and 1-3 bomb combinations",
+  "continuous_refinement": "SLSQP polish with one-second drop-spacing constraints",
+  "joint_verification": "continuous time subdivision with conservative spatial envelopes",
+  "unresolved_policy": "retain unresolved intervals and never promote them to feasible",
+  "scenario_count": 4,
+  "total_runtime_s": 22.900893399957567,
+  "scenarios": [
+    {
+      "burst_times_s": [
+        5.5,
+        17.167318
+      ],
+      "center_times_s": [
+        12.0913966032,
+        23.7587146032
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 17.209294505133997,
+      "coverage_upper_s": 17.209294505133997,
+      "total_exposure_lower_s": 6.958414750000003,
+      "total_exposure_upper_s": 6.958414750000003,
+      "maximum_continuous_exposure_s": 6.958414750000003,
+      "joint_gain_s": 17.209294505133997,
+      "witness_time_s": 6.229207375,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes",
+      "solver_native_success": null,
+      "scenario_id": "q1_rebuild_front_d8000",
+      "runtime_s": 1.913598400016781,
+      "candidate_count": 40,
+      "warm_start_count": 1,
+      "polish_success": false,
+      "polish_status": "Iteration limit reached",
+      "q1_covered_duration_s": 10.376134889753999,
+      "relative_q1_improvement_lower_s": 6.833159615379998,
+      "detection_components": [
+        {
+          "start_s": 0.0,
+          "end_s": 24.167709255134
+        }
+      ]
+    },
+    {
+      "burst_times_s": [
+        6.102957,
+        21.207775
+      ],
+      "center_times_s": [
+        18.186811627599997,
+        30.270666137744
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 16.615300137744,
+      "coverage_upper_s": 16.615300137744,
+      "total_exposure_lower_s": 7.552409117389999,
+      "total_exposure_upper_s": 7.552409117389999,
+      "maximum_continuous_exposure_s": 7.552409117389999,
+      "joint_gain_s": 16.615300137744,
+      "witness_time_s": 9.8791615,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes",
+      "solver_native_success": null,
+      "scenario_id": "q1_rebuild_front_d10000",
+      "runtime_s": 1.1925862999632955,
+      "candidate_count": 40,
+      "warm_start_count": 1,
+      "polish_success": false,
+      "polish_status": "Iteration limit reached",
+      "q1_covered_duration_s": 10.376134889754,
+      "relative_q1_improvement_lower_s": 6.23916524799,
+      "detection_components": [
+        {
+          "start_s": 6.10295688261,
+          "end_s": 30.270666137744
+        }
+      ]
+    },
+    {
+      "burst_times_s": [
+        12.205914,
+        27.310732
+      ],
+      "center_times_s": [
+        24.289768627599997,
+        36.373623020353
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 16.615300020353,
+      "coverage_upper_s": 16.615300020353,
+      "total_exposure_lower_s": 7.552409234780999,
+      "total_exposure_upper_s": 7.552409234780999,
+      "maximum_continuous_exposure_s": 7.552409234780999,
+      "joint_gain_s": 16.615300020353,
+      "witness_time_s": 15.9821185,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes",
+      "solver_native_success": null,
+      "scenario_id": "q1_rebuild_front_d12000",
+      "runtime_s": 1.20573670003796,
+      "candidate_count": 40,
+      "warm_start_count": 1,
+      "polish_success": false,
+      "polish_status": "Iteration limit reached",
+      "q1_covered_duration_s": 10.376134889753999,
+      "relative_q1_improvement_lower_s": 6.239165130599002,
+      "detection_components": [
+        {
+          "start_s": 12.205913765219,
+          "end_s": 36.373623020353
+        }
+      ]
+    },
+    {
+      "burst_times_s": [
+        21.360349,
+        36.465167
+      ],
+      "center_times_s": [
+        33.444203627600004,
+        45.528058344268
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 16.615300299700998,
+      "coverage_upper_s": 16.615300299700998,
+      "total_exposure_lower_s": 7.552408955432998,
+      "total_exposure_upper_s": 7.552408955432998,
+      "maximum_continuous_exposure_s": 7.552408955432998,
+      "joint_gain_s": 16.615300299700998,
+      "witness_time_s": 25.136553566850502,
+      "unresolved_intervals": [],
+      "reason": "exact point witness lies in target and outside all smokes",
+      "solver_native_success": null,
+      "scenario_id": "q1_rebuild_front_d15000",
+      "runtime_s": 1.2516891999985091,
+      "candidate_count": 40,
+      "warm_start_count": 1,
+      "polish_success": false,
+      "polish_status": "Iteration limit reached",
+      "q1_covered_duration_s": 10.376134889754002,
+      "relative_q1_improvement_lower_s": 6.239165409946995,
+      "detection_components": [
+        {
+          "start_s": 21.360349089134,
+          "end_s": 45.528058344268
+        }
+      ]
+    }
+  ]
+}

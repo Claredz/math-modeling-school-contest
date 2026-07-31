@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-07-31T02:30:18.410304+00:00",
+  "git_sha": "e1d155c05dadfb9adcb5eb142dac5cc0a122613b",
+  "formal_baseline": true,
+  "causal_rolling": true,
+  "task_package_source": "Q1-Q3 certified task-package interface",
+  "global_optimum_claim": false,
+  "resource_cases": [
+    {
+      "resource_case": "abundant",
+      "capacity": 4,
+      "status": "unresolved",
+      "causal": true,
+      "total_value": 46.4,
+      "certified_value": 46.4,
+      "decisions": [
+        {
+          "time_s": 0.0,
+          "task_id": "threat_front",
+          "resources_used": 1,
+          "value": 17.2
+        },
+        {
+          "time_s": 4.0,
+          "task_id": "threat_rear",
+          "resources_used": 1,
+          "value": 15.8
+        },
+        {
+          "time_s": 8.0,
+          "task_id": "threat_side",
+          "resources_used": 2,
+          "value": 13.4
+        }
+      ],
+      "unresolved_task_ids": [
+        "threat_oblique"
+      ],
+      "reason": "pending tasks retained as unresolved"
+    },
+    {
+      "resource_case": "critical",
+      "capacity": 2,
+      "status": "unresolved",
+      "causal": true,
+      "total_value": 33.0,
+      "certified_value": 33.0,
+      "decisions": [
+        {
+          "time_s": 0.0,
+          "task_id": "threat_front",
+          "resources_used": 1,
+          "value": 17.2
+        },
+        {
+          "time_s": 4.0,
+          "task_id": "threat_rear",
+          "resources_used": 1,
+          "value": 15.8
+        }
+      ],
+      "unresolved_task_ids": [
+        "threat_side",
+        "threat_oblique"
+      ],
+      "reason": "pending tasks retained as unresolved"
+    },
+    {
+      "resource_case": "shortage",
+      "capacity": 1,
+      "status": "unresolved",
+      "causal": true,
+      "total_value": 17.2,
+      "certified_value": 17.2,
+      "decisions": [
+        {
+          "time_s": 0.0,
+          "task_id": "threat_front",
+          "resources_used": 1,
+          "value": 17.2
+        }
+      ],
+      "unresolved_task_ids": [
+        "threat_rear",
+        "threat_side",
+        "threat_oblique"
+      ],
+      "reason": "pending tasks retained as unresolved"
+    }
+  ]
+}
