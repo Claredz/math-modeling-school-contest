@@ -1,6 +1,6 @@
 {
   "_schema_version": "3.0",
-  "_doc": "mathmodel-skill 跨阶段决策日志；本轮仅执行 Stage 0-3，并在 Gate B 停止。",
+  "_doc": "mathmodel-skill 跨阶段决策日志；Gate B 已人工批准，Stage 4 已 fast-track 通过，当前执行 Stage 5 的 Q1-Q2。",
   "competition": "cumcm",
   "task_type": "B_optimization_simulation",
   "problem": "2026-school-contest-B",
@@ -11,12 +11,88 @@
     "deadline_iso": "2026-08-01T19:00:00+08:00",
     "team_size": 3
   },
-  "mode": "standard",
+  "mode": "fast",
   "started_at": "2026-07-31T00:20:55+08:00",
-  "current_stage": 3,
-  "next_stage": 4,
-  "gate_b_status": "pending_human_approval",
-  "stage_4_started": false,
+  "current_stage": 5,
+  "next_stage": 5,
+  "gate_b_status": "approved",
+  "stage_4_started": true,
+  "stage_4_status": "passed",
+  "gate_c_status": "approved_fast_track",
+  "stage_5_started": true,
+  "gate_b_approval": {
+    "decision_time": "2026-07-31T09:30:21+08:00",
+    "approved_by": "human",
+    "stage_4_started_at_approval": false,
+    "branch_rule": "PR #6 的研究基线不合并 main；快速实施从其远端最新 head 建立独立 Draft PR。",
+    "decisions": [
+      {
+        "id": 1,
+        "approved": true,
+        "decision": "瞬时纯追踪作为最少参数的正式基准。"
+      },
+      {
+        "id": 2,
+        "approved": true,
+        "decision": "一阶惯性纯追踪与比例导引 PN 作为参数化反事实。"
+      },
+      {
+        "id": 3,
+        "approved": true,
+        "decision": "固定烟幕中心作为正式基准。"
+      },
+      {
+        "id": 4,
+        "approved": true,
+        "decision": "有界漂移与半径误差作为鲁棒扩展。"
+      },
+      {
+        "id": 5,
+        "approved": true,
+        "decision": "分段直线 UAV 路径作为理想化基准。"
+      },
+      {
+        "id": 6,
+        "approved": true,
+        "decision": "Dubins 或有限转弯模型只在转弯参数有来源时升级。"
+      },
+      {
+        "id": 7,
+        "approved": true,
+        "decision": "Q1/Q3 算法框架、Q2 SIP 优先研究路线、Q4 因果滚动框架获批，但不冻结具体主求解器。"
+      },
+      {
+        "id": 8,
+        "approved": true,
+        "decision": "Q3 主解释为三架无人机每架恰好投放一枚，至多一枚作为放松对照。"
+      },
+      {
+        "id": 9,
+        "approved": true,
+        "decision": "2 秒响应延时定义为投弹指令到实际释放的固定延时。"
+      },
+      {
+        "id": 10,
+        "approved": true,
+        "decision": "3.5 秒起爆延时从实际释放时刻开始计算。"
+      },
+      {
+        "id": 11,
+        "approved": true,
+        "decision": "UAV 在 2 秒响应期间可以正常飞行。"
+      },
+      {
+        "id": 12,
+        "approved": true,
+        "decision": "基准场景不允许负时间预指令。"
+      },
+      {
+        "id": 13,
+        "approved": true,
+        "decision": "授权进入 Stage 4；Stage 4 在本次批准时尚未开始。"
+      }
+    ]
+  },
   "budget": {
     "tokens_used": 0,
     "tokens_cap": 200000,
@@ -401,25 +477,25 @@
             "PSO_heuristic_baseline"
           ],
           "status": "framework_pending_formal_benchmark",
-          "approval": "pending_human_approval"
+          "approval": "approved"
         },
         "Q2": {
           "framework": "spatiotemporal_SIP_constraint_generation_continuous_separation_independent_verifier",
           "formal_oracle_ready": false,
           "status": "priority_research_route_pending_oracle",
-          "approval": "pending_human_approval"
+          "approval": "approved"
         },
         "Q3": {
           "framework": "success_first_lexicographic_epsilon_constraint",
           "nsga2_role": "pareto_coverage_baseline_only",
-          "status": "framework_pending_human_approval",
-          "approval": "pending_human_approval"
+          "status": "framework_approved_pending_implementation",
+          "approval": "approved"
         },
         "Q4": {
           "framework": "certified_packages_causal_online_rolling_optimization_with_mandatory_baselines",
           "current_rolling_baseline": "zero_forecast_whole_package_commitment_weak_baseline",
           "status": "research_framework_pending_formal_benchmark",
-          "approval": "pending_human_approval"
+          "approval": "approved"
         }
       },
       "rejection_log": [
@@ -477,14 +553,101 @@
         }
       ],
       "model_family_consistency": "四问共享解释层、动力学层、连续覆盖层和三值认证层；solver生成候选，independent verifier认证。Q1只为Q2/Q3提供warm start；Q4只消费认证任务包且保留跨威胁共享与直接联合反事实。",
-      "gate_status": "pending_human_approval; current_stage=3; next_stage=4; stage_4_started=false"
+      "gate_status": "approved by human at 2026-07-31T09:30:21+08:00; Stage 4 subsequently passed; Stage 5 Q1-Q2 in progress"
     },
     "4": {
       "_label": "foundation",
-      "assumptions": [],
-      "symbols": [],
-      "terminology": [],
-      "consistency_check": {}
+      "status": "passed",
+      "completed_at": "2026-07-31T09:30:21+08:00",
+      "assumptions": [
+        {
+          "id": "A-F01",
+          "content": "利用二维刚体变换令舰船初始位置为原点、航向为 x 轴正向；舰船保持题面给定速度的匀速直线运动。",
+          "support": "平移与旋转不改变距离、夹角、圆盘并集覆盖或路径可达性；舰船匀速直线运动来自题面 P5。",
+          "support_type": "physical"
+        },
+        {
+          "id": "A-F02",
+          "content": "正式基准导弹采用恒速瞬时纯追踪；一阶惯性纯追踪和 PN 只作参数化反事实。",
+          "support": "题面仅给出匀速追踪而未给导航比、转弯率或时间常数；瞬时纯追踪所需额外参数最少。",
+          "support_type": "data"
+        },
+        {
+          "id": "A-F03",
+          "content": "烟幕采用题面分段半径和固定中心；有界漂移与半径误差只进入鲁棒扩展。",
+          "support": "题面给出定点起爆及半径时序，但没有风速场；固定中心不引入无来源风参数。",
+          "support_type": "physical"
+        },
+        {
+          "id": "A-F04",
+          "content": "UAV 从运动舰船出发，以 28 m/s 连续分段直线飞行；无转弯参数时不施加 Dubins 约束。",
+          "support": "题面给定速度和机动定性描述，但未给转弯半径；分段直线是参数最少且可审计的理想化基准。",
+          "support_type": "data"
+        },
+        {
+          "id": "A-F05",
+          "content": "投弹命令到实际释放固定 2 s，释放到起爆固定 3.5 s；响应期间 UAV 正常飞行，且正式基准禁止负时间命令。",
+          "support": "这是用户对题面两个延时歧义的人工批准解释，建立唯一因果事件轴。",
+          "support_type": "physical"
+        },
+        {
+          "id": "A-F06",
+          "content": "防御成功按完整 80 m 舰船圆盘在全部探测时刻被活动烟幕并集覆盖；solver 只生成候选，独立 verifier 给出三值认证。",
+          "support": "题面 P7 要求完整等效探测区域全程无遮挡；连续全称条件不能由局部 optimizer 或离散采样替代。",
+          "support_type": "physical"
+        },
+        {
+          "id": "A-F07",
+          "content": "Q3 主解释为每架恰好一枚，至多一枚仅作放松对照；Q1/Q2 本轮结果不得外推为 Q3/Q4 已实施。",
+          "support": "题面 P17 的“每架只投一枚”与用户人工决定共同确定主解释，并维持跨题范围边界。",
+          "support_type": "data"
+        }
+      ],
+      "symbols": [
+        {"symbol": "t", "meaning": "自任务决策开始计的连续时间", "unit": "s", "type": "independent", "range": "[0,+∞)"},
+        {"symbol": "s(t)", "meaning": "舰船中心位置", "unit": "m", "type": "state", "range": "R²"},
+        {"symbol": "m_i(t)", "meaning": "第 i 枚导弹位置", "unit": "m", "type": "state", "range": "R²"},
+        {"symbol": "u_k(t)", "meaning": "第 k 架 UAV 位置", "unit": "m", "type": "state", "range": "R²"},
+        {"symbol": "t_j^c", "meaning": "第 j 枚弹命令时刻", "unit": "s", "type": "decision", "range": "[0,+∞)"},
+        {"symbol": "t_j^d", "meaning": "第 j 枚弹实际释放时刻", "unit": "s", "type": "decision", "range": "t_j^c+2"},
+        {"symbol": "t_j^e", "meaning": "第 j 枚弹起爆时刻", "unit": "s", "type": "decision", "range": "t_j^d+3.5"},
+        {"symbol": "p_j^d", "meaning": "第 j 枚弹释放位置", "unit": "m", "type": "decision", "range": "R²"},
+        {"symbol": "c_j", "meaning": "第 j 个固定烟幕中心", "unit": "m", "type": "decision", "range": "R²"},
+        {"symbol": "R_j(t)", "meaning": "第 j 个烟幕半径", "unit": "m", "type": "state", "range": "[0,120]"},
+        {"symbol": "D_i", "meaning": "第 i 枚导弹连续探测时间集合", "unit": "s", "type": "derived_set", "range": "闭区间并"},
+        {"symbol": "g_J(t)", "meaning": "活动烟幕并集对舰船圆盘的覆盖缺口", "unit": "m", "type": "verification_metric", "range": "R"},
+        {"symbol": "T_cov", "meaning": "认证覆盖总时长下界", "unit": "s", "type": "objective", "range": "[0,+∞)"},
+        {"symbol": "T_gap^max", "meaning": "最大连续裸露时长", "unit": "s", "type": "objective", "range": "[0,+∞)"}
+      ],
+      "terminology": [
+        {"zh": "瞬时纯追踪", "en": "instantaneous pure pursuit", "abbrev": "IPP", "first_appearance": "§3"},
+        {"zh": "半无限规划", "en": "semi-infinite programming", "abbrev": "SIP", "first_appearance": "§5.2"},
+        {"zh": "约束生成", "en": "constraint generation", "abbrev": "CG", "first_appearance": "§5.2"},
+        {"zh": "连续分离", "en": "continuous separation", "abbrev": "CS", "first_appearance": "§5.2"},
+        {"zh": "独立验证器", "en": "independent verifier", "abbrev": "IV", "first_appearance": "§5"}
+      ],
+      "time_semantics": {
+        "origin": "decision_start",
+        "command_to_drop_s": 2.0,
+        "drop_to_burst_s": 3.5,
+        "uav_moves_during_response": true,
+        "negative_command_allowed": false
+      },
+      "verification_contract": {
+        "solver_role": "candidate_generation_only",
+        "verifier_role": "independent_continuous_certification",
+        "statuses": ["certified_feasible", "certified_infeasible", "unresolved"]
+      },
+      "artifact_isolation": {
+        "formal": ["results/q1_rebuild", "results/q2_rebuild"],
+        "counterfactual": "experimental_counterfactual; formal_baseline=false",
+        "synthetic": "experiments/toy_demos; formal_result=false"
+      },
+      "consistency_check": {
+        "with_stage2": "pass",
+        "with_stage3": "pass",
+        "high_severity_issues": []
+      }
     },
     "5": {
       "_label": "subproblem_loop",
@@ -632,7 +795,24 @@
         "evidence": "八模块各至少三候选；十维矩阵、29篇文献、Q1/PR5审计、五类synthetic toy、独立verifier与red-team共同支撑；不等于Stage4冻结。"
       }
     ],
-    "4": [],
+    "4": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_assumption_count": 9,
+          "2_assumption_support": 9,
+          "3_symbol_uniqueness": 9,
+          "4_model_consistency": 9,
+          "5_terminology_standardization": 9
+        },
+        "min": 9,
+        "mean": 9.0,
+        "weighted_mean": 9.0,
+        "verdict": "pass_early",
+        "ts": "2026-07-31T09:30:21+08:00",
+        "evidence": "7 条有支撑核心假设、14 个唯一且有单位符号、5 个中英术语；时间、事件、三值认证和产物隔离完成一致性预检。"
+      }
+    ],
     "5": [],
     "5_per_qi": [],
     "6": [],
@@ -645,7 +825,7 @@
     "1": 1,
     "2": 1,
     "3": 1,
-    "4": 0,
+    "4": 1,
     "5": 0,
     "5_per_qi": 0,
     "6": 0,
@@ -747,6 +927,26 @@
         "type": "gate_b_revision",
         "stage": 3,
         "detail": "按审查修正四问独立目标层级；Q1只批多路线框架，Q2降为优先研究路线，Q4将zero-forecast整包承诺标为弱基线；继续等待人工批准。"
+      },
+      {
+        "ts": "2026-07-31T09:30:21+08:00",
+        "type": "gate_b_approved",
+        "stage": 3,
+        "approved_by": "human",
+        "detail": "人工批准 13 项 Gate B 决定；批准瞬间 current_stage=4、next_stage=4、stage_4_started=false。快速实施分支以 PR #6 远端最新 head 为基线，不合并 main。"
+      },
+      {
+        "ts": "2026-07-31T09:30:21+08:00",
+        "type": "stage_complete",
+        "stage": 4,
+        "verdict": "pass_early",
+        "detail": "7 条假设、14 个符号、5 个术语及时间/事件/认证/产物隔离合同完成；无高严重度问题。"
+      },
+      {
+        "ts": "2026-07-31T09:30:21+08:00",
+        "type": "gate_c_fast_track",
+        "stage": 4,
+        "detail": "gate_c_status=approved_fast_track；进入 Stage 5，先执行 Q1，再执行 Q2，不等待额外人工确认。"
       }
     ]
   }

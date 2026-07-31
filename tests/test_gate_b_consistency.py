@@ -87,23 +87,32 @@ def read_text(relative_path: str) -> str:
     return (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
 
 
-def test_decision_log_stops_unambiguously_at_gate_b() -> None:
+def test_gate_b_approval_and_stage_4_fast_track_are_unambiguous() -> None:
     decision_log = json.loads(read_text("state/decision_log.json"))
 
-    assert decision_log["current_stage"] == 3
-    assert decision_log["next_stage"] == 4
-    assert decision_log["gate_b_status"] == "pending_human_approval"
-    assert decision_log["stage_4_started"] is False
-    assert decision_log["scores"]["4"] == []
-    assert decision_log["iterations"]["4"] == 0
-    assert decision_log["stages"]["4"] == {
-        "_label": "foundation",
-        "assumptions": [],
-        "symbols": [],
-        "terminology": [],
-        "consistency_check": {},
-    }
-    assert all(event.get("stage", -1) < 4 for event in decision_log["events"]["log"])
+    assert decision_log["current_stage"] == 5
+    assert decision_log["next_stage"] == 5
+    assert decision_log["gate_b_status"] == "approved"
+    assert decision_log["stage_4_started"] is True
+    assert decision_log["stage_4_status"] == "passed"
+    assert decision_log["gate_c_status"] == "approved_fast_track"
+    assert decision_log["stage_5_started"] is True
+    approval = decision_log["gate_b_approval"]
+    assert approval["approved_by"] == "human"
+    assert approval["stage_4_started_at_approval"] is False
+    assert len(approval["decisions"]) == 13
+    assert all(item["approved"] for item in approval["decisions"])
+    foundation = decision_log["stages"]["4"]
+    assert 3 <= len(foundation["assumptions"]) <= 7
+    assert all(item["support"] for item in foundation["assumptions"])
+    assert len(foundation["symbols"]) >= 10
+    assert all(item["unit"] and item["type"] for item in foundation["symbols"])
+    assert len({item["symbol"] for item in foundation["symbols"]}) == len(
+        foundation["symbols"]
+    )
+    assert len(foundation["terminology"]) >= 3
+    assert foundation["consistency_check"]["with_stage2"] == "pass"
+    assert foundation["consistency_check"]["with_stage3"] == "pass"
 
 
 def test_each_subproblem_has_its_own_ordered_objective_hierarchy() -> None:
@@ -127,9 +136,28 @@ def test_gate_b_approves_frameworks_without_freezing_q1_q2_or_q4_solver() -> Non
 
     assert selections["Q1"]["status"] == "framework_pending_formal_benchmark"
     assert selections["Q2"]["status"] == "priority_research_route_pending_oracle"
-    assert selections["Q3"]["status"] == "framework_pending_human_approval"
+    assert selections["Q3"]["status"] == "framework_approved_pending_implementation"
     assert selections["Q4"]["status"] == "research_framework_pending_formal_benchmark"
-    assert all(item["approval"] == "pending_human_approval" for item in selections.values())
+    assert all(item["approval"] == "approved" for item in selections.values())
+
+
+def test_stage_4_freezes_event_and_evidence_boundaries() -> None:
+    foundation = read_text("docs/workflow/stage-04-foundation.md")
+
+    for phrase in (
+        "command → drop：固定 2 s",
+        "drop → burst：固定 3.5 s",
+        "禁止负时间预指令",
+        "solver",
+        "verifier",
+        "certified_feasible",
+        "certified_infeasible",
+        "unresolved",
+        "results/q1_rebuild/",
+        "experimental_counterfactual",
+        "synthetic",
+    ):
+        assert phrase in foundation
 
 
 def test_research_docs_do_not_reintroduce_unified_or_frozen_solver_claims() -> None:
@@ -151,10 +179,17 @@ def test_research_docs_do_not_reintroduce_unified_or_frozen_solver_claims() -> N
     assert "current_stage` 停在 4" not in research_design
 
 
-def test_legacy_model_documents_are_unambiguously_historical() -> None:
-    legacy_paths = (
+def test_replaced_model_documents_distinguish_current_contract_from_history() -> None:
+    current_paths = (
         "docs/modeling/assumption_register.md",
         "docs/modeling/model_contract_v0.1.md",
+    )
+    for path in current_paths:
+        content = read_text(path)
+        assert "状态：Stage 4 正式冻结" in content
+        assert "瞬时纯追踪" in content
+
+    legacy_paths = (
         "docs/modeling/revised_four_problem_architecture.md",
         "docs/modeling/q1_analytic_feasibility.md",
     )
