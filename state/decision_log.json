@@ -929,7 +929,7 @@
       "q1_sobol_warm_start": "fixed_with_shared_rank_regression_tests",
       "q1_fixed_counterfactual": "fixed_with_candidate_identity_regression_test"
     },
-    "artifact_provenance": "5f1de8c2f40969a08dee7a36a1831ca9fb228bb2",
+    "artifact_provenance": "9dea2ef0ee22278479b74a4016b0c0ce6f782e65",
     "notes": "结果工件已按修复逻辑重生成；Q1 SHGO winner 未改变；Q2/Q3 联合增益与最大连续裸露语义已更新；Q4 三工况数值未改变。"
   },
   "events": {

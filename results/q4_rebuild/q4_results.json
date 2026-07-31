@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-31T03:00:11.447874+00:00",
-  "git_sha": "f77a1e87943a29c4207347878bd1b766aa6bdb12",
+  "generated_at": "2026-07-31T04:39:18.307346+00:00",
+  "git_sha": "9dea2ef0ee22278479b74a4016b0c0ce6f782e65",
   "formal_baseline": true,
   "causal_rolling": true,
   "causal_greedy_baseline": true,
