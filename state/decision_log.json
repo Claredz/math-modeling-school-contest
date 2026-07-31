@@ -721,6 +721,7 @@
       "sensitivity_artifacts": "results/sensitivity_rebuild",
       "sensitivity_categories": [
         "missile_model",
+        "PN_parameter_source_boundary",
         "lost_counterfactual",
         "smoke_drift",
         "response_delay",
