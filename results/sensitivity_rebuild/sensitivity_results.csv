@@ -3,6 +3,7 @@ missile_model,instantaneous_pure_pursuit,0.0,detection_duration_s,24.16770925513
 missile_model,inertial_heading_response_rate_per_s,0.5,detection_duration_s,24.167709255134
 missile_model,inertial_heading_response_rate_per_s,1.0,detection_duration_s,24.167709255134
 missile_model,inertial_heading_response_rate_per_s,2.0,detection_duration_s,24.167709255134
+missile_model,proportional_navigation,0.0,status,deferred_no_navigation_ratio_or_overload_source
 lost_counterfactual,tau_T_tau_L_T_R,0.25,minimum_separation_m,69.41799999999839
 lost_counterfactual,tau_T_tau_L_T_R,0.25,minimum_separation_m,69.41799999999839
 lost_counterfactual,tau_T_tau_L_T_R,0.25,minimum_separation_m,69.41799999999839
