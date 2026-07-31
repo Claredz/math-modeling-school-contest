@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-31T02:59:45.995793+00:00",
-  "git_sha": "f77a1e87943a29c4207347878bd1b766aa6bdb12",
+  "generated_at": "2026-07-31T03:23:36.896048+00:00",
+  "git_sha": "8b21c09484aa6ea5dfee3843b5632575a2d32e86",
   "formal_baseline": true,
   "solver_verifier_separated": true,
   "search_scope": "bounded event-parameterized candidates on four representative Q1 scenarios",
@@ -10,7 +10,7 @@
   "joint_verification": "continuous time subdivision with conservative spatial envelopes",
   "unresolved_policy": "retain unresolved intervals and never promote them to feasible",
   "scenario_count": 4,
-  "total_runtime_s": 22.923203099984676,
+  "total_runtime_s": 22.30061380000552,
   "scenarios": [
     {
       "burst_times_s": [
@@ -34,7 +34,7 @@
       "reason": "exact point witness lies in target and outside all smokes",
       "solver_native_success": null,
       "scenario_id": "q1_rebuild_front_d8000",
-      "runtime_s": 1.9820200999965891,
+      "runtime_s": 1.839036200020928,
       "candidate_count": 40,
       "warm_start_count": 1,
       "polish_success": false,
@@ -45,6 +45,56 @@
         {
           "start_s": 0.0,
           "end_s": 24.167709255134
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 1.0852737890951427,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -30.387666094663995,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 1.0852737890951427,
+          "end_time_s": 2.0,
+          "start_position_m": [
+            -30.387666094663995,
+            0.0
+          ],
+          "end_position_m": [
+            -4.775332189327997,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 2.0,
+          "end_time_s": 6.227319325357144,
+          "start_position_m": [
+            -4.775332189327997,
+            0.0
+          ],
+          "end_position_m": [
+            -123.14027329932804,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 6.227319325357144,
+          "end_time_s": 13.667318000000002,
+          "start_position_m": [
+            -123.14027329932804,
+            0.0
+          ],
+          "end_position_m": [
+            85.17968959067201,
+            0.0
+          ]
         }
       ]
     },
@@ -70,7 +120,7 @@
       "reason": "exact point witness lies in target and outside all smokes",
       "solver_native_success": null,
       "scenario_id": "q1_rebuild_front_d10000",
-      "runtime_s": 1.2343385000131093,
+      "runtime_s": 1.3148095999495126,
       "candidate_count": 40,
       "warm_start_count": 1,
       "polish_success": false,
@@ -81,6 +131,56 @@
         {
           "start_s": 6.10295688261,
           "end_s": 30.270666137744
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 0.5475442562715005,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -15.331239175602015,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 0.5475442562715005,
+          "end_time_s": 2.602957,
+          "start_position_m": [
+            -15.331239175602015,
+            0.0
+          ],
+          "end_position_m": [
+            42.22031764879597,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 2.602957,
+          "end_time_s": 8.491678173692675,
+          "start_position_m": [
+            42.22031764879597,
+            0.0
+          ],
+          "end_position_m": [
+            -122.66387521459893,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 8.491678173692675,
+          "end_time_s": 17.707775,
+          "start_position_m": [
+            -122.66387521459893,
+            0.0
+          ],
+          "end_position_m": [
+            135.38683592200624,
+            0.0
+          ]
         }
       ]
     },
@@ -106,7 +206,7 @@
       "reason": "exact point witness lies in target and outside all smokes",
       "solver_native_success": null,
       "scenario_id": "q1_rebuild_front_d12000",
-      "runtime_s": 1.2031994000426494,
+      "runtime_s": 1.1275995000032708,
       "candidate_count": 40,
       "warm_start_count": 1,
       "polish_success": false,
@@ -117,6 +217,56 @@
         {
           "start_s": 12.205913765219,
           "end_s": 36.373623020353
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 2.7587763550215,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -77.245737940602,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 2.7587763550215,
+          "end_time_s": 8.705914,
+          "start_position_m": [
+            -77.245737940602,
+            0.0
+          ],
+          "end_position_m": [
+            89.27411611879597,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 8.705914,
+          "end_time_s": 14.594635189854902,
+          "start_position_m": [
+            89.27411611879597,
+            0.0
+          ],
+          "end_position_m": [
+            -75.61007719714127,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 14.594635189854902,
+          "end_time_s": 23.810732,
+          "start_position_m": [
+            -75.61007719714127,
+            0.0
+          ],
+          "end_position_m": [
+            182.44063348692163,
+            0.0
+          ]
         }
       ]
     },
@@ -142,7 +292,7 @@
       "reason": "exact point witness lies in target and outside all smokes",
       "solver_native_success": null,
       "scenario_id": "q1_rebuild_front_d15000",
-      "runtime_s": 1.369033400027547,
+      "runtime_s": 1.231104000005871,
       "candidate_count": 40,
       "warm_start_count": 1,
       "polish_success": false,
@@ -153,6 +303,56 @@
         {
           "start_s": 21.360349089134,
           "end_s": 45.528058344268
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 6.075624321985785,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -170.11748101560198,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 6.075624321985785,
+          "end_time_s": 17.860349,
+          "start_position_m": [
+            -170.11748101560198,
+            0.0
+          ],
+          "end_position_m": [
+            159.85480996879602,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 17.860349,
+          "end_time_s": 23.74907014525875,
+          "start_position_m": [
+            159.85480996879602,
+            0.0
+          ],
+          "end_position_m": [
+            -5.029382098448934,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 23.74907014525875,
+          "end_time_s": 32.965167,
+          "start_position_m": [
+            -5.029382098448934,
+            0.0
+          ],
+          "end_position_m": [
+            253.02132983430624,
+            0.0
+          ]
         }
       ]
     }

@@ -17,6 +17,7 @@ from smoke_defense.q2_rebuild import (
     Q2CandidateResult,
     Q2CertificationStatus,
     Q2SolveResult,
+    construct_q2_plan,
     solve_q2_candidates,
 )
 from smoke_defense.scenario_matrix import generate_q1_rebuild_matrix
@@ -139,6 +140,11 @@ def run() -> dict:
         )
         runtime = time.perf_counter() - started
         selected = _best_multi(solved)
+        selected_plan = construct_q2_plan(
+            problem,
+            burst_times_s=selected.burst_times_s,
+            center_times_s=selected.center_times_s,
+        )
         q1_coverage = 0.0
         if Q1_RESULTS.exists():
             q1_payload = json.loads(Q1_RESULTS.read_text(encoding="utf-8"))
@@ -163,6 +169,15 @@ def run() -> dict:
                 "detection_components": [
                     {"start_s": item.start_s, "end_s": item.end_s}
                     for item in problem.detection.components
+                ],
+                "uav_path": [
+                    {
+                        "start_time_s": segment.start_time_s,
+                        "end_time_s": segment.end_time_s,
+                        "start_position_m": segment.start_position_m.tolist(),
+                        "end_position_m": segment.end_position_m.tolist(),
+                    }
+                    for segment in selected_plan.path.segments
                 ],
             }
         )
@@ -192,11 +207,13 @@ def run() -> dict:
         "coverage_lower_s", "coverage_upper_s", "total_exposure_lower_s",
         "total_exposure_upper_s", "maximum_continuous_exposure_s", "joint_gain_s",
         "q1_covered_duration_s", "relative_q1_improvement_lower_s", "runtime_s",
+        "uav_path_segment_count",
     ]
     with (RESULTS / "q2_results.csv").open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
         for row in rows:
+            row["uav_path_segment_count"] = len(row.get("uav_path", []))
             writer.writerow({field: row.get(field) for field in fields})
     if rows:
         _write_figures(rows[0])
