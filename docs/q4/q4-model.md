@@ -12,6 +12,6 @@ Q4 消费经过 Q1–Q3 verifier 认证的任务包，而不是直接消费局�
 
 1. `(Q4-C1)` \(\sum_i a_ix_i\le A\)；
 2. `(Q4-C2)` 在线决策时刻 \(t_i\ge r_i\)，只允许读取已揭示任务；
-3. `(Q4-C3)` 选中任务必须来自 Q1–Q3 的认证任务包，未认证包不计入认证价值；
+3. `(Q4-C3)` 选中任务必须来自 Q1–Q3 的认证任务包；未认证包在 `feasible` 过滤前即被排除，既不消耗容量，也不进入 `decisions`、`total_value` 或 `certified_value`；
 4. `(Q4-C4)` 资源不足或 verifier 未闭合的任务保留 `unresolved`；
 5. `(Q4-C5)` hindsight 枚举只作为离线上界，不能作为在线策略。

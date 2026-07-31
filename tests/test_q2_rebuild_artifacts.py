@@ -15,3 +15,11 @@ def test_q2_artifact_contains_paths_and_bounds():
         assert row["uav_path"]
         assert row["coverage_upper_s"] >= row["coverage_lower_s"]
         assert "verification_status" in row
+        assert row["joint_coverage_lower_s"] == row["coverage_lower_s"]
+        assert row["joint_gain_s"] == (
+            row["joint_coverage_lower_s"]
+            - row["best_single_smoke_coverage_lower_s"]
+        )
+        assert row["maximum_exposure_lower_s"] <= row["maximum_exposure_upper_s"]
+        assert row["maximum_continuous_exposure_s"] == row["maximum_exposure_lower_s"]
+        assert "best_single_smoke_candidate_id" in row

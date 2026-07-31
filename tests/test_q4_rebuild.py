@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from smoke_defense.q4_rebuild import (
     ThreatTask,
     build_q4_tasks,
@@ -86,3 +89,16 @@ def test_q4_all_certified_tasks_preserve_existing_schedule_behavior():
     assert [item.task_id for item in hindsight.decisions] == ["threat_front", "threat_rear"]
     assert rolling.total_value == rolling.certified_value == 33.0
     assert rolling.unresolved_task_ids == ("threat_side", "threat_oblique")
+
+
+def test_q4_generated_artifact_keeps_unresolved_and_certified_value_semantics():
+    root = Path(__file__).resolve().parents[1]
+    payload = json.loads(
+        (root / "results/q4_rebuild/q4_results.json").read_text(encoding="utf-8")
+    )
+
+    for row in payload["resource_cases"]:
+        assert row["total_value"] == row["certified_value"]
+        assert set(row["unresolved_task_ids"]).isdisjoint(
+            {item["task_id"] for item in row["decisions"]}
+        )

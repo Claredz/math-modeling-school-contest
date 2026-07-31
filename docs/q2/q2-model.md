@@ -26,4 +26,12 @@ Q2 在 Stage 4 冻结的正式基线之上允许同一架 UAV 使用 1–3 枚�
 2. `(Q2-C2)` \(1\le\sum_jz_j\le3\)，同一 UAV 的投弹间隔至少 1 s；
 3. `(Q2-C3)` 每个 \(p_j^d\) 可由连续 UAV 路径到达，且作战半径不超过 12 km；
 4. `(Q2-C4)` 起爆中心、路径速度和事件时刻一致；
-5. `(Q2-C5)` 烟幕并集对全部检测时间和 80 m 圆盘执行联合 verifier，连续 separation 无法关闭时返回 `unresolved`。
+5. `(Q2-C5)` 烟幕并集对全部检测时间和 80 m 圆盘执行联合 verifier；认证覆盖区间、认证裸露区间和 `unresolved` 区间分别保存，连续 separation 无法关闭时不伪造裸露时长。
+
+结果字段中，`joint_coverage_lower_s` 是联合覆盖下界，`best_single_smoke_coverage_lower_s` 来自同一场景、同一 verifier 的最佳单弹候选，且
+
+\[
+G_{\rm joint}=T_{\rm cov,joint}^{\rm lower}-T_{\rm cov,single}^{\rm lower}.
+\]
+
+`maximum_continuous_exposure_s` 明确表示认证裸露下界；未决导致的可能更大连续裸露通过 `maximum_exposure_upper_s` 单独表达。

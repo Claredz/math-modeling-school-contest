@@ -916,6 +916,22 @@
     "8": 0,
     "9": 0
   },
+  "pr8_review": {
+    "pr_number": 8,
+    "reviewed_head": "95e2dabd860d2853b65c3510d3b4e71ddda3030e",
+    "fix_commit": "5f1de8c2f40969a08dee7a36a1831ca9fb228bb2",
+    "draft_preserved": true,
+    "stage_8_started": false,
+    "threads": {
+      "q4_certification_filter": "fixed_with_regression_test",
+      "q2_continuous_exposure": "fixed_with_interval_regression_tests",
+      "q2_joint_gain": "fixed_with_same_verifier_baseline",
+      "q1_sobol_warm_start": "fixed_with_shared_rank_regression_tests",
+      "q1_fixed_counterfactual": "fixed_with_candidate_identity_regression_test"
+    },
+    "artifact_provenance": "5f1de8c2f40969a08dee7a36a1831ca9fb228bb2",
+    "notes": "结果工件已按修复逻辑重生成；Q1 SHGO winner 未改变；Q2/Q3 联合增益与最大连续裸露语义已更新；Q4 三工况数值未改变。"
+  },
   "events": {
     "log": [
       {
@@ -1051,6 +1067,12 @@
         "stage": 7,
         "verdict": "pass",
         "detail": "测试、Ruff、schema、场景、toy artifact和diff检查完成；已写入Q1-Q4论文素材，下一待执行阶段为Stage 8。"
+      },
+      {
+        "ts": "2026-07-31T15:30:00+08:00",
+        "type": "pr8_codex_review_reprocessed",
+        "stage": 5,
+        "detail": "PR #8 五条 Codex review 均完成代码级复核；修复 Q4 认证过滤、Q2 区间分类与联合增益、Q1 Sobol warm start 及固定正式候选反事实。已重生成 Q1-Q4/敏感性结果与图；保持 Draft，未合并，未开始 Stage 8。"
       }
     ]
   }

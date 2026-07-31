@@ -25,6 +25,10 @@ def test_q3_main_interpretation_has_exactly_three_bombs():
     assert certificate.pairwise_conflict_ok
     assert certificate.minimum_pairwise_distance_m >= 0.0
     assert "max_continuous_exposure_s" in certificate.epsilon_constraints
+    assert certificate.joint.joint_gain_s == (
+        certificate.joint.coverage_lower_s
+        - certificate.joint.best_single_smoke_coverage_lower_s
+    )
     assert len(q3_verification_rank(certificate)) == 5
 
 
