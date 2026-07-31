@@ -45,15 +45,31 @@ def _status_rank(status: Q2CertificationStatus) -> float:
 def _candidate_payload(candidate: Q2CandidateResult) -> dict:
     certificate = candidate.certificate
     return {
+        "candidate_id": candidate.candidate_id,
         "burst_times_s": list(candidate.burst_times_s),
         "center_times_s": list(candidate.center_times_s),
         "bomb_count": len(candidate.burst_times_s),
         "verification_status": certificate.status.value,
         "coverage_lower_s": certificate.coverage_lower_s,
+        "joint_coverage_lower_s": certificate.coverage_lower_s,
         "coverage_upper_s": certificate.coverage_upper_s,
         "total_exposure_lower_s": certificate.total_exposure_lower_s,
         "total_exposure_upper_s": certificate.total_exposure_upper_s,
         "maximum_continuous_exposure_s": certificate.maximum_continuous_exposure_s,
+        "maximum_exposure_lower_s": certificate.maximum_exposure_lower_s,
+        "maximum_exposure_upper_s": certificate.maximum_exposure_upper_s,
+        "certified_covered_intervals": [
+            {"start_s": item.start_s, "end_s": item.end_s}
+            for item in certificate.certified_covered_intervals
+        ],
+        "certified_exposed_intervals": [
+            {"start_s": item.start_s, "end_s": item.end_s}
+            for item in certificate.certified_exposed_intervals
+        ],
+        "best_single_smoke_coverage_lower_s": (
+            certificate.best_single_smoke_coverage_lower_s
+        ),
+        "best_single_smoke_candidate_id": certificate.best_single_smoke_candidate_id,
         "joint_gain_s": certificate.joint_gain_s,
         "witness_time_s": certificate.witness_time_s,
         "unresolved_intervals": [
@@ -194,6 +210,10 @@ def run() -> dict:
         "candidate_generation": "Q1 warm starts plus event anchors and 1-3 bomb combinations",
         "continuous_refinement": "SLSQP polish with one-second drop-spacing constraints",
         "joint_verification": "continuous time subdivision with conservative spatial envelopes",
+        "joint_gain_definition": (
+            "joint_coverage_lower_s minus best_single_smoke_coverage_lower_s; "
+            "both use this Q2 verifier and the same scenario"
+        ),
         "unresolved_policy": "retain unresolved intervals and never promote them to feasible",
         "scenario_count": len(rows),
         "total_runtime_s": time.perf_counter() - started_all,
@@ -204,8 +224,11 @@ def run() -> dict:
     )
     fields = [
         "scenario_id", "bomb_count", "verification_status", "burst_times_s",
-        "coverage_lower_s", "coverage_upper_s", "total_exposure_lower_s",
-        "total_exposure_upper_s", "maximum_continuous_exposure_s", "joint_gain_s",
+        "coverage_lower_s", "joint_coverage_lower_s", "coverage_upper_s",
+        "total_exposure_lower_s", "total_exposure_upper_s",
+        "maximum_continuous_exposure_s", "maximum_exposure_lower_s",
+        "maximum_exposure_upper_s", "best_single_smoke_coverage_lower_s",
+        "best_single_smoke_candidate_id", "joint_gain_s",
         "q1_covered_duration_s", "relative_q1_improvement_lower_s", "runtime_s",
         "uav_path_segment_count",
     ]

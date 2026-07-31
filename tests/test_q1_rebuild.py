@@ -1,14 +1,20 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
+import smoke_defense.q1_rebuild as q1_rebuild
 from smoke_defense.q1_rebuild import (
     Q1_METHODS,
+    Q1Verification,
     benchmark_q1_methods,
     build_q1_problem,
     construct_q1_candidate,
+    q1_candidate_rank,
     q1_verification_rank,
+    select_q1_warm_start,
     verify_q1_candidate,
 )
 from smoke_defense.scenario_matrix import generate_q1_rebuild_matrix
@@ -142,3 +148,107 @@ def test_native_solver_status_is_not_conflated_with_certification(front_problem)
         for result in results
         if result.verification is not None
     )
+
+
+def _verification(*, status="certified_infeasible", covered=0.0, exposure=0.0):
+    return Q1Verification(
+        status=status,
+        covered_duration_s=covered,
+        exposed_duration_s=exposure,
+        maximum_exposure_s=exposure,
+        minimum_margin_m=0.0,
+        flight_distance_m=100.0,
+        reason="test",
+    )
+
+
+def test_q1_warm_start_selects_best_coverage_sample():
+    poor = SimpleNamespace(
+        command_time_s=5.0, drop_time_s=7.0, burst_time_s=10.0, center_time_s=10.0
+    )
+    best = SimpleNamespace(
+        command_time_s=7.0, drop_time_s=9.0, burst_time_s=12.0, center_time_s=12.0
+    )
+
+    selected = select_q1_warm_start(
+        ((poor, _verification(covered=1.0)), (best, _verification(covered=5.0)))
+    )
+
+    assert selected is best
+
+
+def test_q1_warm_start_prioritizes_certification_over_duration():
+    certified = SimpleNamespace(
+        command_time_s=5.0, drop_time_s=7.0, burst_time_s=10.0, center_time_s=10.0
+    )
+    unresolved = SimpleNamespace(
+        command_time_s=7.0, drop_time_s=9.0, burst_time_s=12.0, center_time_s=12.0
+    )
+
+    selected = select_q1_warm_start(
+        (
+            (certified, _verification(status="certified_feasible", covered=1.0)),
+            (unresolved, _verification(status="unresolved", covered=10.0)),
+        )
+    )
+
+    assert selected is certified
+
+
+def test_q1_warm_start_ties_are_deterministic_and_invalid_samples_are_ignored():
+    earlier = SimpleNamespace(
+        command_time_s=5.0, drop_time_s=7.0, burst_time_s=10.0, center_time_s=11.0
+    )
+    later = SimpleNamespace(
+        command_time_s=7.0, drop_time_s=9.0, burst_time_s=12.0, center_time_s=12.0
+    )
+    verification = _verification(status="certified_feasible", covered=5.0)
+
+    selected = select_q1_warm_start(
+        (
+            (None, verification),
+            (later, verification),
+            (earlier, verification),
+        )
+    )
+
+    assert selected is earlier
+    assert q1_candidate_rank(None, verification)[0] == float("-inf")
+
+
+def test_q1_sobol_local_refinement_starts_from_best_evaluated_sample(
+    front_problem, monkeypatch
+):
+    scaled_points = np.array([[0.1, 0.1], [0.9, 0.9]])
+    starts = []
+
+    class FakeSobol:
+        def __init__(self, d, scramble, seed):
+            assert (d, scramble, seed) == (2, True, 7)
+
+        def random_base2(self, m):
+            assert m == 3
+            return scaled_points
+
+    def fake_minimize(_fun, x0, **_kwargs):
+        starts.append(np.asarray(x0, dtype=float).copy())
+        return SimpleNamespace(success=False, message="captured test start")
+
+    def fake_verify(_problem, candidate):
+        return _verification(status="certified_feasible", covered=candidate.burst_time_s)
+
+    monkeypatch.setattr(q1_rebuild.qmc, "Sobol", FakeSobol)
+    monkeypatch.setattr(q1_rebuild, "minimize", fake_minimize)
+    monkeypatch.setattr(q1_rebuild, "verify_q1_candidate", fake_verify)
+
+    result = q1_rebuild._run_method(
+        front_problem,
+        method="sobol_slsqp",
+        seed=7,
+        evaluation_budget=8,
+    )
+
+    bounds = np.asarray(result.bounds, dtype=float)
+    expected = bounds[:, 0] + scaled_points[1] * (bounds[:, 1] - bounds[:, 0])
+    np.testing.assert_allclose(starts[0], expected)
+    assert result.best_candidate.burst_time_s == pytest.approx(expected[0])

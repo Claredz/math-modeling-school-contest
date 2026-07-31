@@ -1,4 +1,5 @@
 from smoke_defense.q4_rebuild import (
+    ThreatTask,
     build_q4_tasks,
     schedule_causal_greedy,
     schedule_causal_rolling,
@@ -33,3 +34,55 @@ def test_q4_reports_causal_greedy_and_hindsight_upper_bound():
     assert hindsight.causal is False
     assert hindsight.strategy == "offline_hindsight_upper_bound"
     assert hindsight.certified_value >= greedy.certified_value
+
+
+def test_q4_uncertified_high_value_task_is_never_scheduled():
+    tasks = (
+        ThreatTask("uncertified_high", 0.0, 100.0, 1, 0.0, certified=False),
+        ThreatTask("certified_later", 1.0, 10.0, 1, 10.0, certified=True),
+    )
+
+    for scheduler in (schedule_causal_rolling, schedule_causal_greedy):
+        result = scheduler(tasks, resource_capacity=1, horizon_end_s=10.0)
+        assert [item.task_id for item in result.decisions] == ["certified_later"]
+        assert result.total_value == result.certified_value == 10.0
+
+
+def test_q4_uncertified_task_is_retained_as_unresolved_and_does_not_block():
+    tasks = (
+        ThreatTask("uncertified_high", 0.0, 100.0, 1, 0.0, certified=False),
+        ThreatTask("certified_later", 1.0, 10.0, 1, 10.0, certified=True),
+    )
+
+    result = schedule_causal_rolling(tasks, resource_capacity=1, horizon_end_s=10.0)
+
+    assert "uncertified_high" in result.unresolved_task_ids
+    assert "uncertified_high" not in {item.task_id for item in result.decisions}
+    assert result.status == "unresolved"
+
+
+def test_q4_hindsight_filters_uncertified_tasks_before_optimization():
+    tasks = (
+        ThreatTask("uncertified_high", 0.0, 100.0, 1, 0.0, certified=False),
+        ThreatTask("certified_later", 1.0, 10.0, 1, 10.0, certified=True),
+    )
+
+    result = schedule_offline_hindsight(tasks, resource_capacity=1, horizon_end_s=10.0)
+
+    assert [item.task_id for item in result.decisions] == ["certified_later"]
+    assert "uncertified_high" in result.unresolved_task_ids
+    assert result.total_value == result.certified_value == 10.0
+
+
+def test_q4_all_certified_tasks_preserve_existing_schedule_behavior():
+    tasks = build_q4_tasks()
+
+    rolling = schedule_causal_rolling(tasks, resource_capacity=2, horizon_end_s=30.0)
+    greedy = schedule_causal_greedy(tasks, resource_capacity=2, horizon_end_s=30.0)
+    hindsight = schedule_offline_hindsight(tasks, resource_capacity=2, horizon_end_s=30.0)
+
+    assert [item.task_id for item in rolling.decisions] == ["threat_front", "threat_rear"]
+    assert [item.task_id for item in greedy.decisions] == ["threat_front", "threat_rear"]
+    assert [item.task_id for item in hindsight.decisions] == ["threat_front", "threat_rear"]
+    assert rolling.total_value == rolling.certified_value == 33.0
+    assert rolling.unresolved_task_ids == ("threat_side", "threat_oblique")

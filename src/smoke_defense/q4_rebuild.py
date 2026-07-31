@@ -60,7 +60,11 @@ def schedule_causal_rolling(
         while index < len(ordered) and ordered[index].reveal_time_s <= current_time + 1e-9:
             pending.append(ordered[index])
             index += 1
-        feasible = [item for item in pending if item.resource_cost <= remaining]
+        feasible = [
+            item
+            for item in pending
+            if item.certified and item.resource_cost <= remaining
+        ]
         if feasible:
             if selection_rule == "value":
                 def key(item: ThreatTask) -> tuple[float, int, str]:
@@ -91,15 +95,12 @@ def schedule_causal_rolling(
             current_time = max(current_time + 1e-6, next_time)
         else:
             break
-    for task in (*pending, *ordered[index:]):
-        if task.certified:
-            unresolved.append(task.task_id)
+    unresolved.extend(task.task_id for task in (*pending, *ordered[index:]))
     total_value = sum(item.value for item in decisions)
-    certified_value = sum(
-        item.value
-        for item in decisions
-        if next(task for task in ordered if task.task_id == item.task_id).certified
-    )
+    # The scheduler can only commit certified packages, so both fields now have
+    # the same value.  Keeping both names preserves the artifact contract while
+    # making it impossible for an uncertified package to enter total_value.
+    certified_value = total_value
     status = "certified_feasible" if not unresolved else "unresolved"
     return Q4ScheduleCertificate(
         status=status,
@@ -172,14 +173,29 @@ def schedule_offline_hindsight(
         ScheduleDecision(item.reveal_time_s, item.task_id, item.resource_cost, item.value)
         for item in sorted(best_subset, key=lambda item: item.reveal_time_s)
     )
+    selected_ids = {item.task_id for item in best_subset}
+    unresolved = tuple(
+        task.task_id
+        for task in tasks
+        if task.task_id not in selected_ids
+        and (not task.certified or task.reveal_time_s > horizon_end_s)
+    )
     return Q4ScheduleCertificate(
-        status="certified_feasible",
+        status="certified_feasible" if not unresolved else "unresolved",
         decisions=decisions,
         total_value=best_value,
         certified_value=best_value,
         capacity=resource_capacity,
         causal=False,
-        reason="offline hindsight subset oracle; not an online policy",
+        unresolved_task_ids=unresolved,
+        reason=(
+            "offline hindsight subset oracle; not an online policy"
+            if not unresolved
+            else (
+                "offline hindsight subset oracle; uncertified or unrevealed tasks "
+                "retained as unresolved"
+            )
+        ),
         strategy="offline_hindsight_upper_bound",
         hindsight_upper_bound_value=best_value,
     )

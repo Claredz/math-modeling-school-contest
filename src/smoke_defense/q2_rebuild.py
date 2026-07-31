@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from itertools import combinations
 from math import isclose
@@ -57,6 +57,15 @@ class Q2JointCertificate:
     witness_time_s: float | None = None
     unresolved_intervals: tuple[ClosedInterval, ...] = ()
     reason: str = ""
+    # ``maximum_continuous_exposure_s`` is the certified lower bound.  The
+    # explicit bounds below prevent unresolved cells from being mistaken for
+    # certified exposure in reports and rankings.
+    maximum_exposure_lower_s: float = 0.0
+    maximum_exposure_upper_s: float = 0.0
+    certified_covered_intervals: tuple[ClosedInterval, ...] = ()
+    certified_exposed_intervals: tuple[ClosedInterval, ...] = ()
+    best_single_smoke_coverage_lower_s: float = 0.0
+    best_single_smoke_candidate_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -67,6 +76,7 @@ class Q2CandidateResult:
     certificate: Q2JointCertificate
     center_times_s: tuple[float, ...] = ()
     solver_native_success: bool | None = None
+    candidate_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -206,6 +216,84 @@ def _active_disks(
     return tuple(disks)
 
 
+def merge_certified_intervals(
+    intervals: tuple[ClosedInterval, ...] | list[ClosedInterval],
+    *,
+    tolerance_s: float = 1e-9,
+) -> tuple[ClosedInterval, ...]:
+    """Merge overlapping or adjacent certified time intervals."""
+
+    if not intervals:
+        return ()
+    ordered = sorted(intervals, key=lambda item: (item.start_s, item.end_s))
+    merged: list[ClosedInterval] = [ordered[0]]
+    for current in ordered[1:]:
+        previous = merged[-1]
+        if current.start_s <= previous.end_s + tolerance_s:
+            merged[-1] = ClosedInterval(
+                previous.start_s,
+                max(previous.end_s, current.end_s),
+            )
+        else:
+            merged.append(current)
+    return tuple(merged)
+
+
+def _maximum_interval_duration(intervals: tuple[ClosedInterval, ...]) -> float:
+    return max((item.duration_s for item in intervals), default=0.0)
+
+
+def _smoke_radius_upper_bound(
+    smoke: SmokeCloud,
+    left_s: float,
+    right_s: float,
+) -> float:
+    probe_times = [left_s, right_s]
+    for event_time in (
+        smoke.burst_time_s,
+        smoke.hold_end_time_s,
+        smoke.failure_time_s,
+    ):
+        if left_s <= event_time <= right_s:
+            probe_times.append(event_time)
+    return max(smoke.radius(time_s) for time_s in probe_times)
+
+
+def _certify_exposed_cell(
+    *,
+    witness_m: np.ndarray | None,
+    ship_position,
+    smokes: tuple[SmokeCloud, ...],
+    left_s: float,
+    right_s: float,
+    ship_radius_m: float,
+    ship_speed_bound_mps: float,
+) -> bool:
+    """Certify a whole cell exposed using one fixed spatial witness.
+
+    A midpoint witness alone only proves one exposed instant.  It becomes a
+    duration certificate only when the same point stays inside the ship disk
+    and outside every smoke disk for the whole cell under conservative bounds.
+    """
+
+    if witness_m is None:
+        return False
+    midpoint = 0.5 * (left_s + right_s)
+    half = 0.5 * (right_s - left_s)
+    witness = np.asarray(witness_m, dtype=float)
+    ship_midpoint = np.asarray(ship_position(midpoint), dtype=float)
+    if (
+        np.linalg.norm(witness - ship_midpoint) + ship_speed_bound_mps * half
+        > ship_radius_m + 1e-8
+    ):
+        return False
+    for smoke in smokes:
+        radius_upper = _smoke_radius_upper_bound(smoke, left_s, right_s)
+        if np.linalg.norm(witness - smoke.burst_center_m) <= radius_upper + 1e-8:
+            return False
+    return True
+
+
 def certify_joint_coverage(
     *,
     ship_position,
@@ -216,8 +304,15 @@ def certify_joint_coverage(
     initial_polygon_sides: int = 32,
     maximum_polygon_sides: int = 2048,
     time_tolerance_s: float = 1e-3,
+    _compute_single_baseline: bool = True,
 ) -> Q2JointCertificate:
-    """Certify by time subdivision with a conservative spatial envelope."""
+    """Certify coverage and exposure by complete time-cell classification.
+
+    Covered cells are certified by an outer target/inner smoke envelope.  An
+    exposed cell requires a fixed witness that remains valid for the whole
+    cell; otherwise the cell is subdivided or retained as unresolved.  Thus a
+    witness time never gets promoted to a duration by itself.
+    """
 
     if not detection_components:
         return Q2JointCertificate(
@@ -229,11 +324,10 @@ def certify_joint_coverage(
             0.0,
             0.0,
         )
-    lower = 0.0
-    upper = 0.0
+    covered_intervals: list[ClosedInterval] = []
+    exposed_intervals: list[ClosedInterval] = []
     unresolved: list[ClosedInterval] = []
-    total = sum(component.duration_s for component in detection_components)
-    maximum_exposure = 0.0
+    witness_time: float | None = None
     for component in detection_components:
         breakpoints = {component.start_s, component.end_s}
         for smoke in smokes:
@@ -258,9 +352,7 @@ def certify_joint_coverage(
                 maximum_polygon_sides=maximum_polygon_sides,
             )
             if certificate.status.value == "certified_feasible":
-                lower += right - left
-                upper += right - left
-                maximum_exposure = max(maximum_exposure, 0.0)
+                covered_intervals.append(ClosedInterval(left, right))
                 continue
             exact_target = Disk(np.asarray(ship_position(midpoint), dtype=float), ship_radius_m)
             exact_certificate = certify_union_coverage(
@@ -270,42 +362,98 @@ def certify_joint_coverage(
                 maximum_polygon_sides=maximum_polygon_sides,
             )
             if exact_certificate.status.value == "certified_infeasible":
-                return Q2JointCertificate(
-                    Q2CertificationStatus.CERTIFIED_INFEASIBLE,
-                    lower,
-                    upper,
-                    total - upper,
-                    total - lower,
-                    total - lower,
-                    upper,
-                    witness_time_s=midpoint,
-                    unresolved_intervals=tuple(unresolved),
-                    reason=exact_certificate.reason,
-                )
+                if witness_time is None:
+                    witness_time = midpoint
+                if _certify_exposed_cell(
+                    witness_m=exact_certificate.witness_m,
+                    ship_position=ship_position,
+                    smokes=smokes,
+                    left_s=left,
+                    right_s=right,
+                    ship_radius_m=ship_radius_m,
+                    ship_speed_bound_mps=ship_speed_bound_mps,
+                ):
+                    exposed_intervals.append(ClosedInterval(left, right))
+                    continue
             if right - left <= time_tolerance_s:
                 unresolved.append(ClosedInterval(left, right))
-                upper += right - left
                 continue
             stack.extend(((left, midpoint), (midpoint, right)))
+
+    covered = merge_certified_intervals(covered_intervals)
+    exposed = merge_certified_intervals(exposed_intervals)
+    unresolved_intervals = merge_certified_intervals(unresolved)
+    total = sum(component.duration_s for component in detection_components)
+    coverage_lower = sum(item.duration_s for item in covered)
+    exposure_lower = sum(item.duration_s for item in exposed)
+    coverage_upper = max(coverage_lower, total - exposure_lower)
+    exposure_upper = max(exposure_lower, total - coverage_lower)
+    maximum_exposure_lower = _maximum_interval_duration(exposed)
+    maximum_exposure_upper = _maximum_interval_duration(
+        merge_certified_intervals([*exposed, *unresolved_intervals])
+    )
     status = (
-        Q2CertificationStatus.UNRESOLVED
-        if unresolved
+        Q2CertificationStatus.CERTIFIED_INFEASIBLE
+        if exposed
+        else Q2CertificationStatus.UNRESOLVED
+        if unresolved_intervals
         else Q2CertificationStatus.CERTIFIED_FEASIBLE
     )
+    best_single_coverage = 0.0
+    best_single_id: str | None = None
+    if _compute_single_baseline and smokes:
+        single_certificates = tuple(
+            certify_joint_coverage(
+                ship_position=ship_position,
+                detection_components=detection_components,
+                smokes=(smoke,),
+                ship_radius_m=ship_radius_m,
+                ship_speed_bound_mps=ship_speed_bound_mps,
+                initial_polygon_sides=initial_polygon_sides,
+                maximum_polygon_sides=maximum_polygon_sides,
+                time_tolerance_s=time_tolerance_s,
+                _compute_single_baseline=False,
+            )
+            for smoke in smokes
+        )
+        best_index, best_single = max(
+            enumerate(single_certificates),
+            key=lambda item: (
+                item[1].coverage_lower_s,
+                {
+                    Q2CertificationStatus.CERTIFIED_FEASIBLE: 2.0,
+                    Q2CertificationStatus.UNRESOLVED: 1.0,
+                    Q2CertificationStatus.CERTIFIED_INFEASIBLE: 0.0,
+                }[item[1].status],
+                -item[1].maximum_continuous_exposure_s,
+                -item[0],
+            ),
+        )
+        best_single_coverage = best_single.coverage_lower_s
+        best_single_id = f"smoke_{best_index}"
     return Q2JointCertificate(
         status,
-        lower,
-        upper,
-        total - upper,
-        total - lower,
-        total - lower,
-        max(0.0, lower),
-        unresolved_intervals=tuple(unresolved),
+        coverage_lower,
+        coverage_upper,
+        exposure_lower,
+        exposure_upper,
+        maximum_exposure_lower,
+        coverage_lower - best_single_coverage,
+        witness_time_s=witness_time,
+        unresolved_intervals=unresolved_intervals,
         reason=(
-            "time-space envelope closed"
-            if not unresolved
+            "certified exposed interval found"
+            if exposed
+            else "time-space envelope closed"
+            if not unresolved_intervals
             else "time tolerance left unresolved cells"
         ),
+        maximum_exposure_lower_s=maximum_exposure_lower,
+        maximum_exposure_upper_s=maximum_exposure_upper,
+        certified_covered_intervals=covered,
+        certified_exposed_intervals=exposed,
+        best_single_smoke_coverage_lower_s=best_single_coverage,
+        best_single_smoke_candidate_id=best_single_id,
     )
 
 
@@ -315,14 +463,19 @@ def verify_q2_plan(problem: Q1Problem, plan: Q2Plan) -> Q2JointCertificate:
         operation_radius_m=problem.constants.uav.operation_radius_m,
     )
     if radius.status != "certified_feasible":
+        exposed = merge_certified_intervals(list(problem.detection.components))
+        maximum_exposure = _maximum_interval_duration(exposed)
         return Q2JointCertificate(
             Q2CertificationStatus.CERTIFIED_INFEASIBLE,
             0.0,
             0.0,
             sum(item.duration_s for item in problem.detection.components),
             sum(item.duration_s for item in problem.detection.components),
-            sum(item.duration_s for item in problem.detection.components),
+            maximum_exposure,
             0.0,
+            certified_exposed_intervals=exposed,
+            maximum_exposure_lower_s=maximum_exposure,
+            maximum_exposure_upper_s=maximum_exposure,
             reason=radius.reason,
         )
     return certify_joint_coverage(
@@ -447,9 +600,51 @@ def solve_q2_candidates(
                 0.0,
                 reason=str(exc),
             )
-        evaluations.append(Q2CandidateResult(bursts, certificate, centers))
+        evaluations.append(
+            Q2CandidateResult(
+                bursts,
+                certificate,
+                centers,
+                candidate_id=f"q2_candidate_{len(evaluations):03d}",
+            )
+        )
     if not evaluations:
         raise ValueError("Q2 candidate generator produced no candidates")
+
+    single_candidates = [
+        item for item in evaluations if len(item.burst_times_s) == 1
+    ]
+    if single_candidates:
+        best_single = max(
+            single_candidates,
+            key=lambda item: (
+                item.certificate.coverage_lower_s,
+                {
+                    Q2CertificationStatus.CERTIFIED_FEASIBLE: 2.0,
+                    Q2CertificationStatus.UNRESOLVED: 1.0,
+                    Q2CertificationStatus.CERTIFIED_INFEASIBLE: 0.0,
+                }[item.certificate.status],
+                -item.certificate.maximum_continuous_exposure_s,
+                item.candidate_id,
+            ),
+        )
+        baseline = best_single.certificate.coverage_lower_s
+        baseline_id = best_single.candidate_id
+    else:
+        baseline = 0.0
+        baseline_id = None
+    evaluations = [
+        replace(
+            item,
+            certificate=replace(
+                item.certificate,
+                best_single_smoke_coverage_lower_s=baseline,
+                best_single_smoke_candidate_id=baseline_id,
+                joint_gain_s=item.certificate.coverage_lower_s - baseline,
+            ),
+        )
+        for item in evaluations
+    ]
     best = max(evaluations, key=lambda item: q2_verification_rank(item.certificate))
     polish_success = False
     polish_status = "not_started"
@@ -509,6 +704,23 @@ def solve_q2_candidates(
                     refined_certificate,
                     centers_for(refined),
                     solver_native_success=True,
+                    candidate_id=f"q2_polished_{len(evaluations):03d}",
+                )
+                refined_result = replace(
+                    refined_result,
+                    certificate=replace(
+                        refined_result.certificate,
+                        best_single_smoke_coverage_lower_s=(
+                            best.certificate.best_single_smoke_coverage_lower_s
+                        ),
+                        best_single_smoke_candidate_id=(
+                            best.certificate.best_single_smoke_candidate_id
+                        ),
+                        joint_gain_s=(
+                            refined_result.certificate.coverage_lower_s
+                            - best.certificate.best_single_smoke_coverage_lower_s
+                        ),
+                    ),
                 )
                 evaluations.append(refined_result)
                 if q2_verification_rank(refined_certificate) > q2_verification_rank(

@@ -276,6 +276,60 @@ def q1_verification_rank(result: Q1Verification) -> tuple[float, ...]:
     )
 
 
+def q1_candidate_rank(
+    candidate: Q1CandidateDecision | None,
+    verification: Q1Verification,
+) -> tuple[float, ...]:
+    """Rank one evaluated candidate using the formal Q1 objective hierarchy.
+
+    A failed construction is never a warm start.  Valid candidates use the same
+    rank for Sobol warm-start selection and final method selection; the final two
+    coordinates only make exact ties deterministic.
+    """
+
+    if candidate is None:
+        return (float("-inf"),)
+    numeric_values = (
+        candidate.command_time_s,
+        candidate.drop_time_s,
+        candidate.burst_time_s,
+        candidate.center_time_s,
+        verification.covered_duration_s,
+        verification.maximum_exposure_s,
+        verification.minimum_margin_m,
+        verification.flight_distance_m,
+    )
+    if not all(np.isfinite(value) for value in numeric_values):
+        return (float("-inf"),)
+    return (
+        *q1_verification_rank(verification),
+        -round(candidate.burst_time_s, 9),
+        -round(candidate.center_time_s, 9),
+    )
+
+
+def _best_cached_q1_entry(
+    entries: list[tuple[Q1CandidateDecision | None, Q1Verification]]
+) -> tuple[Q1CandidateDecision, Q1Verification] | None:
+    valid = [
+        entry
+        for entry in entries
+        if q1_candidate_rank(entry[0], entry[1])[0] != float("-inf")
+    ]
+    if not valid:
+        return None
+    return max(valid, key=lambda entry: q1_candidate_rank(entry[0], entry[1]))  # type: ignore[arg-type]
+
+
+def select_q1_warm_start(
+    entries: tuple[tuple[Q1CandidateDecision | None, Q1Verification], ...]
+) -> Q1CandidateDecision | None:
+    """Return the best valid evaluated sample for local refinement."""
+
+    best = _best_cached_q1_entry(list(entries))
+    return best[0] if best is not None else None
+
+
 def _q1_bounds(problem: Q1Problem) -> tuple[tuple[float, float], tuple[float, float]]:
     start = max(5.5, problem.detection.components[0].start_s)
     end = max(start + 1e-3, problem.detection.components[-1].end_s)
@@ -375,8 +429,15 @@ def _run_method(
                 evaluate(point)
                 if len(cache) >= evaluation_budget:
                     break
-            if cache:
-                local(np.asarray(min(cache, key=lambda key: cache[key][1].covered_duration_s)))
+            best_entry = _best_cached_q1_entry(list(cache.values()))
+            if best_entry is not None:
+                best_candidate = best_entry[0]
+                local(
+                    np.asarray(
+                        [best_candidate.burst_time_s, best_candidate.center_time_s],
+                        dtype=float,
+                    )
+                )
         elif method == "shgo":
             result = shgo(
                 evaluate,
@@ -416,8 +477,20 @@ def _run_method(
             None,
             None,
         )
-    key = max(cache, key=lambda item: q1_verification_rank(cache[item][1]))
-    candidate, verification = cache[key]
+    best_entry = _best_cached_q1_entry(list(cache.values()))
+    if best_entry is None:
+        return Q1MethodResult(
+            method,
+            seed,
+            evaluation_budget,
+            len(cache),
+            bounds,
+            native_success,
+            native_status,
+            None,
+            None,
+        )
+    candidate, verification = best_entry
     if verification.solver_native_success is None:
         verification = replace(verification, solver_native_success=native_success)
     return Q1MethodResult(

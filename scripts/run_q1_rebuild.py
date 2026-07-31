@@ -23,6 +23,7 @@ from smoke_defense.q1_rebuild import (
     Q1MethodResult,
     benchmark_q1_methods,
     build_q1_problem,
+    construct_q1_candidate,
     q1_verification_rank,
 )
 from smoke_defense.scenario_matrix import generate_q1_rebuild_matrix
@@ -63,6 +64,7 @@ def _scenario_payload(scenario, result, method: str) -> dict:
         return {
             "scenario_id": scenario.scenario_id,
             "method": method,
+            "candidate_id": None,
             "verification_status": "unresolved",
             "covered_duration_s": 0.0,
             "exposed_duration_s": 0.0,
@@ -73,6 +75,7 @@ def _scenario_payload(scenario, result, method: str) -> dict:
     return {
         "scenario_id": scenario.scenario_id,
         "method": method,
+        "candidate_id": f"formal_q1:{scenario.scenario_id}:{method}",
         "native_success": result.native_success,
         "native_status": result.native_status,
         "verification_status": verification.status,
@@ -92,6 +95,61 @@ def _scenario_payload(scenario, result, method: str) -> dict:
             {"start_s": item.start_s, "end_s": item.end_s}
             for item in build_q1_problem(scenario).detection.components
         ],
+    }
+
+
+def _candidate_decision_payload(candidate) -> dict:
+    return {
+        "command_time_s": candidate.command_time_s,
+        "drop_time_s": candidate.drop_time_s,
+        "burst_time_s": candidate.burst_time_s,
+        "center_time_s": candidate.center_time_s,
+        "release_position_m": candidate.drop_position_m.tolist(),
+        "uav_path": [
+            {
+                "start_time_s": segment.start_time_s,
+                "end_time_s": segment.end_time_s,
+                "start_position_m": segment.start_position_m.tolist(),
+                "end_position_m": segment.end_position_m.tolist(),
+            }
+            for segment in candidate.path.segments
+        ],
+        "smoke_plan": {
+            "burst_center_m": candidate.smoke.burst_center_m.tolist(),
+            "maximum_radius_m": candidate.smoke.maximum_radius_m,
+            "hold_duration_s": candidate.smoke.hold_duration_s,
+            "decay_duration_s": candidate.smoke.decay_duration_s,
+        },
+    }
+
+
+def build_formal_counterfactual_payload(problem, formal_row: dict) -> dict:
+    """Run the loss model on the exact candidate selected for formal Q1."""
+
+    candidate = construct_q1_candidate(
+        problem,
+        burst_time_s=float(formal_row["burst_time_s"]),
+        center_time_s=float(formal_row["center_time_s"]),
+    )
+    counterfactual = simulate_lost_counterfactual(
+        problem,
+        candidate,
+        LostCounterfactualParameters(tau_t_s=0.5, tau_l_s=5.0, t_r_s=1.0),
+    )
+    return {
+        "scenario_id": formal_row["scenario_id"],
+        "candidate_id": formal_row["candidate_id"],
+        "formal_candidate_id": formal_row["candidate_id"],
+        "fixed_decision": True,
+        "changed_model": True,
+        "formal_baseline": False,
+        "label": "experimental_counterfactual",
+        "decision": _candidate_decision_payload(candidate),
+        "lost": counterfactual.lost,
+        "reacquired": counterfactual.reacquired,
+        "hit": counterfactual.hit,
+        "minimum_separation_m": counterfactual.minimum_separation_m,
+        "parameters": counterfactual.parameters,
     }
 
 
@@ -165,12 +223,19 @@ def _write_figures(problem, candidate, payloads: list[dict]) -> None:
 
 
 def _write_counterfactual_figure(output: dict) -> None:
-    formal = output["scenarios"][:4]
+    formal = {
+        item["candidate_id"]: item
+        for item in output["scenarios"][:4]
+        if item.get("candidate_id")
+    }
     counterfactual = output["counterfactual"]["representative_scenarios"]
     if not counterfactual:
         return
     labels = [item["scenario_id"].replace("q1_rebuild_", "") for item in counterfactual]
-    coverage = [item["covered_duration_s"] for item in formal[: len(labels)]]
+    coverage = [
+        formal[item["formal_candidate_id"]]["covered_duration_s"]
+        for item in counterfactual
+    ]
     separation = [item["minimum_separation_m"] for item in counterfactual]
     x = np.arange(len(labels))
     fig, ax = plt.subplots(figsize=(10, 4))
@@ -180,7 +245,7 @@ def _write_counterfactual_figure(output: dict) -> None:
     ax.set_xticks(x, labels, rotation=20)
     ax.set_ylabel("formal coverage (s)")
     ax2.set_ylabel("counterfactual separation (m)")
-    ax.set_title("Formal baseline versus lost-guidance counterfactual")
+    ax.set_title("Fixed formal decision versus changed loss-guidance model")
     fig.tight_layout()
     fig.savefig(FIGURES / "q1_counterfactual_comparison.png", dpi=180)
     plt.close(fig)
@@ -250,29 +315,12 @@ def run() -> dict:
             "representative_scenarios": [],
         },
     }
-    for scenario, _row in zip(scenarios[:4], scenario_rows[:4], strict=True):
+    for scenario, formal_row in zip(scenarios[:4], scenario_rows[:4], strict=True):
         problem = build_q1_problem(scenario)
-        candidate = next(
-            item
-            for item in benchmark_q1_methods(problem, seed=20260731, evaluation_budget=16)
-            if item.method == winner
-        ).best_candidate
-        if candidate is None:
+        if formal_row.get("candidate_id") is None:
             continue
-        counterfactual = simulate_lost_counterfactual(
-            problem,
-            candidate,
-            LostCounterfactualParameters(tau_t_s=0.5, tau_l_s=5.0, t_r_s=1.0),
-        )
         output["counterfactual"]["representative_scenarios"].append(
-            {
-                "scenario_id": scenario.scenario_id,
-                "lost": counterfactual.lost,
-                "reacquired": counterfactual.reacquired,
-                "hit": counterfactual.hit,
-                "minimum_separation_m": counterfactual.minimum_separation_m,
-                "parameters": counterfactual.parameters,
-            }
+            build_formal_counterfactual_payload(problem, formal_row)
         )
     (RESULTS / "q1_results.json").write_text(
         json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8"
