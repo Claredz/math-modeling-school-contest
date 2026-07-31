@@ -9,7 +9,6 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from smoke_defense.coverage import single_smoke_gap
@@ -154,6 +153,9 @@ def build_formal_counterfactual_payload(problem, formal_row: dict) -> dict:
 
 
 def _write_figures(problem, candidate, payloads: list[dict]) -> None:
+    # Keep data-only helpers importable in the lightweight CI test environment.
+    import matplotlib.pyplot as plt
+
     FIGURES.mkdir(parents=True, exist_ok=True)
     if candidate is None:
         return
@@ -223,6 +225,8 @@ def _write_figures(problem, candidate, payloads: list[dict]) -> None:
 
 
 def _write_counterfactual_figure(output: dict) -> None:
+    import matplotlib.pyplot as plt
+
     formal = {
         item["candidate_id"]: item
         for item in output["scenarios"][:4]
