@@ -30,13 +30,29 @@ def run() -> dict:
     RESULTS.mkdir(parents=True, exist_ok=True)
     FIGURES.mkdir(parents=True, exist_ok=True)
     rows = []
+    q2_payload = json.loads(
+        (ROOT / "results/q2_rebuild/q2_results.json").read_text(encoding="utf-8")
+    )
+    q2_warm = {
+        item["scenario_id"]: (
+            tuple(float(value) for value in item["burst_times_s"]),
+            tuple(float(value) for value in item.get("center_times_s", ())),
+        )
+        for item in q2_payload.get("scenarios", [])
+    }
     for scenario in generate_q1_rebuild_matrix()[:4]:
         problem = build_q1_problem(scenario)
-        plan, certificate = generate_q3_plan(problem)
+        warm_bursts, warm_centers = q2_warm.get(scenario.scenario_id, ((), ()))
+        plan, certificate = generate_q3_plan(
+            problem,
+            warm_burst_times_s=warm_bursts,
+            warm_center_times_s=warm_centers,
+        )
         rows.append(
             {
                 "scenario_id": scenario.scenario_id,
                 "interpretation": plan.interpretation,
+                "warm_start_source": "Q2_best_known" if warm_bursts else "Q1_event_anchors",
                 "uav_count": 3,
                 "bomb_count": 3,
                 "burst_times_s": list(plan.burst_times_s),

@@ -149,14 +149,28 @@ def q3_verification_rank(certificate: Q3Certificate) -> tuple[float, ...]:
     )
 
 
-def generate_q3_plan(problem: Q1Problem) -> tuple[Q3Plan, Q3Certificate]:
+def generate_q3_plan(
+    problem: Q1Problem,
+    *,
+    warm_burst_times_s: tuple[float, ...] = (),
+    warm_center_times_s: tuple[float, ...] = (),
+) -> tuple[Q3Plan, Q3Certificate]:
     start = max(5.5, problem.detection.components[0].start_s)
     end = problem.detection.components[-1].end_s
     span = end - start
-    bursts = (start, start + span / 2.0, end - 1e-3)
-    # The formal Q1 warm starts place fixed centres ahead of burst time; use
-    # that same causal offset for the three-UAV event candidates.
-    offset = min(12.1, max(0.0, span / 2.0))
-    centers = tuple(min(end, value + offset) for value in bursts)
+    if len(warm_burst_times_s) >= 2:
+        bursts = tuple(sorted((*warm_burst_times_s[:2], end - 1e-3)))
+        if len(warm_center_times_s) >= 2:
+            centers = tuple(
+                sorted((*warm_center_times_s[:2], min(end, end - 1e-3)))
+            )
+        else:
+            centers = bursts
+    else:
+        bursts = (start, start + span / 2.0, end - 1e-3)
+        # The formal Q1 warm starts place fixed centres ahead of burst time;
+        # use that same causal offset for the three-UAV event candidates.
+        offset = min(12.1, max(0.0, span / 2.0))
+        centers = tuple(min(end, value + offset) for value in bursts)
     plan = construct_q3_plan(problem, burst_times_s=bursts, center_times_s=centers)
     return plan, verify_q3_plan(problem, plan)

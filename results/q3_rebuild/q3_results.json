@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-31T03:00:08.420503+00:00",
-  "git_sha": "f77a1e87943a29c4207347878bd1b766aa6bdb12",
+  "generated_at": "2026-07-31T03:16:38.674984+00:00",
+  "git_sha": "18dd4bab32aa043cac348c145ff5b93513448b4a",
   "formal_baseline": true,
   "main_interpretation": "three_uavs_exactly_one_bomb_each",
   "relaxation": "at_most_one_bomb_per_uav_is_not_used_as_main_result",
@@ -11,17 +11,18 @@
     {
       "scenario_id": "q1_rebuild_front_d8000",
       "interpretation": "exactly_one_bomb_per_uav",
+      "warm_start_source": "Q2_best_known",
       "uav_count": 3,
       "bomb_count": 3,
       "burst_times_s": [
         5.5,
-        14.833854627567,
+        17.167318,
         24.166709255134
       ],
       "center_times_s": [
-        14.833854627567,
-        24.167709255134,
-        24.167709255134
+        12.0913966032,
+        23.7587146032,
+        24.166709255134
       ],
       "verification_status": "certified_infeasible",
       "operation_radius_ok": true,
@@ -30,20 +31,20 @@
       "lexicographic_rank": [
         0.0,
         1.0,
-        14.0007819413505,
-        -10.1669273137835,
+        17.209294505133997,
+        -6.958414750000003,
         0.0
       ],
       "epsilon_constraints": {
-        "max_continuous_exposure_s": 10.1669273137835,
+        "max_continuous_exposure_s": 6.958414750000003,
         "minimum_pairwise_distance_m": 0.0
       },
-      "coverage_lower_s": 14.0007819413505,
-      "coverage_upper_s": 14.0007819413505,
-      "total_exposure_lower_s": 10.1669273137835,
-      "total_exposure_upper_s": 10.1669273137835,
-      "maximum_continuous_exposure_s": 10.1669273137835,
-      "joint_gain_s": 14.0007819413505,
+      "coverage_lower_s": 17.209294505133997,
+      "coverage_upper_s": 17.209294505133997,
+      "total_exposure_lower_s": 6.958414750000003,
+      "total_exposure_upper_s": 6.958414750000003,
+      "maximum_continuous_exposure_s": 6.958414750000003,
+      "joint_gain_s": 17.209294505133997,
       "unresolved_intervals": [],
       "reason": "exact point witness lies in target and outside all smokes",
       "uav_paths": [
@@ -52,25 +53,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 0.707696086097472,
+              "end_time_s": 1.0852737890951427,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -19.81549041072922,
+                -30.387666094663995,
                 0.0
               ]
             },
             {
-              "start_time_s": 0.707696086097472,
+              "start_time_s": 1.0852737890951427,
               "end_time_s": 2.0,
               "start_position_m": [
-                -19.81549041072922,
+                -30.387666094663995,
                 0.0
               ],
               "end_position_m": [
-                16.369019178541564,
+                -4.775332189327997,
                 0.0
               ]
             }
@@ -81,25 +82,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 4.089551628835586,
+              "end_time_s": 5.312593114452286,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -114.50744560739642,
+                -148.75260720466403,
                 0.0
               ]
             },
             {
-              "start_time_s": 4.089551628835586,
-              "end_time_s": 11.333854627567,
+              "start_time_s": 5.312593114452286,
+              "end_time_s": 13.667318000000002,
               "start_position_m": [
-                -114.50744560739642,
+                -148.75260720466403,
                 0.0
               ],
               "end_position_m": [
-                88.33303835708313,
+                85.17968959067201,
                 0.0
               ]
             }
@@ -110,25 +111,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 8.755978942619084,
+              "end_time_s": 8.756116621190513,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -245.16741039333436,
+                -245.17126539333438,
                 0.0
               ]
             },
             {
-              "start_time_s": 8.755978942619084,
+              "start_time_s": 8.756116621190513,
               "end_time_s": 20.666709255134,
               "start_position_m": [
-                -245.16741039333436,
+                -245.17126539333438,
                 0.0
               ],
               "end_position_m": [
-                88.33303835708313,
+                88.32532835708312,
                 0.0
               ]
             }
@@ -139,16 +140,17 @@
     {
       "scenario_id": "q1_rebuild_front_d10000",
       "interpretation": "exactly_one_bomb_per_uav",
+      "warm_start_source": "Q2_best_known",
       "uav_count": 3,
       "bomb_count": 3,
       "burst_times_s": [
-        6.10295688261,
-        18.186811510177,
+        6.102957,
+        21.207775,
         30.269666137744
       ],
       "center_times_s": [
-        18.186811510177,
-        30.270666137744,
+        18.186811627599997,
+        30.269666137744,
         30.270666137744
       ],
       "verification_status": "certified_infeasible",
@@ -158,20 +160,20 @@
       "lexicographic_rank": [
         0.0,
         1.0,
-        12.083854627567,
-        -12.083854627567,
+        16.615300137744,
+        -7.552409117389999,
         0.0
       ],
       "epsilon_constraints": {
-        "max_continuous_exposure_s": 12.083854627567,
+        "max_continuous_exposure_s": 7.552409117389999,
         "minimum_pairwise_distance_m": 0.0
       },
-      "coverage_lower_s": 12.083854627567,
-      "coverage_upper_s": 12.083854627567,
-      "total_exposure_lower_s": 12.083854627567,
-      "total_exposure_upper_s": 12.083854627567,
-      "maximum_continuous_exposure_s": 12.083854627567,
-      "joint_gain_s": 12.083854627567,
+      "coverage_lower_s": 16.615300137744,
+      "coverage_upper_s": 16.615300137744,
+      "total_exposure_lower_s": 7.552409117389999,
+      "total_exposure_upper_s": 7.552409117389999,
+      "maximum_continuous_exposure_s": 7.552409117389999,
+      "joint_gain_s": 16.615300137744,
       "unresolved_intervals": [],
       "reason": "exact point witness lies in target and outside all smokes",
       "uav_paths": [
@@ -180,25 +182,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 0.5475442137431307,
+              "end_time_s": 0.5475442562715005,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -15.331237984807657,
+                -15.331239175602015,
                 0.0
               ]
             },
             {
-              "start_time_s": 0.5475442137431307,
-              "end_time_s": 2.60295688261,
+              "start_time_s": 0.5475442562715005,
+              "end_time_s": 2.602957,
               "start_position_m": [
-                -15.331237984807657,
+                -15.331239175602015,
                 0.0
               ],
               "end_position_m": [
-                42.22031674346468,
+                42.22031764879597,
                 0.0
               ]
             }
@@ -209,25 +211,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 4.925783685052674,
+              "end_time_s": 6.436403108535603,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -137.9219431814749,
+                -180.2192870389969,
                 0.0
               ]
             },
             {
-              "start_time_s": 4.925783685052674,
-              "end_time_s": 14.686811510177002,
+              "start_time_s": 6.436403108535603,
+              "end_time_s": 17.707775,
               "start_position_m": [
-                -137.9219431814749,
+                -180.2192870389969,
                 0.0
               ],
               "end_position_m": [
-                135.38683592200624,
+                135.37912592200624,
                 0.0
               ]
             }
@@ -267,16 +269,17 @@
     {
       "scenario_id": "q1_rebuild_front_d12000",
       "interpretation": "exactly_one_bomb_per_uav",
+      "warm_start_source": "Q2_best_known",
       "uav_count": 3,
       "bomb_count": 3,
       "burst_times_s": [
-        12.205913765219,
-        24.289768392786,
+        12.205914,
+        27.310732,
         36.372623020353004
       ],
       "center_times_s": [
-        24.289768392786,
-        36.373623020353,
+        24.289768627599997,
+        36.372623020353004,
         36.373623020353
       ],
       "verification_status": "certified_infeasible",
@@ -286,20 +289,20 @@
       "lexicographic_rank": [
         0.0,
         1.0,
-        12.083854627567,
-        -12.083854627567,
+        16.615300020353,
+        -7.552409234780999,
         0.0
       ],
       "epsilon_constraints": {
-        "max_continuous_exposure_s": 12.083854627567,
+        "max_continuous_exposure_s": 7.552409234780999,
         "minimum_pairwise_distance_m": 0.0
       },
-      "coverage_lower_s": 12.083854627567,
-      "coverage_upper_s": 12.083854627567,
-      "total_exposure_lower_s": 12.083854627567,
-      "total_exposure_upper_s": 12.083854627567,
-      "maximum_continuous_exposure_s": 12.083854627567,
-      "joint_gain_s": 12.083854627567,
+      "coverage_lower_s": 16.615300020353,
+      "coverage_upper_s": 16.615300020353,
+      "total_exposure_lower_s": 7.552409234780999,
+      "total_exposure_upper_s": 7.552409234780999,
+      "maximum_continuous_exposure_s": 7.552409234780999,
+      "joint_gain_s": 16.615300020353,
       "unresolved_intervals": [],
       "reason": "exact point witness lies in target and outside all smokes",
       "uav_paths": [
@@ -308,25 +311,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 2.758776269959856,
+              "end_time_s": 2.7587763550215,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -77.24573555887596,
+                -77.245737940602,
                 0.0
               ]
             },
             {
-              "start_time_s": 2.758776269959856,
-              "end_time_s": 8.705913765219,
+              "start_time_s": 2.7587763550215,
+              "end_time_s": 8.705914,
               "start_position_m": [
-                -77.24573555887596,
+                -77.245737940602,
                 0.0
               ],
               "end_position_m": [
-                89.27411430838006,
+                89.27411611879597,
                 0.0
               ]
             }
@@ -337,25 +340,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 7.137015741269399,
+              "end_time_s": 8.64763522344783,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -199.83644075554315,
+                -242.13378625653922,
                 0.0
               ]
             },
             {
-              "start_time_s": 7.137015741269399,
-              "end_time_s": 20.789768392786,
+              "start_time_s": 8.64763522344783,
+              "end_time_s": 23.810732,
               "start_position_m": [
-                -199.83644075554315,
+                -242.13378625653922,
                 0.0
               ],
               "end_position_m": [
-                182.44063348692163,
+                182.43292348692165,
                 0.0
               ]
             }
@@ -395,16 +398,17 @@
     {
       "scenario_id": "q1_rebuild_front_d15000",
       "interpretation": "exactly_one_bomb_per_uav",
+      "warm_start_source": "Q2_best_known",
       "uav_count": 3,
       "bomb_count": 3,
       "burst_times_s": [
-        21.360349089134,
-        33.444203716701,
+        21.360349,
+        36.465167,
         45.527058344268
       ],
       "center_times_s": [
-        33.444203716701,
-        45.528058344268,
+        33.444203627600004,
+        45.527058344268,
         45.528058344268
       ],
       "verification_status": "certified_infeasible",
@@ -414,20 +418,20 @@
       "lexicographic_rank": [
         0.0,
         1.0,
-        12.083854627567,
-        -12.083854627566996,
+        16.615300299700998,
+        -7.552408955432998,
         0.0
       ],
       "epsilon_constraints": {
-        "max_continuous_exposure_s": 12.083854627566996,
+        "max_continuous_exposure_s": 7.552408955432998,
         "minimum_pairwise_distance_m": 0.0
       },
-      "coverage_lower_s": 12.083854627567,
-      "coverage_upper_s": 12.083854627567,
-      "total_exposure_lower_s": 12.083854627566996,
-      "total_exposure_upper_s": 12.083854627566996,
-      "maximum_continuous_exposure_s": 12.083854627566996,
-      "joint_gain_s": 12.083854627567,
+      "coverage_lower_s": 16.615300299700998,
+      "coverage_upper_s": 16.615300299700998,
+      "total_exposure_lower_s": 7.552408955432998,
+      "total_exposure_upper_s": 7.552408955432998,
+      "maximum_continuous_exposure_s": 7.552408955432998,
+      "joint_gain_s": 16.615300299700998,
       "unresolved_intervals": [],
       "reason": "exact point witness lies in target and outside all smokes",
       "uav_paths": [
@@ -436,25 +440,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 6.075624354285488,
+              "end_time_s": 6.075624321985785,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -170.11748191999368,
+                -170.11748101560198,
                 0.0
               ]
             },
             {
-              "start_time_s": 6.075624354285488,
-              "end_time_s": 17.860349089134,
+              "start_time_s": 6.075624321985785,
+              "end_time_s": 17.860349,
               "start_position_m": [
-                -170.11748191999368,
+                -170.11748101560198,
                 0.0
               ],
               "end_position_m": [
-                159.8548106557647,
+                159.85480996879602,
                 0.0
               ]
             }
@@ -465,25 +469,25 @@
           "segments": [
             {
               "start_time_s": 0.0,
-              "end_time_s": 10.45386382559503,
+              "end_time_s": 11.964483145815958,
               "start_position_m": [
                 0.0,
                 0.0
               ],
               "end_position_m": [
-                -292.70818711666084,
+                -335.0055280828468,
                 0.0
               ]
             },
             {
-              "start_time_s": 10.45386382559503,
-              "end_time_s": 29.944203716700997,
+              "start_time_s": 11.964483145815958,
+              "end_time_s": 32.965167,
               "start_position_m": [
-                -292.70818711666084,
+                -335.0055280828468,
                 0.0
               ],
               "end_position_m": [
-                253.02132983430624,
+                253.01361983430627,
                 0.0
               ]
             }
