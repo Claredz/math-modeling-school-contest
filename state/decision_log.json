@@ -25,6 +25,8 @@
   "stage_6_status": "passed",
   "stage_7_started": true,
   "stage_7_status": "passed",
+  "completed_through_stage": 7,
+  "next_stage_after_fast_track": 8,
   "gate_b_approval": {
     "decision_time": "2026-07-31T09:30:21+08:00",
     "approved_by": "human",
