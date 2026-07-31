@@ -1,0 +1,999 @@
+{
+  "generated_at": "2026-07-31T04:35:30.988742+00:00",
+  "git_sha": "9dea2ef0ee22278479b74a4016b0c0ce6f782e65",
+  "formal_baseline": true,
+  "formal_baseline_model": "instantaneous_pure_pursuit",
+  "matrix_shape": "4x4",
+  "scenario_count": 16,
+  "solver_verifier_separated": true,
+  "objective_hierarchy": [
+    "strict_full_window_coverage",
+    "max_certified_total_coverage_duration",
+    "min_max_continuous_exposure",
+    "max_min_coverage_margin",
+    "min_travel_or_resources"
+  ],
+  "algorithm_benchmark": [
+    {
+      "scenario_id": "q1_rebuild_front_d8000",
+      "method": "multistart_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6253189749986632,
+      "native_success": false,
+      "native_status": "Iteration limit reached",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889753999,
+      "maximum_exposure_s": 6.955549286657
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d8000",
+      "method": "sobol_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6253189749986632,
+      "native_success": false,
+      "native_status": "Inequality constraints incompatible",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889753999,
+      "maximum_exposure_s": 11.248757390923
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d8000",
+      "method": "shgo",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6253189749986632,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 7.116312578623
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d8000",
+      "method": "differential_evolution_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6253189749986632,
+      "native_success": false,
+      "native_status": "Inequality constraints incompatible",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 7.809246517856998
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d10000",
+      "method": "multistart_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6362178499985021,
+      "native_success": false,
+      "native_status": "Iteration limit reached",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889753999,
+      "maximum_exposure_s": 6.908197062013
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d10000",
+      "method": "sobol_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6362178499985021,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889753999,
+      "maximum_exposure_s": 7.683843627612999
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d10000",
+      "method": "shgo",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6362178499985021,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754,
+      "maximum_exposure_s": 6.895787182713001
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d10000",
+      "method": "differential_evolution_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6362178499985021,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 9.954827161812998
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d12000",
+      "method": "multistart_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6573297750001075,
+      "native_success": false,
+      "native_status": "Inequality constraints incompatible",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 7.056539721476
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d12000",
+      "method": "sobol_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6573297750001075,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889753999,
+      "maximum_exposure_s": 7.683843627604
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d12000",
+      "method": "shgo",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6573297750001075,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889753999,
+      "maximum_exposure_s": 6.895787182704
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d12000",
+      "method": "differential_evolution_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6573297750001075,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889753999,
+      "maximum_exposure_s": 9.954827161804
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d15000",
+      "method": "multistart_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6669939499988686,
+      "native_success": false,
+      "native_status": "Inequality constraints incompatible",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 7.056534846690994
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d15000",
+      "method": "sobol_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6669939499988686,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 7.683843627588999
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d15000",
+      "method": "shgo",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6669939499988686,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 6.895787182690995
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d15000",
+      "method": "differential_evolution_slsqp",
+      "seed": 20260731,
+      "evaluation_budget": 24,
+      "evaluations": 24,
+      "runtime_s": 0.6669939499988686,
+      "native_success": true,
+      "native_status": "Optimization terminated successfully",
+      "verification_status": "certified_infeasible",
+      "covered_duration_s": 10.376134889754002,
+      "maximum_exposure_s": 9.954827161788998
+    }
+  ],
+  "selected_method": "shgo",
+  "scenarios": [
+    {
+      "scenario_id": "q1_rebuild_front_d8000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_front_d8000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889753999,
+      "exposed_duration_s": 13.79157436538,
+      "maximum_exposure_s": 6.903329158323,
+      "minimum_margin_m": -173.224667810672,
+      "flight_distance_m": 55.99999999999999,
+      "command_time_s": 0.0,
+      "drop_time_s": 2.0,
+      "burst_time_s": 5.5,
+      "center_time_s": 12.0913966032,
+      "drop_position_m": [
+        -4.775332189327997,
+        0.0
+      ],
+      "burst_center_m": [
+        93.224667810672,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 0.0,
+          "end_s": 24.167709255134
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d10000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_front_d10000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754,
+      "exposed_duration_s": 13.791574365379999,
+      "maximum_exposure_s": 6.895787182713001,
+      "minimum_margin_m": -173.16651917836427,
+      "flight_distance_m": 72.8827927128,
+      "command_time_s": 0.6029568826,
+      "drop_time_s": 2.6029568826,
+      "burst_time_s": 6.1029568826,
+      "center_time_s": 18.1868115102,
+      "drop_position_m": [
+        42.22031674364197,
+        0.0
+      ],
+      "burst_center_m": [
+        140.22031674364197,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 6.10295688261,
+          "end_s": 30.270666137744
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d12000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_front_d12000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889753999,
+      "exposed_duration_s": 13.79157436538,
+      "maximum_exposure_s": 6.895787182704,
+      "minimum_margin_m": -173.16651917843365,
+      "flight_distance_m": 243.76558542560002,
+      "command_time_s": 6.7059137652,
+      "drop_time_s": 8.7059137652,
+      "burst_time_s": 12.2059137652,
+      "center_time_s": 24.2897683928,
+      "drop_position_m": [
+        89.27411430848798,
+        0.0
+      ],
+      "burst_center_m": [
+        187.27411430848798,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 12.205913765219,
+          "end_s": 36.373623020353
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_front_d15000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_front_d15000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754002,
+      "exposed_duration_s": 13.791574365379994,
+      "maximum_exposure_s": 6.895787182690995,
+      "minimum_margin_m": -173.1665191785492,
+      "flight_distance_m": 500.0897744948,
+      "command_time_s": 15.860349089100001,
+      "drop_time_s": 17.8603490891,
+      "burst_time_s": 21.3603490891,
+      "center_time_s": 33.4442037167,
+      "drop_position_m": [
+        159.85481065575703,
+        0.0
+      ],
+      "burst_center_m": [
+        257.85481065575703,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 21.360349089134,
+          "end_s": 45.528058344268
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_rear_d8000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_rear_d8000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889753999,
+      "exposed_duration_s": 14.984907730887002,
+      "maximum_exposure_s": 7.493126505423,
+      "minimum_margin_m": -177.772005356813,
+      "flight_distance_m": 56.0,
+      "command_time_s": 0.0,
+      "drop_time_s": 2.0,
+      "burst_time_s": 5.5,
+      "center_time_s": 12.6811939503,
+      "drop_position_m": [
+        -0.2279946431869888,
+        0.0
+      ],
+      "burst_center_m": [
+        97.77200535681301,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 0.0,
+          "end_s": 25.361042620641
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_rear_d10000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_rear_d10000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889753999,
+      "exposed_duration_s": 14.984907730886999,
+      "maximum_exposure_s": 7.492453865445,
+      "minimum_margin_m": -177.76681930258263,
+      "flight_distance_m": 81.3205033788,
+      "command_time_s": 0.9043036921000001,
+      "drop_time_s": 2.9043036921,
+      "burst_time_s": 6.4043036921,
+      "center_time_s": 19.0848250024,
+      "drop_position_m": [
+        49.144000768503986,
+        0.0
+      ],
+      "burst_center_m": [
+        147.144000768504,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 6.404303692081,
+          "end_s": 31.765346312722
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_rear_d12000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_rear_d12000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889753999,
+      "exposed_duration_s": 14.984907730887002,
+      "maximum_exposure_s": 7.492453865461,
+      "minimum_margin_m": -177.76681930270598,
+      "flight_distance_m": 260.64100675760005,
+      "command_time_s": 7.3086073842,
+      "drop_time_s": 9.3086073842,
+      "burst_time_s": 12.8086073842,
+      "center_time_s": 25.4891286945,
+      "drop_position_m": [
+        98.52118223459499,
+        0.0
+      ],
+      "burst_center_m": [
+        196.521182234595,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 12.808607384162,
+          "end_s": 38.169650004803
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_rear_d15000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_rear_d15000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754002,
+      "exposed_duration_s": 14.984907730886999,
+      "maximum_exposure_s": 7.492453865447999,
+      "minimum_margin_m": -177.76681930260582,
+      "flight_distance_m": 529.6217618244,
+      "command_time_s": 16.9150629223,
+      "drop_time_s": 18.9150629223,
+      "burst_time_s": 22.4150629223,
+      "center_time_s": 35.0955842326,
+      "drop_position_m": [
+        172.58695443334597,
+        0.0
+      ],
+      "burst_center_m": [
+        270.58695443334597,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 22.415062922284,
+          "end_s": 47.776105542925
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_side_d8000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_side_d8000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754002,
+      "exposed_duration_s": 14.387574171823996,
+      "maximum_exposure_s": 7.212061110323,
+      "minimum_margin_m": -175.60499116059202,
+      "flight_distance_m": 56.0,
+      "command_time_s": 0.0,
+      "drop_time_s": 2.0,
+      "burst_time_s": 5.5,
+      "center_time_s": 12.4001285552,
+      "drop_position_m": [
+        -2.3950088394079927,
+        0.0
+      ],
+      "burst_center_m": [
+        95.60499116059201,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 0.0,
+          "end_s": 24.763709061578
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_side_d10000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_side_d10000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754,
+      "exposed_duration_s": 14.390782576869997,
+      "maximum_exposure_s": 7.195391288480998,
+      "minimum_margin_m": -175.47646683419018,
+      "flight_distance_m": 77.01091461840001,
+      "command_time_s": 0.7503898078000004,
+      "drop_time_s": 2.7503898078000004,
+      "burst_time_s": 6.2503898078,
+      "center_time_s": 18.6338485411,
+      "drop_position_m": [
+        45.66697225188099,
+        0.0
+      ],
+      "burst_center_m": [
+        143.666972251881,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 6.250389807834,
+          "end_s": 31.017307274458
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_side_d12000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_side_d12000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754002,
+      "exposed_duration_s": 14.393404242348996,
+      "maximum_exposure_s": 7.196702121198999,
+      "minimum_margin_m": -175.48657335444597,
+      "flight_distance_m": 252.0384229888,
+      "command_time_s": 7.001372249599999,
+      "drop_time_s": 9.0013722496,
+      "burst_time_s": 12.5013722496,
+      "center_time_s": 24.8861418156,
+      "drop_position_m": [
+        93.872153398276,
+        0.0
+      ],
+      "burst_center_m": [
+        191.872153398276,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 12.501372249573,
+          "end_s": 37.270911381676
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_side_d15000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_side_d15000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889753999,
+      "exposed_duration_s": 14.396612997456003,
+      "maximum_exposure_s": 7.198306498744003,
+      "minimum_margin_m": -175.49894310531795,
+      "flight_distance_m": 514.6001536955999,
+      "command_time_s": 16.3785769177,
+      "drop_time_s": 18.3785769177,
+      "burst_time_s": 21.8785769177,
+      "center_time_s": 34.2649508613,
+      "drop_position_m": [
+        166.182771140623,
+        0.0
+      ],
+      "burst_center_m": [
+        264.182771140623,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 21.878576917711,
+          "end_s": 46.651324804921
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_oblique_d8000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_oblique_d8000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889753999,
+      "exposed_duration_s": 14.809834136086,
+      "maximum_exposure_s": 7.434744985763,
+      "minimum_margin_m": -176.861937348992,
+      "flight_distance_m": 56.0,
+      "command_time_s": 0.0,
+      "drop_time_s": 2.0,
+      "burst_time_s": 5.5,
+      "center_time_s": 12.5631565952,
+      "drop_position_m": [
+        -1.1380626510079992,
+        0.0
+      ],
+      "burst_center_m": [
+        96.861937348992,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 0.0,
+          "end_s": 25.18596902584
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_oblique_d10000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_oblique_d10000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754,
+      "exposed_duration_s": 14.811462131006996,
+      "maximum_exposure_s": 7.405731065542,
+      "minimum_margin_m": -177.0981865153305,
+      "flight_distance_m": 80.03885551759998,
+      "command_time_s": 0.8585305541999997,
+      "drop_time_s": 2.8585305541999997,
+      "burst_time_s": 6.3585305542,
+      "center_time_s": 18.9523290646,
+      "drop_position_m": [
+        48.122457088066,
+        0.0
+      ],
+      "burst_center_m": [
+        146.122457088066,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 6.358530554181,
+          "end_s": 31.546127574942
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_oblique_d12000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_oblique_d12000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754002,
+      "exposed_duration_s": 14.812783035284998,
+      "maximum_exposure_s": 7.4063915176579975,
+      "minimum_margin_m": -177.10327860114484,
+      "flight_distance_m": 258.08638328760003,
+      "command_time_s": 7.2173708317,
+      "drop_time_s": 9.2173708317,
+      "burst_time_s": 12.7173708317,
+      "center_time_s": 25.3118297942,
+      "drop_position_m": [
+        97.154207713282,
+        0.0
+      ],
+      "burst_center_m": [
+        195.154207713282,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 12.717370831665,
+          "end_s": 37.906288756704
+        }
+      ]
+    },
+    {
+      "scenario_id": "q1_rebuild_oblique_d15000",
+      "method": "shgo",
+      "candidate_id": "formal_q1:q1_rebuild_oblique_d15000:shgo",
+      "native_success": true,
+      "native_status": "Optimization terminated successfully.",
+      "verification_status": "certified_infeasible",
+      "verification_reason": "closed detection endpoint has a positive coverage gap",
+      "covered_duration_s": 10.376134889754002,
+      "exposed_duration_s": 14.814388392342998,
+      "maximum_exposure_s": 7.407194196208998,
+      "minimum_margin_m": -177.1094672521948,
+      "flight_distance_m": 525.1682931263999,
+      "command_time_s": 16.7560104688,
+      "drop_time_s": 18.7560104688,
+      "burst_time_s": 22.2560104688,
+      "center_time_s": 34.8512721099,
+      "drop_position_m": [
+        170.703307967329,
+        0.0
+      ],
+      "burst_center_m": [
+        268.703307967329,
+        0.0
+      ],
+      "detection_components": [
+        {
+          "start_s": 22.256010468814,
+          "end_s": 47.446533750911
+        }
+      ]
+    }
+  ],
+  "counterfactual": {
+    "label": "experimental_counterfactual",
+    "formal_baseline": false,
+    "representative_scenarios": [
+      {
+        "scenario_id": "q1_rebuild_front_d8000",
+        "candidate_id": "formal_q1:q1_rebuild_front_d8000:shgo",
+        "formal_candidate_id": "formal_q1:q1_rebuild_front_d8000:shgo",
+        "fixed_decision": true,
+        "changed_model": true,
+        "formal_baseline": false,
+        "label": "experimental_counterfactual",
+        "decision": {
+          "command_time_s": 0.0,
+          "drop_time_s": 2.0,
+          "burst_time_s": 5.5,
+          "center_time_s": 12.0913966032,
+          "release_position_m": [
+            -4.775332189327997,
+            0.0
+          ],
+          "uav_path": [
+            {
+              "start_time_s": 0.0,
+              "end_time_s": 1.0852737890951427,
+              "start_position_m": [
+                0.0,
+                0.0
+              ],
+              "end_position_m": [
+                -30.387666094663995,
+                0.0
+              ]
+            },
+            {
+              "start_time_s": 1.0852737890951427,
+              "end_time_s": 2.0,
+              "start_position_m": [
+                -30.387666094663995,
+                0.0
+              ],
+              "end_position_m": [
+                -4.775332189327997,
+                0.0
+              ]
+            }
+          ],
+          "smoke_plan": {
+            "burst_center_m": [
+              93.224667810672,
+              0.0
+            ],
+            "maximum_radius_m": 120.0,
+            "hold_duration_s": 18.0,
+            "decay_duration_s": 5.0
+          }
+        },
+        "lost": true,
+        "reacquired": true,
+        "hit": true,
+        "minimum_separation_m": 69.41799999999839,
+        "parameters": {
+          "tau_T_s": 0.5,
+          "tau_L_s": 5.0,
+          "T_R_s": 1.0
+        }
+      },
+      {
+        "scenario_id": "q1_rebuild_front_d10000",
+        "candidate_id": "formal_q1:q1_rebuild_front_d10000:shgo",
+        "formal_candidate_id": "formal_q1:q1_rebuild_front_d10000:shgo",
+        "fixed_decision": true,
+        "changed_model": true,
+        "formal_baseline": false,
+        "label": "experimental_counterfactual",
+        "decision": {
+          "command_time_s": 0.6029568826,
+          "drop_time_s": 2.6029568826,
+          "burst_time_s": 6.1029568826,
+          "center_time_s": 18.1868115102,
+          "release_position_m": [
+            42.22031674364197,
+            0.0
+          ],
+          "uav_path": [
+            {
+              "start_time_s": 0.0,
+              "end_time_s": 0.5475442137349648,
+              "start_position_m": [
+                0.0,
+                0.0
+              ],
+              "end_position_m": [
+                -15.331237984579012,
+                0.0
+              ]
+            },
+            {
+              "start_time_s": 0.5475442137349648,
+              "end_time_s": 2.6029568826,
+              "start_position_m": [
+                -15.331237984579012,
+                0.0
+              ],
+              "end_position_m": [
+                42.22031674364197,
+                0.0
+              ]
+            }
+          ],
+          "smoke_plan": {
+            "burst_center_m": [
+              140.22031674364197,
+              0.0
+            ],
+            "maximum_radius_m": 120.0,
+            "hold_duration_s": 18.0,
+            "decay_duration_s": 5.0
+          }
+        },
+        "lost": true,
+        "reacquired": true,
+        "hit": true,
+        "minimum_separation_m": 70.38699999999773,
+        "parameters": {
+          "tau_T_s": 0.5,
+          "tau_L_s": 5.0,
+          "T_R_s": 1.0
+        }
+      },
+      {
+        "scenario_id": "q1_rebuild_front_d12000",
+        "candidate_id": "formal_q1:q1_rebuild_front_d12000:shgo",
+        "formal_candidate_id": "formal_q1:q1_rebuild_front_d12000:shgo",
+        "fixed_decision": true,
+        "changed_model": true,
+        "formal_baseline": false,
+        "label": "experimental_counterfactual",
+        "decision": {
+          "command_time_s": 6.7059137652,
+          "drop_time_s": 8.7059137652,
+          "burst_time_s": 12.2059137652,
+          "center_time_s": 24.2897683928,
+          "release_position_m": [
+            89.27411430848798,
+            0.0
+          ],
+          "uav_path": [
+            {
+              "start_time_s": 0.0,
+              "end_time_s": 2.7587762699484295,
+              "start_position_m": [
+                0.0,
+                0.0
+              ],
+              "end_position_m": [
+                -77.24573555855602,
+                0.0
+              ]
+            },
+            {
+              "start_time_s": 2.7587762699484295,
+              "end_time_s": 8.7059137652,
+              "start_position_m": [
+                -77.24573555855602,
+                0.0
+              ],
+              "end_position_m": [
+                89.27411430848798,
+                0.0
+              ]
+            }
+          ],
+          "smoke_plan": {
+            "burst_center_m": [
+              187.27411430848798,
+              0.0
+            ],
+            "maximum_radius_m": 120.0,
+            "hold_duration_s": 18.0,
+            "decay_duration_s": 5.0
+          }
+        },
+        "lost": true,
+        "reacquired": true,
+        "hit": true,
+        "minimum_separation_m": 71.35599999999948,
+        "parameters": {
+          "tau_T_s": 0.5,
+          "tau_L_s": 5.0,
+          "T_R_s": 1.0
+        }
+      },
+      {
+        "scenario_id": "q1_rebuild_front_d15000",
+        "candidate_id": "formal_q1:q1_rebuild_front_d15000:shgo",
+        "formal_candidate_id": "formal_q1:q1_rebuild_front_d15000:shgo",
+        "fixed_decision": true,
+        "changed_model": true,
+        "formal_baseline": false,
+        "label": "experimental_counterfactual",
+        "decision": {
+          "command_time_s": 15.860349089100001,
+          "drop_time_s": 17.8603490891,
+          "burst_time_s": 21.3603490891,
+          "center_time_s": 33.4442037167,
+          "release_position_m": [
+            159.85481065575703,
+            0.0
+          ],
+          "uav_path": [
+            {
+              "start_time_s": 0.0,
+              "end_time_s": 6.075624354268625,
+              "start_position_m": [
+                0.0,
+                0.0
+              ],
+              "end_position_m": [
+                -170.11748191952148,
+                0.0
+              ]
+            },
+            {
+              "start_time_s": 6.075624354268625,
+              "end_time_s": 17.8603490891,
+              "start_position_m": [
+                -170.11748191952148,
+                0.0
+              ],
+              "end_position_m": [
+                159.85481065575703,
+                0.0
+              ]
+            }
+          ],
+          "smoke_plan": {
+            "burst_center_m": [
+              257.85481065575703,
+              0.0
+            ],
+            "maximum_radius_m": 120.0,
+            "hold_duration_s": 18.0,
+            "decay_duration_s": 5.0
+          }
+        },
+        "lost": true,
+        "reacquired": true,
+        "hit": true,
+        "minimum_separation_m": 72.80950000000348,
+        "parameters": {
+          "tau_T_s": 0.5,
+          "tau_L_s": 5.0,
+          "T_R_s": 1.0
+        }
+      }
+    ]
+  }
+}

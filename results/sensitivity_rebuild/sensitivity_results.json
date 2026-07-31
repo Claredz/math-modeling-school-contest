@@ -1,0 +1,332 @@
+{
+  "generated_at": "2026-07-31T04:39:36.631578+00:00",
+  "git_sha": "9dea2ef0ee22278479b74a4016b0c0ce6f782e65",
+  "formal_baseline": true,
+  "experimental_counterfactual": {
+    "lost_guidance": true,
+    "formal_baseline": false,
+    "parameters": [
+      "tau_T_s",
+      "tau_L_s",
+      "T_R_s"
+    ]
+  },
+  "categories": [
+    "missile_model",
+    "lost_counterfactual",
+    "smoke_drift",
+    "response_delay",
+    "uav_reachability"
+  ],
+  "row_count": 44,
+  "rows": [
+    {
+      "category": "missile_model",
+      "parameter": "instantaneous_pure_pursuit",
+      "value": 0.0,
+      "metric": "detection_duration_s",
+      "result": 24.167709255134
+    },
+    {
+      "category": "missile_model",
+      "parameter": "inertial_heading_response_rate_per_s",
+      "value": 0.5,
+      "metric": "detection_duration_s",
+      "result": 24.167709255134
+    },
+    {
+      "category": "missile_model",
+      "parameter": "inertial_heading_response_rate_per_s",
+      "value": 1.0,
+      "metric": "detection_duration_s",
+      "result": 24.167709255134
+    },
+    {
+      "category": "missile_model",
+      "parameter": "inertial_heading_response_rate_per_s",
+      "value": 2.0,
+      "metric": "detection_duration_s",
+      "result": 24.167709255134
+    },
+    {
+      "category": "missile_model",
+      "parameter": "proportional_navigation",
+      "value": 0.0,
+      "metric": "status",
+      "result": "deferred_no_navigation_ratio_or_overload_source"
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.25,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 0.5,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "lost_counterfactual",
+      "parameter": "tau_T_tau_L_T_R",
+      "value": 1.0,
+      "metric": "minimum_separation_m",
+      "result": 69.41799999999839
+    },
+    {
+      "category": "smoke_drift",
+      "parameter": "bounded_drift_m",
+      "value": 0.0,
+      "metric": "minimum_gap_m",
+      "result": -39.66833056025369
+    },
+    {
+      "category": "smoke_drift",
+      "parameter": "bounded_drift_m",
+      "value": 10.0,
+      "metric": "minimum_gap_m",
+      "result": -29.994501280932482
+    },
+    {
+      "category": "smoke_drift",
+      "parameter": "bounded_drift_m",
+      "value": 20.0,
+      "metric": "minimum_gap_m",
+      "result": -19.997250073620833
+    },
+    {
+      "category": "smoke_drift",
+      "parameter": "bounded_drift_m",
+      "value": 40.0,
+      "metric": "minimum_gap_m",
+      "result": 0.0013750340817892948
+    },
+    {
+      "category": "response_delay",
+      "parameter": "command_to_drop_s",
+      "value": 1.5,
+      "metric": "available_detection_after_earliest_burst_s",
+      "result": 19.167709255134
+    },
+    {
+      "category": "response_delay",
+      "parameter": "command_to_drop_s",
+      "value": 2.0,
+      "metric": "available_detection_after_earliest_burst_s",
+      "result": 18.667709255134
+    },
+    {
+      "category": "response_delay",
+      "parameter": "command_to_drop_s",
+      "value": 2.5,
+      "metric": "available_detection_after_earliest_burst_s",
+      "result": 18.167709255134
+    },
+    {
+      "category": "response_delay",
+      "parameter": "command_to_drop_s",
+      "value": 3.0,
+      "metric": "available_detection_after_earliest_burst_s",
+      "result": 17.667709255134
+    },
+    {
+      "category": "uav_reachability",
+      "parameter": "operation_radius_m",
+      "value": 8000.0,
+      "metric": "path_feasible",
+      "result": true
+    },
+    {
+      "category": "uav_reachability",
+      "parameter": "operation_radius_m",
+      "value": 10000.0,
+      "metric": "path_feasible",
+      "result": true
+    },
+    {
+      "category": "uav_reachability",
+      "parameter": "operation_radius_m",
+      "value": 12000.0,
+      "metric": "path_feasible",
+      "result": true
+    },
+    {
+      "category": "uav_reachability",
+      "parameter": "operation_radius_m",
+      "value": 14000.0,
+      "metric": "path_feasible",
+      "result": true
+    }
+  ]
+}

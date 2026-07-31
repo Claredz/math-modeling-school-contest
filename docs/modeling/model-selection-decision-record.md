@@ -1,7 +1,8 @@
 # Gate B 模型选型决策记录
 
 **决策状态：`approved`（人工，2026-07-31T09:30:21+08:00）**
-**证据状态：Stage 0–3 已完成；Stage 4 尚未开始**
+**证据状态：Stage 0–3 已完成；批准瞬间 Stage 4 尚未开始；随后 Stage 4
+`passed`、Gate C `approved_fast_track`，现执行 Stage 5**
 
 ## Gate B 人工批准的 13 项决定
 
@@ -11,17 +12,17 @@
 4. 有界漂移与半径误差作为鲁棒扩展；
 5. 分段直线 UAV 路径作为理想化基准；
 6. Dubins 或有限转弯模型只在转弯参数有来源时升级；
-7. Q1/Q3 算法框架、Q2 SIP 优先研究路线、Q4 因果滚动框架获批，但不冻结具体主求解器；
+7. Q1/Q3 算法框架、Q2 SIP 优先研究路线、Q4 因果滚动框架获批，但不冻结
+   具体主求解器；
 8. Q3 主解释为三架无人机每架恰好投放一枚，“至多一枚”作为放松对照；
 9. 2 s 响应延时定义为投弹指令到实际释放的固定延时；
 10. 3.5 s 起爆延时从实际释放时刻开始计算；
 11. UAV 在 2 s 响应期间可以正常飞行；
 12. 基准场景不允许负时间预指令；
-13. 授权进入 Stage 4；本记录更新时 Stage 4 尚未开始。
+13. 授权进入 Stage 4；批准瞬间 Stage 4 尚未开始。
 
-阶段字段为 `current_stage=4`、`next_stage=4`、`gate_b_status=approved`、
-`stage_4_started=false`。这里的 4 表示下一待执行阶段，不表示 Stage 4 已完成。
-PR #6 合并后才能从最新 `main` 建立后续正式实施分支。
+版本控制边界按最新快速实施指令执行：快速分支和 Draft PR 以 PR #6 研究分支的
+远端最新 head 为基础，base 仍为研究分支，不在本轮合并 `main`。
 
 ## 四问目标层级
 
@@ -101,8 +102,9 @@ Q4 的 zero-forecast、whole-package-commitment rolling 在 synthetic toy 中为
 4. 所有 solver 状态与 verifier 状态分开；数值求解成功不等于模型可行已认证。
 5. unresolved 是正式状态，不得在汇总、排序或论文措辞中被折叠为成功或失败。
 
-## 合并边界
+## Gate 迁移
 
-Gate B 已正式批准，但 Stage 4 尚未开始。本 PR 仍只包含 Stage 0–3、研究审计、
-synthetic toy、Gate B 决策记录和工作流状态；正式 Q1–Q4 实施必须在本 PR 合并后
-从最新 `main` 建立的新分支中进行。
+Gate B 已人工批准。Stage 4 依据批准决定冻结 7 条核心假设、14 个符号、5 个术语、
+事件语义、solver/verifier 分离和三类产物隔离；L1 五维均为 9，无高严重度问题。
+因此 Gate C 自动设为 `approved_fast_track` 并进入 Stage 5。Q1/Q2 尚未因进入
+Stage 5 而自动视为完成；Q3/Q4 未开始。

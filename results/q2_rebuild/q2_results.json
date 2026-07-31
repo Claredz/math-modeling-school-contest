@@ -1,0 +1,469 @@
+{
+  "generated_at": "2026-07-31T04:39:06.878234+00:00",
+  "git_sha": "9dea2ef0ee22278479b74a4016b0c0ce6f782e65",
+  "formal_baseline": true,
+  "solver_verifier_separated": true,
+  "search_scope": "bounded event-parameterized candidates on four representative Q1 scenarios",
+  "global_optimum_claim": false,
+  "candidate_generation": "Q1 warm starts plus event anchors and 1-3 bomb combinations",
+  "continuous_refinement": "SLSQP polish with one-second drop-spacing constraints",
+  "joint_verification": "continuous time subdivision with conservative spatial envelopes",
+  "joint_gain_definition": "joint_coverage_lower_s minus best_single_smoke_coverage_lower_s; both use this Q2 verifier and the same scenario",
+  "unresolved_policy": "retain unresolved intervals and never promote them to feasible",
+  "scenario_count": 4,
+  "total_runtime_s": 189.49539019999793,
+  "scenarios": [
+    {
+      "candidate_id": "q2_candidate_014",
+      "burst_times_s": [
+        5.5,
+        14.833855
+      ],
+      "center_times_s": [
+        12.0913966032,
+        21.4252516032
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 17.263415274726285,
+      "joint_coverage_lower_s": 17.263415274726285,
+      "coverage_upper_s": 17.265795741340057,
+      "total_exposure_lower_s": 6.901913513793945,
+      "total_exposure_upper_s": 6.904293980407715,
+      "maximum_continuous_exposure_s": 5.49932861328125,
+      "maximum_exposure_lower_s": 5.49932861328125,
+      "maximum_exposure_upper_s": 6.904293980407715,
+      "certified_covered_intervals": [
+        {
+          "start_s": 6.904293980407715,
+          "end_s": 24.167709255134
+        }
+      ],
+      "certified_exposed_intervals": [
+        {
+          "start_s": 0.0,
+          "end_s": 5.49932861328125
+        },
+        {
+          "start_s": 5.5,
+          "end_s": 6.902584900512695
+        }
+      ],
+      "best_single_smoke_coverage_lower_s": 10.37384033203125,
+      "best_single_smoke_candidate_id": "q2_candidate_000",
+      "joint_gain_s": 6.889574942695035,
+      "witness_time_s": 6.666731875,
+      "unresolved_intervals": [
+        {
+          "start_s": 5.49932861328125,
+          "end_s": 5.5
+        },
+        {
+          "start_s": 6.902584900512695,
+          "end_s": 6.904293980407715
+        }
+      ],
+      "reason": "certified exposed interval found",
+      "solver_native_success": null,
+      "scenario_id": "q1_rebuild_front_d8000",
+      "runtime_s": 43.522171700024046,
+      "candidate_count": 40,
+      "warm_start_count": 1,
+      "polish_success": false,
+      "polish_status": "Iteration limit reached",
+      "q1_covered_duration_s": 10.376134889753999,
+      "relative_q1_improvement_lower_s": 6.887280384972286,
+      "detection_components": [
+        {
+          "start_s": 0.0,
+          "end_s": 24.167709255134
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 1.0852737890951427,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -30.387666094663995,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 1.0852737890951427,
+          "end_time_s": 2.0,
+          "start_position_m": [
+            -30.387666094663995,
+            0.0
+          ],
+          "end_position_m": [
+            -4.775332189327997,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 2.0,
+          "end_time_s": 5.381855677678572,
+          "start_position_m": [
+            -4.775332189327997,
+            0.0
+          ],
+          "end_position_m": [
+            -99.467291164328,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 5.381855677678572,
+          "end_time_s": 11.333855,
+          "start_position_m": [
+            -99.467291164328,
+            0.0
+          ],
+          "end_position_m": [
+            67.18868986067199,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "q2_candidate_011",
+      "burst_times_s": [
+        6.102957,
+        15.165848
+      ],
+      "center_times_s": [
+        18.186811627599997,
+        27.249702627599998
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 17.270972993456894,
+      "joint_coverage_lower_s": 17.270972993456894,
+      "coverage_upper_s": 17.272632575751675,
+      "total_exposure_lower_s": 6.895076679382324,
+      "total_exposure_upper_s": 6.8967362616771055,
+      "maximum_continuous_exposure_s": 6.895076679382324,
+      "maximum_exposure_lower_s": 6.895076679382324,
+      "maximum_exposure_upper_s": 6.896736261677109,
+      "certified_covered_intervals": [
+        {
+          "start_s": 12.999693144287109,
+          "end_s": 30.270666137744
+        }
+      ],
+      "certified_exposed_intervals": [
+        {
+          "start_s": 6.102957,
+          "end_s": 12.998033679382324
+        }
+      ],
+      "best_single_smoke_coverage_lower_s": 10.37384033203125,
+      "best_single_smoke_candidate_id": "q2_candidate_002",
+      "joint_gain_s": 6.897132661425644,
+      "witness_time_s": 10.6344025,
+      "unresolved_intervals": [
+        {
+          "start_s": 6.10295688261,
+          "end_s": 6.102957
+        },
+        {
+          "start_s": 12.998033679382324,
+          "end_s": 12.999693144287109
+        }
+      ],
+      "reason": "certified exposed interval found",
+      "solver_native_success": null,
+      "scenario_id": "q1_rebuild_front_d10000",
+      "runtime_s": 44.04444149998017,
+      "candidate_count": 41,
+      "warm_start_count": 1,
+      "polish_success": true,
+      "polish_status": "Optimization terminated successfully",
+      "q1_covered_duration_s": 10.376134889754,
+      "relative_q1_improvement_lower_s": 6.894838103702893,
+      "detection_components": [
+        {
+          "start_s": 6.10295688261,
+          "end_s": 30.270666137744
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 0.5475442562715005,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -15.331239175602015,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 0.5475442562715005,
+          "end_time_s": 2.602957,
+          "start_position_m": [
+            -15.331239175602015,
+            0.0
+          ],
+          "end_position_m": [
+            42.22031764879597,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 2.602957,
+          "end_time_s": 5.886636614107143,
+          "start_position_m": [
+            42.22031764879597,
+            0.0
+          ],
+          "end_position_m": [
+            -49.72271154620404,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 5.886636614107143,
+          "end_time_s": 11.665848,
+          "start_position_m": [
+            -49.72271154620404,
+            0.0
+          ],
+          "end_position_m": [
+            112.095207258796,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "q2_polished_040",
+      "burst_times_s": [
+        12.205985564557842,
+        21.252813115862786
+      ],
+      "center_times_s": [
+        24.28984019215784,
+        33.33666774346278
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 17.27097753661799,
+      "joint_coverage_lower_s": 17.27097753661799,
+      "coverage_upper_s": 17.272153685023152,
+      "total_exposure_lower_s": 6.895555570110847,
+      "total_exposure_upper_s": 6.896731718516008,
+      "maximum_continuous_exposure_s": 6.895555570110847,
+      "maximum_exposure_lower_s": 6.895555570110847,
+      "maximum_exposure_upper_s": 6.89673171851601,
+      "certified_covered_intervals": [
+        {
+          "start_s": 19.10264548373501,
+          "end_s": 36.373623020353
+        }
+      ],
+      "certified_exposed_intervals": [
+        {
+          "start_s": 12.205985564557842,
+          "end_s": 19.10154113466869
+        }
+      ],
+      "best_single_smoke_coverage_lower_s": 10.37384033203125,
+      "best_single_smoke_candidate_id": "q2_candidate_002",
+      "joint_gain_s": 6.897137204586741,
+      "witness_time_s": 16.729399340210314,
+      "unresolved_intervals": [
+        {
+          "start_s": 12.205913765219,
+          "end_s": 12.205985564557842
+        },
+        {
+          "start_s": 19.10154113466869,
+          "end_s": 19.10264548373501
+        }
+      ],
+      "reason": "certified exposed interval found",
+      "solver_native_success": true,
+      "scenario_id": "q1_rebuild_front_d12000",
+      "runtime_s": 45.30866739997873,
+      "candidate_count": 41,
+      "warm_start_count": 1,
+      "polish_success": true,
+      "polish_status": "Optimization terminated successfully",
+      "q1_covered_duration_s": 10.376134889753999,
+      "relative_q1_improvement_lower_s": 6.894842646863992,
+      "detection_components": [
+        {
+          "start_s": 12.205913765219,
+          "end_s": 36.373623020353
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 2.7588022843943327,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -77.24646396304132,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 2.7588022843943327,
+          "end_time_s": 8.705985564557842,
+          "start_position_m": [
+            -77.24646396304132,
+            0.0
+          ],
+          "end_position_m": [
+            89.27466788153694,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 8.705985564557842,
+          "end_time_s": 11.983845046986008,
+          "start_position_m": [
+            89.27466788153694,
+            0.0
+          ],
+          "end_position_m": [
+            -2.5053976264517246,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 11.983845046986008,
+          "end_time_s": 17.752813115862786,
+          "start_position_m": [
+            -2.5053976264517246,
+            0.0
+          ],
+          "end_position_m": [
+            159.02570830209805,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "q2_candidate_011",
+      "burst_times_s": [
+        21.360349,
+        30.42324
+      ],
+      "center_times_s": [
+        33.444203627600004,
+        42.5070946276
+      ],
+      "bomb_count": 2,
+      "verification_status": "certified_infeasible",
+      "coverage_lower_s": 17.27097317867664,
+      "joint_coverage_lower_s": 17.27097317867664,
+      "coverage_upper_s": 17.27263264356511,
+      "total_exposure_lower_s": 6.895076611568886,
+      "total_exposure_upper_s": 6.896736076457355,
+      "maximum_continuous_exposure_s": 6.895076611568886,
+      "maximum_exposure_lower_s": 6.895076611568886,
+      "maximum_exposure_upper_s": 6.896736076457355,
+      "certified_covered_intervals": [
+        {
+          "start_s": 28.257085165591356,
+          "end_s": 45.528058344268
+        }
+      ],
+      "certified_exposed_intervals": [
+        {
+          "start_s": 21.360349089134,
+          "end_s": 28.255425700702887
+        }
+      ],
+      "best_single_smoke_coverage_lower_s": 10.37384033203125,
+      "best_single_smoke_candidate_id": "q2_candidate_002",
+      "joint_gain_s": 6.897132846645391,
+      "witness_time_s": 25.891794544567,
+      "unresolved_intervals": [
+        {
+          "start_s": 28.255425700702887,
+          "end_s": 28.257085165591356
+        }
+      ],
+      "reason": "certified exposed interval found",
+      "solver_native_success": null,
+      "scenario_id": "q1_rebuild_front_d15000",
+      "runtime_s": 39.83894019998843,
+      "candidate_count": 41,
+      "warm_start_count": 1,
+      "polish_success": true,
+      "polish_status": "Optimization terminated successfully",
+      "q1_covered_duration_s": 10.376134889754002,
+      "relative_q1_improvement_lower_s": 6.894838288922639,
+      "detection_components": [
+        {
+          "start_s": 21.360349089134,
+          "end_s": 45.528058344268
+        }
+      ],
+      "uav_path": [
+        {
+          "start_time_s": 0.0,
+          "end_time_s": 6.075624321985785,
+          "start_position_m": [
+            0.0,
+            0.0
+          ],
+          "end_position_m": [
+            -170.11748101560198,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 6.075624321985785,
+          "end_time_s": 17.860349,
+          "start_position_m": [
+            -170.11748101560198,
+            0.0
+          ],
+          "end_position_m": [
+            159.85480996879602,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 17.860349,
+          "end_time_s": 21.144028614107143,
+          "start_position_m": [
+            159.85480996879602,
+            0.0
+          ],
+          "end_position_m": [
+            67.91178077379601,
+            0.0
+          ]
+        },
+        {
+          "start_time_s": 21.144028614107143,
+          "end_time_s": 26.92324,
+          "start_position_m": [
+            67.91178077379601,
+            0.0
+          ],
+          "end_position_m": [
+            229.729699578796,
+            0.0
+          ]
+        }
+      ]
+    }
+  ]
+}

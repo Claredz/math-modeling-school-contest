@@ -1,0 +1,132 @@
+{
+  "generated_at": "2026-07-31T04:39:18.307346+00:00",
+  "git_sha": "9dea2ef0ee22278479b74a4016b0c0ce6f782e65",
+  "formal_baseline": true,
+  "causal_rolling": true,
+  "causal_greedy_baseline": true,
+  "offline_hindsight_upper_bound": true,
+  "task_package_source": "Q1-Q3 certified task-package interface",
+  "global_optimum_claim": false,
+  "resource_cases": [
+    {
+      "resource_case": "abundant",
+      "capacity": 4,
+      "status": "unresolved",
+      "causal": true,
+      "total_value": 46.4,
+      "certified_value": 46.4,
+      "rolling_value": 46.4,
+      "greedy_value": 46.4,
+      "hindsight_upper_bound": 46.4,
+      "rolling_vs_greedy_gap": 0.0,
+      "hindsight_gap": 0.0,
+      "greedy_unresolved_task_ids": [
+        "threat_oblique"
+      ],
+      "hindsight_decision_task_ids": [
+        "threat_front",
+        "threat_rear",
+        "threat_side"
+      ],
+      "decisions": [
+        {
+          "time_s": 0.0,
+          "task_id": "threat_front",
+          "resources_used": 1,
+          "value": 17.2
+        },
+        {
+          "time_s": 4.0,
+          "task_id": "threat_rear",
+          "resources_used": 1,
+          "value": 15.8
+        },
+        {
+          "time_s": 8.0,
+          "task_id": "threat_side",
+          "resources_used": 2,
+          "value": 13.4
+        }
+      ],
+      "unresolved_task_ids": [
+        "threat_oblique"
+      ],
+      "reason": "pending tasks retained as unresolved"
+    },
+    {
+      "resource_case": "critical",
+      "capacity": 2,
+      "status": "unresolved",
+      "causal": true,
+      "total_value": 33.0,
+      "certified_value": 33.0,
+      "rolling_value": 33.0,
+      "greedy_value": 33.0,
+      "hindsight_upper_bound": 33.0,
+      "rolling_vs_greedy_gap": 0.0,
+      "hindsight_gap": 0.0,
+      "greedy_unresolved_task_ids": [
+        "threat_side",
+        "threat_oblique"
+      ],
+      "hindsight_decision_task_ids": [
+        "threat_front",
+        "threat_rear"
+      ],
+      "decisions": [
+        {
+          "time_s": 0.0,
+          "task_id": "threat_front",
+          "resources_used": 1,
+          "value": 17.2
+        },
+        {
+          "time_s": 4.0,
+          "task_id": "threat_rear",
+          "resources_used": 1,
+          "value": 15.8
+        }
+      ],
+      "unresolved_task_ids": [
+        "threat_side",
+        "threat_oblique"
+      ],
+      "reason": "pending tasks retained as unresolved"
+    },
+    {
+      "resource_case": "shortage",
+      "capacity": 1,
+      "status": "unresolved",
+      "causal": true,
+      "total_value": 17.2,
+      "certified_value": 17.2,
+      "rolling_value": 17.2,
+      "greedy_value": 17.2,
+      "hindsight_upper_bound": 17.2,
+      "rolling_vs_greedy_gap": 0.0,
+      "hindsight_gap": 0.0,
+      "greedy_unresolved_task_ids": [
+        "threat_rear",
+        "threat_side",
+        "threat_oblique"
+      ],
+      "hindsight_decision_task_ids": [
+        "threat_front"
+      ],
+      "decisions": [
+        {
+          "time_s": 0.0,
+          "task_id": "threat_front",
+          "resources_used": 1,
+          "value": 17.2
+        }
+      ],
+      "unresolved_task_ids": [
+        "threat_rear",
+        "threat_side",
+        "threat_oblique"
+      ],
+      "reason": "pending tasks retained as unresolved"
+    }
+  ]
+}

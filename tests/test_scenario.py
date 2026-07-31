@@ -66,6 +66,26 @@ def test_formal_scene_rejects_instantaneous_pursuit(valid_dict):
         Scenario.model_validate(valid_dict)
 
 
+def test_formal_baseline_scene_uses_parameter_free_instantaneous_pursuit(valid_dict):
+    valid_dict["model_layer"] = "formal_baseline"
+    valid_dict["assumption_ids"] = ["A-F01", "A-F02", "A-F06"]
+    valid_dict["missiles"][0]["guidance_model"] = "instantaneous_pure_pursuit"
+    valid_dict["missiles"][0].pop("heading_response_rate_per_s")
+    valid_dict["missiles"][0].pop("max_turn_rate_deg_s")
+
+    scene = Scenario.model_validate(valid_dict)
+
+    assert scene.model_layer == "formal_baseline"
+    assert scene.missiles[0].guidance_model == "instantaneous_pure_pursuit"
+
+
+def test_formal_baseline_rejects_unapproved_inertial_parameters(valid_dict):
+    valid_dict["model_layer"] = "formal_baseline"
+
+    with pytest.raises(ValidationError):
+        Scenario.model_validate(valid_dict)
+
+
 def test_ablation_scene_allows_only_instantaneous_reference(valid_dict):
     valid_dict["model_layer"] = "ablation"
     valid_dict["missiles"][0]["guidance_model"] = "instantaneous_pure_pursuit"

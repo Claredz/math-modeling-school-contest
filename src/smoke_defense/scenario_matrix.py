@@ -30,6 +30,14 @@ ASSUMPTION_IDS = (
     "A-021",
     "A-022",
 )
+REBUILD_ASSUMPTION_IDS = (
+    "A-F01",
+    "A-F02",
+    "A-F03",
+    "A-F04",
+    "A-F05",
+    "A-F06",
+)
 
 
 def _token(value: float) -> str:
@@ -63,7 +71,11 @@ def _base_scene(
             "scenario_id": scenario_id,
             "time_origin": "decision_start",
             "model_layer": model_layer,
-            "assumption_ids": ASSUMPTION_IDS,
+            "assumption_ids": (
+                REBUILD_ASSUMPTION_IDS
+                if model_layer == "formal_baseline"
+                else ASSUMPTION_IDS
+            ),
             "ship": {
                 "initial_position_world_m": (0.0, 0.0),
                 "heading_deg": 0.0,
@@ -124,6 +136,25 @@ def generate_instantaneous_ablation_matrix() -> tuple[Scenario, ...]:
                 scenario_id=f"ablation_{direction_name}_d{int(distance_m)}",
                 position_body_m=_position(direction, distance_m),
                 model_layer="ablation",
+                guidance_model="instantaneous_pure_pursuit",
+            )
+        )
+    return tuple(scenes)
+
+
+def generate_q1_rebuild_matrix() -> tuple[Scenario, ...]:
+    """Return the approved 4-direction x 4-distance formal baseline."""
+
+    scenes = []
+    for (direction_name, direction), distance_m in product(
+        DIRECTIONS.items(),
+        DISTANCES_M,
+    ):
+        scenes.append(
+            _base_scene(
+                scenario_id=f"q1_rebuild_{direction_name}_d{int(distance_m)}",
+                position_body_m=_position(direction, distance_m),
+                model_layer="formal_baseline",
                 guidance_model="instantaneous_pure_pursuit",
             )
         )
