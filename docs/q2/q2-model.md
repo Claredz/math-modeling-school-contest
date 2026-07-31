@@ -14,3 +14,16 @@ Q2 在 Stage 4 冻结的正式基线之上允许同一架 UAV 使用 1–3 枚�
 - 目标是检测窗口上的联合覆盖，而不是局部优化器的原生成功标志。
 
 本轮 Q2 是可提交的有界候选流程，不宣称全局精确最优。结果目录 `results/q2_rebuild/` 与旧 `results/q1/` 隔离。
+
+## 目标与约束编号
+
+令 \(z_j\in\{0,1\}\) 表示第 \(j\) 枚弹是否使用，事件和中心组成
+\(\mathbf{x}_2=(z_j,t_j^c,t_j^d,t_j^e,c_j,p_j^d,\pi)\)。目标词典序为
+\(\mathcal{J}_2=(I_{\rm full},T_{\rm cov}^{\rm lower},-T_{\rm gap}^{\max},-T_{\rm exposed},G_{\rm joint},-\sum_jz_j,-L_{\rm UAV})\)。
+约束为：
+
+1. `(Q2-C1)` \(t_j^d=t_j^c+2,\;t_j^e=t_j^d+3.5,\;t_j^c\ge0\)；
+2. `(Q2-C2)` \(1\le\sum_jz_j\le3\)，同一 UAV 的投弹间隔至少 1 s；
+3. `(Q2-C3)` 每个 \(p_j^d\) 可由连续 UAV 路径到达，且作战半径不超过 12 km；
+4. `(Q2-C4)` 起爆中心、路径速度和事件时刻一致；
+5. `(Q2-C5)` 烟幕并集对全部检测时间和 80 m 圆盘执行联合 verifier，连续 separation 无法关闭时返回 `unresolved`。
