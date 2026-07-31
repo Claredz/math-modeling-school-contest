@@ -1,0 +1,68 @@
+\documentclass[withoutpreface,bwprint]{cumcmthesis}
+
+% Stage 8 论文入口：直接以 LaTeX 组织正文，不经过 Markdown 转换。
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{url}
+\usepackage{listings}
+
+\graphicspath{{figures/}}
+\setlength{\tabcolsep}{4pt}
+\newcommand{\cert}{\text{certified}}
+\newcommand{\unres}{\text{unresolved}}
+\newcommand{\dd}{\mathrm{d}}
+
+\title{舰船烟幕遮蔽干扰的多阶段证据约束优化模型}
+\tihao{B}
+\baominghao{000000000000}
+\schoolname{匿名参赛学校}
+\membera{队员 A}
+\memberb{队员 B}
+\memberc{队员 C}
+\supervisor{指导教师}
+\yearinput{2026}
+\monthinput{7}
+\dayinput{31}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+本文研究来袭威胁与舰船烟幕遮蔽干扰之间的时空耦合决策问题。论文严格沿着“单弹连续优化—单机多弹联合覆盖—多机协同—多威胁因果调度”的主线组织，先用四种连续优化算法生成候选，再用独立的连续覆盖验证器对候选进行认证；随后把起爆事件离散化为有限候选集，并使用局部 SLSQP 精修，最后用保守的时间单元分类给出联合覆盖证书。多机阶段固定为三架 UAV、每架一枚弹，并对航迹半径和成对冲突进行独立检查；多威胁阶段只在已认证任务包上比较因果 rolling、因果 greedy 与离线 hindsight 上界。
+
+在固定的 4\(\times\)4 正式场景矩阵上，Q1 的四算法基准均得到“认证不可行”状态；SHGO 的平均最大连续暴露时长为约 $6.95\,\mathrm{s}$，在本次有限预算基准中最小。Q2 的四个代表场景联合覆盖下界为 $17.2634$--$17.2710\,\mathrm{s}$，相对最佳单烟幕基线的联合增益为 $6.8896$--$6.8971\,\mathrm{s}$；保守验证得到的最大连续暴露下界为 $5.4993$--$6.8956\,\mathrm{s}$。Q3 保持三架 UAV 每架一枚的主解释，路径半径与成对冲突证书均通过，结果与 Q2 的联合覆盖量一致。Q4 在容量 $4$、$2$、$1$ 下三种策略的值分别为 $46.4$、$33.0$、$17.2$，但任务包中仍保留未揭示任务，因此状态标记为未解析。
+
+灵敏度结果表明，在给定的局部扰动范围内，导引响应率的检测时长保持 $24.1677\,\mathrm{s}$，响应延迟从 $1.5$ 增至 $3.0\,\mathrm{s}$ 时可用检测窗口从 $19.1677$ 降至 $17.6677\,\mathrm{s}$，烟幕漂移上界为 $40\,\mathrm{m}$ 时最小间隙约为 $0.0014\,\mathrm{m}$。本文强调这些结果是固定场景、有限候选、证书约束下的可复核结果，不宣称完整 SIP、完整 Pareto 求解、滚动 MILP 或连续全局最优。
+
+\keywords{烟幕遮蔽\quad 连续覆盖认证\quad 事件候选\quad 多机协同\quad 因果调度}
+\end{abstract}
+
+% 电子版按要求不生成目录、图目录或表目录；摘要是第一页。
+\input{sections/01_problem_restatement}
+\input{sections/02_problem_analysis}
+\input{sections/03_assumptions_symbols}
+\input{sections/04_common_model}
+\input{sections/05_q1_single}
+\input{sections/06_q2_joint}
+\input{sections/07_q3_multi_uav}
+\input{sections/08_q4_causal}
+\input{sections/09_sensitivity}
+\input{sections/10_evaluation}
+
+\begin{appendices}
+\input{sections/A_reproducibility}
+\input{sections/B_result_manifest}
+\input{sections/C_audit_checklist}
+\end{appendices}
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,30 @@
+\section{复现与产物说明}
+
+\subsection{结果文件}
+
+论文正文引用的主要文件如下：
+
+\begin{itemize}
+  \item Q1：\path{results/q1_rebuild/q1_algorithm_benchmark.csv}、\path{results/q1_rebuild/q1_results.csv}、\path{results/q1_rebuild/q1_results.json}；
+  \item Q2：\path{results/q2_rebuild/q2_results.csv}、\path{results/q2_rebuild/q2_results.json}；
+  \item Q3：\path{results/q3_rebuild/q3_results.csv}、\path{results/q3_rebuild/q3_results.json}；
+  \item Q4：\path{results/q4_rebuild/q4_results.csv}、\path{results/q4_rebuild/q4_results.json}；
+  \item 灵敏度：\path{results/sensitivity_rebuild/sensitivity_results.csv}、\path{results/sensitivity_rebuild/sensitivity_results.json}。
+\end{itemize}
+
+这些文件的 JSON 元数据均指向生成基线 \texttt{9dea2ef0ee22278479b74a4016b0c0ce6f782e65}；Stage 8 分支从 PR \#8 合并提交建立，但没有重新生成科学工件。图像只从根目录的各结果子目录（如 \path{figures/q1_rebuild/}）复制到 \path{paper/figures/}，复制关系在 \path{paper/figures/README.md} 和 \path{paper/paper_audit.md} 中记录。
+
+\subsection{验证命令}
+
+论文构建命令为：
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+cd paper
+latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
+\end{lstlisting}
+
+项目验证命令包括测试、Ruff、场景 schema、场景生成和 Q1--Q4/灵敏度 artifact check。论文不上传比赛平台，Stage 8 Draft PR 也不在本阶段合并。
+
+\subsection{文件级防漂移检查}
+
+论文审计文件列出了每一项关键声明的来源、证据级别和允许措辞。最终交付前需检查：CSV 与 JSON 的核心数值一致、所有正文图像存在且来自当前冻结基线、公式引用无未定义标签、参考文献可由 BibTeX 生成、PDF 使用中文字体且文件大小正常，以及 Git 工作树只包含 Stage 8 产物。

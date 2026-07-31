@@ -1,0 +1,53 @@
+\section{灵敏度与稳健性检验}
+
+\subsection{检验设计}
+
+灵敏度文件包含五类局部证据：导引模型、丢失导引反事实、烟幕漂移、响应延迟和 UAV 作用半径。每一行包含类别、参数、参数值、指标和结果；正式基线与实验性丢失导引反事实在 JSON 中分开标记。该设计是局部扰动，不是针对所有参数的全局不确定性分析。
+
+对于固定参考候选，漂移敏感度采用离散检测时间网格 $\{t_\ell\}$，计算最小间隙
+\begin{equation}
+  g_{\min}(\delta)=\min_{\ell}\left(
+  \|x_T(t_\ell)-[x_S+\Delta(\delta)]\|_2
+  -r_T-R_S(t_\ell)\right),
+  \label{eq:sensitivity-gap}
+\end{equation}
+其中 $\Delta(\delta)$ 是大小为 $\delta$ 的有界漂移。响应延迟测试只改变最早合法爆炸时刻，因此可用窗口为
+\begin{equation}
+  W(\tau)=\max\left(0,\ t_{\mathrm{det,end}}-
+  \max(t_{\mathrm{det,start}},\tau+\tau_{\mathrm{burst}})\right).
+  \label{eq:sensitivity-window}
+\end{equation}
+
+\begin{table}[!htbp]
+\centering
+\caption{灵敏度结果中的代表性边界}
+\label{tab:sensitivity}
+\begin{tabular}{llrr}
+\toprule
+类别 & 参数/指标 & 低值结果 & 高值结果 \\
+\midrule
+导引模型 & 检测时长/s & 24.1677 & 24.1677 \\
+烟幕漂移 & 最小间隙/m（漂移 0--40 m） & -39.6683 & 0.0014 \\
+响应延迟 & 可用窗口/s（延迟 1.5--3.0 s） & 19.1677 & 17.6677 \\
+作用半径 & 路径可行性（8000--14000 m） & 真 & 真 \\
+丢失导引 & 最小分离/m（实验反事实） & 69.4180 & 69.4180 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表\ref{tab:sensitivity}的导引模型结果来自瞬时纯追踪与惯性航向响应率 $0.5$、$1.0$、$2.0\,\mathrm{s}^{-1}$ 的检测时长；比例导航项因缺少导航比和过载来源而在结果文件中标记为 deferred。烟幕漂移的最小间隙从负值接近零，说明固定中心方案对该扰动较敏感；响应延迟增加会压缩可用检测窗口。
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.86\textwidth]{sensitivity_summary.png}
+  \caption{冻结基线中的 Stage 6 局部灵敏度汇总图。}
+  \label{fig:sensitivity}
+\end{figure}
+
+\subsection{正式与反事实的隔离}
+
+丢失导引参数 $(\tau_T,\tau_L,T_R)$ 的 $27$ 行实验结果只用于说明失锁模型变化下的几何分离，不修改正式 Q1 候选决策，也不改变 Q2--Q4 任务包。正式基线字段为 \texttt{formal\_baseline=true}，反事实对象为 \texttt{formal\_baseline=false}。因此，本文不把反事实数值写成正式方案的稳健保证。
+
+\subsection{稳健性结论}
+
+在代码已计算的局部范围内，UAV 作用半径从 $8000$ 增至 $14000\,\mathrm{m}$ 时固定路径均被判定为可行；响应延迟每增加 $0.5\,\mathrm{s}$，可用窗口减少约 $0.5\,\mathrm{s}$。这些是有限样本、固定路径或固定候选下的敏感性方向，不足以支持完整参数空间中的稳健最优性结论。

@@ -1,0 +1,64 @@
+\section{Q4：多威胁因果调度}
+
+\subsection{认证任务包}
+
+Q4 不重新优化 Q1--Q3 的连续决策，而是读取任务包接口。每个任务 $i$ 包含揭示时刻 $r_i$、价值 $v_i$、资源消耗 $c_i$ 和认证标志 $a_i$。在当前时刻 $t$，可行集合定义为
+\begin{equation}
+  \mathcal{F}(t)=\{i:r_i\le t,\ a_i=1,\ c_i\le R(t)\},
+  \label{eq:q4-feasible}
+\end{equation}
+其中 $R(t)$ 是剩余资源。rolling 在可行集合中按单位资源价值选择，greedy 按任务价值选择；二者都保持因果性。未揭示、未认证或因容量不足而无法选取的任务保存在 \texttt{unresolved\_task\_ids} 中。
+
+若 $A(t)$ 是已执行任务集合，则状态更新为
+\begin{equation}
+  R(t^+)=R(t)-\sum_{i\in A(t^+)-A(t)}c_i,
+  \qquad
+  \mathcal{T}_{\mathrm{revealed}}(t^+)=
+  \mathcal{T}_{\mathrm{revealed}}(t)\cup\{i:r_i\le t^+\}.
+  \label{eq:q4-state}
+\end{equation}
+rolling 的单位资源价值规则可表示为
+\begin{equation}
+  i^*(t)=\arg\max_{i\in\mathcal{F}(t)}
+  \left(\frac{v_i}{c_i},v_i,-r_i,-\mathrm{id}_i\right),
+  \label{eq:q4-rolling-rule}
+\end{equation}
+而 greedy 将首项替换为 $v_i$。式\eqref{eq:q4-state}中的揭示集合是因果限制，式\eqref{eq:q4-rolling-rule}只描述当前实现的选择优先级。
+
+\subsection{离线 hindsight 上界}
+
+hindsight 枚举已经在时间窗内揭示且经过认证的任务子集，约束总成本不超过容量，最大化任务价值：
+\begin{equation}
+  U^*(B)=\max_{\mathcal{A}\subseteq\mathcal{T}_{\mathrm{cert}}}
+  \left\{\sum_{i\in\mathcal{A}}v_i:\sum_{i\in\mathcal{A}}c_i\le B\right\}.
+  \label{eq:q4-hindsight}
+\end{equation}
+它使用完整任务集合，因此只能作为在线策略的离线上界。当前代码明确将其标记为 \texttt{offline\_hindsight\_upper\_bound}，没有实现滚动 MILP。
+
+\begin{table}[!htbp]
+\centering
+\caption{Q4 三种资源容量下的因果调度结果}
+\label{tab:q4-results}
+\begin{tabular}{lrrrrrr}
+\toprule
+情形 & 容量 & rolling & greedy & hindsight 上界 & 两差值 & 状态 \\
+\midrule
+充足 & 4 & 46.4 & 46.4 & 46.4 & 0.0/0.0 & 未解析 \\
+临界 & 2 & 33.0 & 33.0 & 33.0 & 0.0/0.0 & 未解析 \\
+短缺 & 1 & 17.2 & 17.2 & 17.2 & 0.0/0.0 & 未解析 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表\ref{tab:q4-results}的两个差值依次为 rolling--greedy 与 hindsight--rolling。三种情形的数值相同并不意味着三种策略在所有任务流上等价；它只反映当前四任务、揭示时刻和价值设定下的结果。状态仍为未解析，因为 JSON 中保留了尚未揭示的任务，例如充足容量下的 \texttt{threat\_oblique}。
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.84\textwidth]{q4_resource_cases.png}
+  \caption{Q4 资源容量情形下的 rolling、greedy 与离线上界。}
+  \label{fig:q4-resource}
+\end{figure}
+
+\subsection{因果性检查}
+
+对每一个实际决策，代码检查决策时间不早于对应任务的揭示时刻；同时只把 \texttt{certified=true} 的任务加入可行集合。因此，Q4 的科学结论是“在认证任务包接口上，当前有限基准的三种值一致”，而不是“已求得多威胁问题的最优调度”或“已完成完整信息下的在线最优性证明”。

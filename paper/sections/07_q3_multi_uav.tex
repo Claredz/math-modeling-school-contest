@@ -1,0 +1,71 @@
+\section{Q3：三架 UAV 协同与冲突证书}
+
+\subsection{主解释与路径构造}
+
+Q3 的主解释固定为三架 UAV、三枚烟幕弹且每架恰好一枚。对第 $i$ 架 UAV，使用 Q2 的单弹路径连接器构造 $P_i$，并令其烟幕为 $S_i$。这一步不是把多机问题放松为“每架至多一枚”，因为结果文件显式记录 \texttt{main\_interpretation=three\_uavs\_exactly\_one\_bomb\_each}，放松解释不参与主结果。
+
+\subsection{可行性和冲突证书}
+
+首先对每条路径验证作用半径；随后对任意 $i<j$ 检验成对路径分离。安全距离参数在当前基线为 $0\,\mathrm{m}$，因此“冲突证书通过”表示代码定义下没有小于安全距离的交叠，不应写成现实飞行安全裕度无限大。联合烟幕仍由 Q2 的完整时间单元分类器认证。
+
+\begin{equation}
+  P_i\in\mathcal{P}_{\mathrm{radius}},\quad
+  \operatorname{sep}(P_i,P_j)\ge d_{\mathrm{safe}},\quad
+  1\le i<j\le3.
+  \label{eq:q3-conflict}
+\end{equation}
+
+若一条路径由线段 $e_{i,r}$ 组成，线段速度固定为 $v_U$，则每段的长度约束写成
+\begin{equation}
+  \|p_{i,r}^{\mathrm{end}}-p_{i,r}^{\mathrm{start}}\|_2
+  \le v_U\bigl(t_{i,r}^{\mathrm{end}}-t_{i,r}^{\mathrm{start}}\bigr),
+  \quad e_{i,r}\subseteq P_i.
+  \label{eq:q3-segment}
+\end{equation}
+两条路径的认证最小距离记为 $d_{ij}^{\min}$，则当前安全距离设置下的冲突判定为
+\begin{equation}
+  \mathrm{pairwise\_conflict\_ok}
+  =\bigwedge_{1\le i<j\le3}\left(d_{ij}^{\min}\ge0-\varepsilon\right).
+  \label{eq:q3-pairwise}
+\end{equation}
+这个公式解释了为什么结果中“证书通过”和“最小成对距离为 $0$”可以同时出现。
+
+候选按带 $\varepsilon$ 的词典序筛选：先比较认证状态，再比较成对冲突是否通过，再比较覆盖下界、最大连续暴露的负值和最小成对距离。该规则不会把很小的浮点差异升级为新的科学含义。
+
+\begin{table}[!htbp]
+\centering
+\caption{Q3 三架 UAV 协同结果}
+\label{tab:q3-results}
+\begin{tabular}{lrrrrr}
+\toprule
+场景 & UAV 数 & 烟幕数 & 覆盖下界/s & 联合增益/s & 冲突证书 \\
+\midrule
+$d=8000$ & 3 & 3 & 17.2634 & 6.8896 & 通过 \\
+$d=10000$ & 3 & 3 & 17.2710 & 6.8971 & 通过 \\
+$d=12000$ & 3 & 3 & 17.2710 & 6.8971 & 通过 \\
+$d=15000$ & 3 & 3 & 17.2710 & 6.8971 & 通过 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+四个场景的 \texttt{pairwise\_conflict\_ok} 均为真，最小成对距离字段为 $0.0\,\mathrm{m}$；这与安全距离设为零相容。Q3 的联合覆盖与 Q2 表\ref{tab:q2-results}一致，是因为两者复用了同一类保守验证器和相同的场景时段，而不是因为多机问题被证明等价于单机问题。
+
+\begin{figure}[!htbp]
+  \centering
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.96\textwidth]{q3_schedule.png}
+    \subcaption{三架 UAV 起爆时刻}
+  \end{minipage}
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.96\textwidth]{q3_coverage_bounds.png}
+    \subcaption{覆盖证书上下界}
+  \end{minipage}
+  \caption{Q3 的调度和认证边界。}
+  \label{fig:q3-evidence}
+\end{figure}
+
+\subsection{Q3 小结}
+
+Q3 说明，在固定的三架一枚约束下，协同释放可以继承 Q2 的联合覆盖结果，并在代码定义的路径证书上通过；但是因为所有正式状态仍为认证不可行，论文只报告“联合覆盖候选和冲突证书”，不称为完整多机全局规划，也不称为现实飞行安全的充分证明。

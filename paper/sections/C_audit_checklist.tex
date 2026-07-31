@@ -1,0 +1,36 @@
+\section{终稿审计清单}
+
+\subsection{科学边界检查}
+
+\begin{longtable}{p{0.06\textwidth}p{0.40\textwidth}p{0.35\textwidth}p{0.10\textwidth}}
+\caption{论文声明的终稿逐项检查}\label{tab:final-checklist}\\
+\toprule
+编号 & 检查项 & 证据文件/检查动作 & 结果 \\
+\midrule
+\endfirsthead
+\toprule
+编号 & 检查项 & 证据文件/检查动作 & 结果 \\
+\midrule
+\endhead
+1 & Q1 是否明确四算法 benchmark 与独立 verifier & Q1 CSV/JSON、源码函数名 & 通过 \\
+2 & Q1 是否避免把 SHGO 写成全局最优 & 审计禁止措辞 & 通过 \\
+3 & Q2 是否明确有限事件候选与 SLSQP 精修 & Q2 求解函数与结果字段 & 通过 \\
+4 & Q2 是否区分覆盖下界、上界、总暴露和最大连续暴露 & Q2 字段表与区间分类器 & 通过 \\
+5 & Q2 联合增益是否减去最佳单烟幕基线 & \texttt{joint\_gain\_s} 与 baseline 字段复算 & 通过 \\
+6 & Q3 是否固定三架 UAV、每架一枚 & \texttt{main\_interpretation} & 通过 \\
+7 & Q3 是否写明安全距离参数为零 & \texttt{minimum\_pairwise\_distance\_m} 与源码 & 通过 \\
+8 & Q4 是否只在认证且揭示任务上调度 & \texttt{certified} 过滤与 \texttt{causal} 字段 & 通过 \\
+9 & Q4 hindsight 是否只写成离线上界 & \texttt{offline\_hindsight\_upper\_bound} & 通过 \\
+10 & 灵敏度是否标记丢失导引为实验反事实 & \texttt{formal\_baseline=false} & 通过 \\
+11 & 图表是否来自冻结基线 & 根目录 figures 子目录与副本清单 & 通过 \\
+12 & PDF 是否不生成目录、图目录、表目录 & \texttt{main.tex} 无对应命令 & 通过 \\
+\bottomrule
+\end{longtable}
+
+\subsection{排版检查}
+
+最终构建在 Windows TeX Live 2025 上使用 XeLaTeX/latexmk 完成。PDF 文本抽取无替换字符，第一页包含摘要，正文图像数量为 $10$，参考文献条目为 $15$。交叉引用在最后一轮构建后无 undefined reference；SimSun 粗体形状有一次回退警告，使用模板的 \texttt{AutoFakeBold}/系统字体回退，不影响中文字体嵌入。日志中还保留少量过宽行，主要来自长 SHA、代码字段和附录文件路径；这些不改变内容，但列为排版待优化项。
+
+\subsection{交付限制}
+
+本论文电子版路径为 \path{paper/main.pdf}；AI 使用报告位于 \texttt{supporting\_materials/} 目录下，文件名为 AI工具使用详情.pdf。Stage 8 只建立 Draft PR，不上传比赛平台，不合并 Stage 8 PR；所有科学结果仍以冻结结果目录和其检查脚本为准。

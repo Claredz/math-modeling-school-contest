@@ -1,0 +1,67 @@
+\documentclass[UTF8,a4paper,12pt]{ctexart}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\hypersetup{hidelinks}
+\title{AI 工具使用详情}
+\author{Stage 8 论文工作记录}
+\date{2026 年 7 月 31 日}
+
+\begin{document}
+\maketitle
+
+\section{报告范围}
+
+本报告记录 Stage 8 论文终稿工作中使用的 ChatGPT、Codex 及其相关工具。AI 工具只用于仓库核验、结构建议、LaTeX 草稿和审计表辅助；Q1--Q4 的算法实现、冻结结果和科学图表没有由本阶段 AI 修改或重新生成。最终文本、数字、引用、编译和提交动作由人工复核并负责。
+
+\section{工具与用途}
+
+\begin{longtable}{p{0.18\textwidth}p{0.27\textwidth}p{0.45\textwidth}}
+\toprule
+工具 & 用途 & 人工复核与修改 \\
+\midrule
+ChatGPT & 任务分解、中文论文表述、危险措辞检查 & 只采纳与代码/工件相符的建议；删除无法由结果文件支持的最优性表述。 \\
+Codex & 读取 GitHub PR/CI 状态、读取源码与结果、生成 LaTeX 文件、运行构建与测试 & 人工确认 expected head SHA、review 状态、CSV/JSON 数值、编译日志和工作树；所有外部写操作由主线程执行。 \\
+GitHub Codex review connector & 读取 PR review threads 与 resolved 状态 & 只作为 PR 门禁证据，不把 review 文本当作科学结果来源。 \\
+XeLaTeX/latexmk/BibTeX & 构建电子版论文和本报告 PDF & 人工检查页数、字体、交叉引用、图表、参考文献和 PDF 大小。 \\
+\bottomrule
+\end{longtable}
+
+\section{关键提示词与输出}
+
+\subsection{论文写作提示词}
+
+关键要求是：“直接使用 LaTeX 编写 Stage 8 论文；采用 \texttt{cumcmthesis}；按单弹连续优化、单机多弹联合覆盖、多机协同、多威胁因果调度组织；论文数值必须来自五个冻结结果目录；建立 \path{paper/paper_audit.md}；不得宣称完整 SIP、完整 Pareto、滚动 MILP 或连续全局最优。”
+
+该提示词的采纳输出包括：\path{paper/main.tex}、\path{paper/sections/*.tex}、\path{paper/references.bib}、构建脚本、冻结图像副本和审计表。人工将所有数值替换/核对为 CSV/JSON 中的精确结果，并将算法描述收敛到实际函数名和状态字段。
+
+\subsection{仓库门禁提示词}
+
+关键要求是：“先核对 PR \#8 head、5 个 Codex review threads、CI run 30605335917 和 mergeable；确认后标记 Ready，以 expected head SHA 使用 merge commit 合并；从合并后的 main 创建 Stage 8 分支并建立 Draft PR。”
+
+采纳输出是 PR \#8 的远端状态核验与 GitHub 操作记录。人工确认 head 为 \texttt{5ba2963b9d38f56d66d4d0ffd4d834dfd8880499}、5 个 threads 均 resolved、CI 成功，最终 merge commit 为 \texttt{c85c8b11a93f6829bc6ff66a76a7180c15c02e91}。
+
+\subsection{审计提示词}
+
+关键要求是：“建立论文声明—结果文件—代码—图表—证据等级—允许措辞对照表，并明确发现的科学或排版问题。”
+
+采纳输出是 \path{paper/paper_audit.md}。人工逐项核对 Q1 的 16 行状态、Q2/Q3 的联合增益定义、Q4 的未解析任务和灵敏度文件 44 行计数，并补充禁止措辞清单。
+
+\section{人工修改与责任边界}
+
+人工完成了以下修改：
+\begin{enumerate}[label=\arabic*.]
+  \item 根据源码将 Q1 改写为四算法 benchmark 加独立 verifier，将 Q2 改写为有限事件候选、SLSQP 精修和保守联合覆盖认证；
+  \item 明确 Q3 的三架 UAV、每架一枚、路径冲突证书和带 $\varepsilon$ 的词典序；
+  \item 明确 Q4 的因果 rolling、因果 greedy 和离线 hindsight 上界，并保留未解析任务；
+  \item 对 CSV、JSON、PNG 做交叉核对，禁止把未解析当作暴露、把覆盖下界当作增益、把原生 solver success 当作物理认证；
+  \item 使用 XeLaTeX/latexmk/BibTeX 编译并检查 PDF。
+\end{enumerate}
+
+\section{未采纳内容}
+
+没有采纳任何未经结果文件支持的连续全局最优、完整 SIP、完整 Pareto、滚动 MILP 或现实飞行安全充分性结论；没有上传比赛平台，也没有合并 Stage 8 Draft PR。
+
+\end{document}

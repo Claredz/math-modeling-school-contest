@@ -1,0 +1,47 @@
+\section{模型假设与符号说明}
+
+\subsection{模型假设}
+
+在不改变代码中正式基线定义的前提下，本文采用以下假设：
+
+\begin{enumerate}
+  \item 舰船和威胁的运动由场景与常数对象确定，在一次候选评价期间不随机改变；烟幕几何由起爆时刻、中心和半径函数确定。
+  \item 正式 Q1--Q3 场景使用 \texttt{formal\_baseline} 模型；丢失导引等情形只作为敏感性文件中明确标记的实验性反事实，不回写正式基线。
+  \item UAV 采用代码中的分段线性航迹构造，释放/起爆之间的延迟和同一架 UAV 的释放间隔采用固定约束。
+  \item 覆盖认证使用保守的目标外包络和烟幕内包络；无法被整段时间证实的单元保留为未解析，不默认为暴露。
+  \item Q4 任务只有在揭示、容量可行且 \texttt{certified=true} 时才可被调度；hindsight 只作为离线上界。
+  \item 所有统计量都对应冻结基线、固定随机种子与有限评估预算，论文只报告文件中已有的量，不外推到未计算的场景。
+\end{enumerate}
+
+\subsection{符号说明}
+
+\begin{table}[!htbp]
+\centering
+\caption{主要符号与证据字段}
+\label{tab:symbols}
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{0.13\textwidth} X >{\centering\arraybackslash}p{0.18\textwidth}}
+\toprule
+符号/字段 & 含义 & 单位或取值 \\
+\midrule
+$t$ & 连续时间变量 & s \\
+$t_b$ & 烟幕爆炸时刻 & s \\
+$t_c$ & 烟幕中心对应的舰船时刻 & s \\
+$t_d$ & UAV 释放时刻 & s \\
+$t_0$ & 指令发出时刻 & s \\
+$R_s(t)$ & 烟幕在时刻 $t$ 的半径 & m \\
+$D(t)$ & 检测区间或检测组件 & s \\
+$C(t)$ & 目标舰船覆盖盘 & m \\
+$\mathcal{S}$ & 烟幕盘集合 & 集合 \\
+$L_{\max}$ & 最大连续暴露时长 & s \\
+$G$ & 联合覆盖相对最佳单烟幕的增益 & s \\
+$m_{\min}$ & 最小覆盖裕度 & m \\
+$d_{\mathrm{flight}}$ & UAV 分段航迹长度 & m \\
+$\varepsilon$ & 词典序比较中的数值容差 & 无量纲 \\
+\texttt{certified} & 任务/候选是否通过认证 & Boolean \\
+\texttt{unresolved} & 仍存在未解析单元或任务 & 状态标记 \\
+\texttt{capacity} & Q4 可用资源容量 & 枚/单位 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+符号表中的“覆盖”均指验证器给出的覆盖下界或明确标注的区间；没有下标的文字性“覆盖”在结果段落中会同时说明其来源，防止把上界、下界和连续暴露混为一个指标。
