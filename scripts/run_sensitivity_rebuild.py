@@ -102,6 +102,15 @@ def run() -> dict:
                 solved.detection.duration_s,
             )
         )
+    rows.append(
+        _row(
+            "missile_model",
+            "proportional_navigation",
+            0.0,
+            "status",
+            "deferred_no_navigation_ratio_or_overload_source",
+        )
+    )
 
     # Lost/reacquisition parameters are explicitly experimental only.
     for tau_t in (0.25, 0.5, 1.0):
@@ -233,7 +242,12 @@ def run() -> dict:
         marker="o",
     )
     axes[1, 0].set(xlabel="operation radius (m)", ylabel="path feasible (0/1)")
-    inertial = [item for item in rows if item["category"] == "missile_model"]
+    inertial = [
+        item
+        for item in rows
+        if item["category"] == "missile_model"
+        and item["metric"] == "detection_duration_s"
+    ]
     axes[1, 1].bar(
         [str(item["value"]) for item in inertial],
         [float(item["result"]) for item in inertial],
