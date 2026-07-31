@@ -1,0 +1,104 @@
+# B 题 Gate B 研究重构设计
+
+> 日期：2026-07-31
+> 状态：本轮获批研究边界；仅执行 Stage 0–3，Gate B 后停止
+> 基线：`origin/main@44fd43b83df2c91bf14f40f9a1cb73882694753f`
+
+## 1. 目标与非目标
+
+本轮重新建立 B 题的研究证据链，而不是继续开发正式求解器。交付包括
+Stage 0–3、系统文献、Q1 审计、候选模型/算法决策矩阵和五类 toy demo。
+
+本轮禁止：
+
+- 修改 `src/smoke_defense/` 以正式重写 Q1；
+- 实现正式 Q2、Q3、Q4；
+- 生成新的正式 Q1–Q4 场景结果；
+- 冻结 Stage 4 模型契约；
+- 合并到 `main`。
+
+## 2. 权威输入与隔离
+
+- 题面事实只来自根目录 Word 原件，不从现有代码反推。
+- 云端 `origin/main` 是唯一版本基线。
+- PR #5 只作为失败案例，不复制、合并、rebase 或 cherry-pick。
+- `state/decision_log.json` 是阶段状态唯一事实源。
+- toy demo 只写入 `experiments/toy_demos/`，正式结果目录保持不变。
+
+## 3. 证据流
+
+```text
+原始题面
+  ├─→ 事实/歧义/假设分层
+  ├─→ Q1–Q4 原始决策空间
+  └─→ 评价指标与阶段门
+
+同行评议文献/官方文档
+  ├─→ 物理模型候选
+  ├─→ 算法候选与保证边界
+  └─→ 不可迁移条件
+
+现有 main 资产
+  ├─→ A 类工程基础复测
+  ├─→ B 类模型与 Q1 逐项审计
+  └─→ 结论保留/降级/失效
+
+toy demo
+  ├─→ 人工可判定正确性
+  ├─→ 运行时间与收敛行为
+  └─→ Stage 3 选型/否决依据
+```
+
+## 4. 候选架构
+
+Stage 3 至少比较：
+
+- 导弹：瞬时纯追踪、一阶惯性纯追踪、受限比例导引；
+- 遮蔽：等效圆盘集合覆盖、视线阻断、轮廓/采样点遮挡；
+- 烟幕：固定中心、确定风漂、有界漂移与半径收缩；
+- UAV：分段直线事件参数化、Dubins/有限转弯率、直接配点/多重打靶；
+- Q1：解析降维+多起点、DE+SLSQP、PSO+SQP、Sobol+trust-constr、
+  低维确定性全局方法；
+- Q2：候选+精修、SIP+constraint generation、LBBD、MINLP+oracle、
+  元启发式+独立认证；
+- Q3：分层分配+连续优化、ε-约束、NSGA-II、事件参数化 MINLP；
+- Q4：任务包 MILP、滚动 MILP、LBBD、鲁棒/在线调度。
+
+候选只有在题意适配、参数可辨识、文献支持、toy demo 证据边界和独立验证可行
+五方面同时成立时，才能进入后续正式 benchmark。本轮只推荐算法框架、候选集合
+或优先研究路线，不等于 Stage 4 冻结，也不冻结具体主求解器。
+
+## 5. Toy demo 边界
+
+每个 toy 使用人工可判定的 synthetic 代理问题；在适用时保留题面结构或量纲，
+但不得声称其为正式题面实例。固定随机种子，记录环境、变量、求解器状态、目标、
+耗时和人工可判定结论，并统一标记 `synthetic=true`、`formal_result=false`。
+
+- Q1：比较 Multi-start、Sobol、SHGO、DE、PSO 五条路线的同预算表现，只选框架；
+- Q2-SIP：有限主问题与最坏违反点分离迭代；
+- Q2-Joint：少量离散组合与连续时刻联合原型；
+- Q3：ε-约束与 NSGA-II/枚举的可解释对照；
+- Q4：离线全知、滚动 MILP 与贪心对照。
+
+所有 demo 是研究原型，不得被导入生产包，不得输出“正式最优方案”。
+
+## 6. Gate B 判定
+
+Gate B 可提交人工批准的要求：
+
+1. Q1–Q4 使用与题面一致的四套独立目标层级；
+2. Q1 只批准解析降维、多路线探索、局部精修和独立认证框架，不预先冻结 DE；
+3. Q2 只批准时空 SIP 为第一优先研究路线，正式 master/oracle 尚未认证；
+4. Q4 只批准因果滚动研究框架，zero-forecast 整包承诺明确为弱基线；
+5. `current_stage=3`、`next_stage=4`、
+   `gate_b_status=pending_human_approval`、`stage_4_started=false`；
+6. 旧假设、契约、架构和 Q1 解析文档均标为已解冻历史快照；
+7. toy 设计承诺与实际 synthetic 抽象程度一致，且均为
+   `synthetic=true`、`formal_result=false`；
+8. 文献矩阵数量、分类、唯一 DOI/稳定 URL 和引用映射未被破坏；
+9. PR #5 保持关闭且未合并；
+10. Stage 4 未开始，未冻结新模型契约；
+11. `src/smoke_defense/` 中正式 Q1–Q4 求解逻辑未修改；
+12. 正式 `results/q1/` 未覆盖，未生成 Q2–Q4 正式结果；
+13. 全部 pytest、ruff、schema、场景、toy artifact 和 `git diff --check`
+    质量检查通过。

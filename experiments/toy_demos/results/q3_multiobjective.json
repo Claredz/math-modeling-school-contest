@@ -1,0 +1,145 @@
+{
+  "formal_result": false,
+  "guarantee_boundary": [
+    "All instances and parameters in this directory are synthetic.",
+    "These records compare algorithm behavior; they are not contest answers.",
+    "A converged toy run is not a proof that the corresponding formal model is valid."
+  ],
+  "module": "q3_multiobjective",
+  "module_summary": {
+    "base_seed": 20260731,
+    "epsilon_on_exact_front": true,
+    "epsilon_selected_code": "ABD",
+    "exact_pareto_front": [
+      {
+        "benefit": 12,
+        "code": "DAD",
+        "risk": 4
+      },
+      {
+        "benefit": 18,
+        "code": "DAA",
+        "risk": 5
+      },
+      {
+        "benefit": 22,
+        "code": "AAA",
+        "risk": 6
+      },
+      {
+        "benefit": 24,
+        "code": "ABD",
+        "risk": 7
+      }
+    ],
+    "nsga2_mean_coverage": 0.9375,
+    "nsga2_mean_jaccard": 0.7999999999999999,
+    "nsga2_mean_precision": 0.9375,
+    "nsga2_minimum_coverage": 0.75,
+    "nsga2_seeds": [
+      20260731,
+      20260732,
+      20260733,
+      20260734
+    ],
+    "nsga2_total_false_positives": 1
+  },
+  "records": [
+    {
+      "converged": true,
+      "demo_name": "q3_multiobjective_epsilon",
+      "failure_reason": null,
+      "metadata": {
+        "enumerated_portfolios": 64,
+        "provenance_seed": 20260731,
+        "risk_limit": 8.0,
+        "selected_code": "ABD",
+        "selected_risk": 7
+      },
+      "objective": 24.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.0010059000342153013,
+      "seed": 20260731,
+      "solver": "exact enumeration epsilon constraint"
+    },
+    {
+      "converged": false,
+      "demo_name": "q3_multiobjective_nsga2",
+      "failure_reason": "heuristic incomplete: not all exact Pareto points found",
+      "metadata": {
+        "backend": "DEAP NSGA-II",
+        "coverage": 0.75,
+        "dominated_count": 1,
+        "generations": 30,
+        "population_size": 40,
+        "precision": 0.75,
+        "unique_evaluations": 56
+      },
+      "objective": 24.0,
+      "passed_manual_case": false,
+      "runtime_s": 0.06116979999933392,
+      "seed": 20260731,
+      "solver": "DEAP NSGA-II"
+    },
+    {
+      "converged": true,
+      "demo_name": "q3_multiobjective_nsga2",
+      "failure_reason": null,
+      "metadata": {
+        "backend": "DEAP NSGA-II",
+        "coverage": 1.0,
+        "dominated_count": 0,
+        "generations": 30,
+        "population_size": 40,
+        "precision": 1.0,
+        "unique_evaluations": 54
+      },
+      "objective": 24.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.05564449995290488,
+      "seed": 20260732,
+      "solver": "DEAP NSGA-II"
+    },
+    {
+      "converged": true,
+      "demo_name": "q3_multiobjective_nsga2",
+      "failure_reason": null,
+      "metadata": {
+        "backend": "DEAP NSGA-II",
+        "coverage": 1.0,
+        "dominated_count": 0,
+        "generations": 30,
+        "population_size": 40,
+        "precision": 1.0,
+        "unique_evaluations": 52
+      },
+      "objective": 24.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.04822309996234253,
+      "seed": 20260733,
+      "solver": "DEAP NSGA-II"
+    },
+    {
+      "converged": true,
+      "demo_name": "q3_multiobjective_nsga2",
+      "failure_reason": null,
+      "metadata": {
+        "backend": "DEAP NSGA-II",
+        "coverage": 1.0,
+        "dominated_count": 0,
+        "generations": 30,
+        "population_size": 40,
+        "precision": 1.0,
+        "unique_evaluations": 59
+      },
+      "objective": 24.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.04942809999920428,
+      "seed": 20260734,
+      "solver": "DEAP NSGA-II"
+    }
+  ],
+  "schema_version": 1,
+  "seed": 20260731,
+  "synthetic": true
+}

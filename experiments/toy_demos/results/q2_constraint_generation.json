@@ -1,0 +1,56 @@
+{
+  "formal_result": false,
+  "guarantee_boundary": [
+    "All instances and parameters in this directory are synthetic.",
+    "These records compare algorithm behavior; they are not contest answers.",
+    "A converged toy run is not a proof that the corresponding formal model is valid."
+  ],
+  "module": "q2_constraint_generation",
+  "module_summary": {
+    "converged": true,
+    "failure_reason": null,
+    "final_violation": 0.0,
+    "initial_finite_master_misses_violation": true,
+    "oracle_witnesses_added": [
+      [
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "records": [
+    {
+      "converged": true,
+      "demo_name": "q2_constraint_generation",
+      "failure_reason": null,
+      "metadata": {
+        "added_witnesses": [
+          [
+            0.0,
+            1.0
+          ]
+        ],
+        "augmentations": 1,
+        "best_seen_positive_violations": [
+          1.0,
+          0.0
+        ],
+        "current_violations": [
+          1.0,
+          0.0
+        ],
+        "master_solves": 2,
+        "oracle_calls": 2,
+        "seed_role": "audit_only_deterministic_solver"
+      },
+      "objective": 1.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.0001354999840259552,
+      "seed": 20260731,
+      "solver": "exact_symmetric_master_plus_power_distance_oracle"
+    }
+  ],
+  "schema_version": 1,
+  "seed": 20260731,
+  "synthetic": true
+}

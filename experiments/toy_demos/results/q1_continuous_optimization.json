@@ -1,0 +1,218 @@
+{
+  "formal_result": false,
+  "guarantee_boundary": [
+    "All instances and parameters in this directory are synthetic.",
+    "These records compare algorithm behavior; they are not contest answers.",
+    "A converged toy run is not a proof that the corresponding formal model is valid."
+  ],
+  "module": "q1_continuous_optimization",
+  "module_summary": {
+    "common_evaluation_budget": 768,
+    "known_synthetic_upper_bound": 10.0,
+    "method_count": 5,
+    "unresolved_methods": [],
+    "verified_methods": [
+      "multistart_slsqp",
+      "de_slsqp",
+      "pso_slsqp",
+      "sobol_trust_constr",
+      "shgo"
+    ]
+  },
+  "records": [
+    {
+      "converged": true,
+      "demo_name": "q1_continuous_optimization",
+      "failure_reason": null,
+      "metadata": {
+        "budget": 768,
+        "budget_exhausted": false,
+        "evaluation_count": 159,
+        "gap": 3.552713678800501e-15,
+        "stage_audit": {
+          "candidate_generation_completed": true,
+          "native_message": "5/5 multistart SLSQP runs converged",
+          "native_success": true,
+          "polish_success": null,
+          "verifier_passed": true
+        },
+        "stage_path": [
+          "sobol_multistart",
+          "slsqp"
+        ],
+        "surrogate": {
+          "objective": "dimensionless event-coverage utility surrogate",
+          "upper_bound": "10 from nonnegative loss; not seconds and not a formal result",
+          "x": "normalized along-track burst-center offset",
+          "y": "normalized cross-track burst-center offset"
+        },
+        "verified": true,
+        "x": [
+          -1.834682530105523e-08,
+          -1.5221089459112643e-08
+        ]
+      },
+      "objective": 9.999999999999996,
+      "passed_manual_case": true,
+      "runtime_s": 0.04488930001389235,
+      "seed": 20260731,
+      "solver": "multistart_slsqp"
+    },
+    {
+      "converged": true,
+      "demo_name": "q1_continuous_optimization",
+      "failure_reason": null,
+      "metadata": {
+        "budget": 768,
+        "budget_exhausted": false,
+        "evaluation_count": 250,
+        "gap": 0.0,
+        "stage_audit": {
+          "candidate_generation_completed": true,
+          "native_message": "Maximum number of iterations has been exceeded.",
+          "native_success": false,
+          "polish_success": true,
+          "verifier_passed": true
+        },
+        "stage_path": [
+          "differential_evolution",
+          "slsqp_polish"
+        ],
+        "surrogate": {
+          "objective": "dimensionless event-coverage utility surrogate",
+          "upper_bound": "10 from nonnegative loss; not seconds and not a formal result",
+          "x": "normalized along-track burst-center offset",
+          "y": "normalized cross-track burst-center offset"
+        },
+        "verified": true,
+        "x": [
+          -1.0441322480195853e-08,
+          -6.43484982519649e-09
+        ]
+      },
+      "objective": 10.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.028679799987003207,
+      "seed": 20260731,
+      "solver": "de_slsqp"
+    },
+    {
+      "converged": true,
+      "demo_name": "q1_continuous_optimization",
+      "failure_reason": null,
+      "metadata": {
+        "budget": 768,
+        "budget_exhausted": false,
+        "evaluation_count": 337,
+        "gap": 1.7763568394002505e-15,
+        "stage_audit": {
+          "candidate_generation_completed": true,
+          "native_message": "no native convergence certificate; fixed-iteration heuristic",
+          "native_success": null,
+          "polish_success": true,
+          "verifier_passed": true
+        },
+        "stage_path": [
+          "particle_swarm",
+          "slsqp_polish"
+        ],
+        "surrogate": {
+          "objective": "dimensionless event-coverage utility surrogate",
+          "upper_bound": "10 from nonnegative loss; not seconds and not a formal result",
+          "x": "normalized along-track burst-center offset",
+          "y": "normalized cross-track burst-center offset"
+        },
+        "verified": true,
+        "x": [
+          1.3101386037899301e-08,
+          6.412484822434714e-09
+        ]
+      },
+      "objective": 9.999999999999998,
+      "passed_manual_case": true,
+      "runtime_s": 0.003971700032707304,
+      "seed": 20260731,
+      "solver": "pso_slsqp"
+    },
+    {
+      "converged": true,
+      "demo_name": "q1_continuous_optimization",
+      "failure_reason": null,
+      "metadata": {
+        "budget": 768,
+        "budget_exhausted": false,
+        "evaluation_count": 118,
+        "gap": 0.0,
+        "stage_audit": {
+          "candidate_generation_completed": true,
+          "native_message": "`xtol` termination condition is satisfied.",
+          "native_success": true,
+          "polish_success": true,
+          "verifier_passed": true
+        },
+        "stage_path": [
+          "sobol_screen",
+          "trust_constr",
+          "slsqp_polish"
+        ],
+        "surrogate": {
+          "objective": "dimensionless event-coverage utility surrogate",
+          "upper_bound": "10 from nonnegative loss; not seconds and not a formal result",
+          "x": "normalized along-track burst-center offset",
+          "y": "normalized cross-track burst-center offset"
+        },
+        "verified": true,
+        "x": [
+          -2.2238722813079362e-09,
+          2.9795778251086195e-09
+        ]
+      },
+      "objective": 10.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.04821139998966828,
+      "seed": 20260731,
+      "solver": "sobol_trust_constr"
+    },
+    {
+      "converged": true,
+      "demo_name": "q1_continuous_optimization",
+      "failure_reason": null,
+      "metadata": {
+        "budget": 768,
+        "budget_exhausted": false,
+        "evaluation_count": 92,
+        "gap": 0.0,
+        "stage_audit": {
+          "candidate_generation_completed": true,
+          "native_message": "Optimization terminated successfully.",
+          "native_success": true,
+          "polish_success": true,
+          "verifier_passed": true
+        },
+        "stage_path": [
+          "shgo",
+          "slsqp_polish"
+        ],
+        "surrogate": {
+          "objective": "dimensionless event-coverage utility surrogate",
+          "upper_bound": "10 from nonnegative loss; not seconds and not a formal result",
+          "x": "normalized along-track burst-center offset",
+          "y": "normalized cross-track burst-center offset"
+        },
+        "verified": true,
+        "x": [
+          0.0,
+          0.0
+        ]
+      },
+      "objective": 10.0,
+      "passed_manual_case": true,
+      "runtime_s": 0.00835040002129972,
+      "seed": 20260731,
+      "solver": "shgo"
+    }
+  ],
+  "schema_version": 1,
+  "seed": 20260731,
+  "synthetic": true
+}

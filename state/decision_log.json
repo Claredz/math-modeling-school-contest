@@ -1,0 +1,781 @@
+{
+  "_schema_version": "3.0",
+  "_doc": "mathmodel-skill 跨阶段决策日志；Stage 0-3 已完成，Gate B 已人工批准，下一待执行阶段为 Stage 4。",
+  "competition": "cumcm",
+  "task_type": "B_optimization_simulation",
+  "problem": "2026-school-contest-B",
+  "problem_meta": {
+    "year": 2026,
+    "letter": "B",
+    "title": "舰船烟幕遮蔽干扰优化",
+    "deadline_iso": "2026-08-01T19:00:00+08:00",
+    "team_size": 3
+  },
+  "mode": "standard",
+  "started_at": "2026-07-31T00:20:55+08:00",
+  "current_stage": 4,
+  "next_stage": 4,
+  "gate_b_status": "approved",
+  "stage_4_started": false,
+  "gate_b_approval": {
+    "decision_time": "2026-07-31T09:30:21+08:00",
+    "approved_by": "human",
+    "stage_4_started_at_approval": false,
+    "post_merge_rule": "PR #6 合并后才能从最新 main 建立后续正式实施分支。",
+    "decisions": [
+      {"id": 1, "approved": true, "decision": "瞬时纯追踪作为最少参数的正式基准。"},
+      {"id": 2, "approved": true, "decision": "一阶惯性纯追踪与比例导引 PN 作为参数化反事实。"},
+      {"id": 3, "approved": true, "decision": "固定烟幕中心作为正式基准。"},
+      {"id": 4, "approved": true, "decision": "有界漂移与半径误差作为鲁棒扩展。"},
+      {"id": 5, "approved": true, "decision": "分段直线 UAV 路径作为理想化基准。"},
+      {"id": 6, "approved": true, "decision": "Dubins 或有限转弯模型只在转弯参数有来源时升级。"},
+      {"id": 7, "approved": true, "decision": "Q1/Q3 算法框架、Q2 SIP 优先研究路线、Q4 因果滚动框架获批，但不冻结具体主求解器。"},
+      {"id": 8, "approved": true, "decision": "Q3 主解释为三架无人机每架恰好投放一枚，至多一枚作为放松对照。"},
+      {"id": 9, "approved": true, "decision": "2 秒响应延时定义为投弹指令到实际释放的固定延时。"},
+      {"id": 10, "approved": true, "decision": "3.5 秒起爆延时从实际释放时刻开始计算。"},
+      {"id": 11, "approved": true, "decision": "UAV 在 2 秒响应期间可以正常飞行。"},
+      {"id": 12, "approved": true, "decision": "基准场景不允许负时间预指令。"},
+      {"id": 13, "approved": true, "decision": "授权进入 Stage 4；本记录更新时 Stage 4 尚未开始。"}
+    ]
+  },
+  "budget": {
+    "tokens_used": 0,
+    "tokens_cap": 200000,
+    "stage_durations_h": {
+      "0": 1.0,
+      "1": 1.0,
+      "2": 4.0,
+      "literature": 5.0,
+      "q1_audit": 4.0,
+      "3": 14.0,
+      "gate_b_review": 4.0,
+      "buffer": 9.0
+    }
+  },
+  "stages": {
+    "0": {
+      "_label": "kickoff",
+      "team_roles": {
+        "A_modeling": {
+          "primary": "题意、假设、数学模型、公式与结果验收",
+          "backup": "协助算法测试",
+          "largest_concern": "现有代码结构反向固化未经文献支持的模型"
+        },
+        "B_writing": {
+          "primary": "论文结构、符号、图表与论据一致性",
+          "backup": "协助文献矩阵",
+          "largest_concern": "把候选库最优或数值稳定误写成全局最优"
+        },
+        "C_simulation": {
+          "primary": "仿真、测试、toy demo、结果和复现",
+          "backup": "协助模型反例",
+          "largest_concern": "连续时间/空间未决区间被离散采样掩盖"
+        }
+      },
+      "tools_ready": [
+        "Python 3.11.9",
+        "NumPy 2.2.6",
+        "CVXPY 1.9.2",
+        "GLPK_MI",
+        "HiGHS",
+        "SciPy",
+        "SALib",
+        "DEAP",
+        "PySwarms",
+        "XeTeX/TeX Live 2025",
+        "Git 2.51.2",
+        "GitHub CLI 2.88.1",
+        "pytest: 83 passed",
+        "ruff: passed",
+        "scenario schema: current",
+        "scenario matrix: 144 formal + 16 ablation"
+      ],
+      "checklist_completed": true,
+      "problem_scan": {
+        "problem_id": "2026-school-contest-B",
+        "domain_keywords": [
+          "几何覆盖",
+          "连续时间认证",
+          "混合事件系统",
+          "非凸优化",
+          "组合调度"
+        ],
+        "data_attachments": [
+          "B题：舰船烟幕遮蔽干扰优化.docx"
+        ],
+        "subproblem_count": 4,
+        "primary_problem_type": "optimization",
+        "secondary_types": [
+          "simulation",
+          "computational_geometry",
+          "scheduling"
+        ],
+        "estimated_difficulty": "high",
+        "data_size_signal": "无数值附件；题面缺少初始场景数据"
+      },
+      "time_budget_h": {
+        "available_at_start": 42.65,
+        "gate_b_scope": 33.0,
+        "buffer": 9.0
+      },
+      "collab_protocol": {
+        "naming": "Python snake_case；文档 kebab-case；量纲写入字段名",
+        "version_control": "每阶段和 Gate 独立提交；禁止合并 main",
+        "sync": "每完成一个 Stage 更新 Draft PR",
+        "escalation": "高严重度问题停止推进并记录；不得补丁式跨 Gate",
+        "multi_agent": "Agent 只处理独立研究/审查；主 Agent 统一核验和写状态"
+      },
+      "notes": "直接基于云端 main@44fd43b83df2c91bf14f40f9a1cb73882694753f；PR #5 已废弃关闭；本轮终点 Gate B。"
+    },
+    "1": {
+      "_label": "problem_selection",
+      "candidates_assessed": [
+        {
+          "candidate": "完整工作流重构至 Gate B",
+          "data_processability": 8,
+          "team_tool_fit": 9,
+          "model_family_fit": 9,
+          "time_feasibility": 8,
+          "innovation_defensibility": 9,
+          "weighted_total": 8.6
+        },
+        {
+          "candidate": "沿用 main 现状",
+          "data_processability": 7,
+          "team_tool_fit": 8,
+          "model_family_fit": 6,
+          "time_feasibility": 9,
+          "innovation_defensibility": 5,
+          "weighted_total": 7.1
+        },
+        {
+          "candidate": "续做已关闭 PR #5",
+          "data_processability": 5,
+          "team_tool_fit": 7,
+          "model_family_fit": 4,
+          "time_feasibility": 6,
+          "innovation_defensibility": 3,
+          "weighted_total": 5.1
+        }
+      ],
+      "selected": "B",
+      "rationale": "用户已用编号 1 锁定仓库唯一提供原文的 B 题。我们擅长数学拆解、文献证据、仿真验证和可复现测试，本题需要连续几何、非凸优化、混合事件仿真与组合调度。选择从题面和文献重建证据链，同时复用 main 中经验证的工程资产；本轮只到 Gate B，避免截止时间前过早进入正式实现。",
+      "rejected_alternatives": [
+        {
+          "candidate": "沿用 main 现状",
+          "reason": "现有测试只证明实现一致性；旧接口可能固化未经文献支持的制导、烟幕和候选空间；无法直接支撑全局最优声明。"
+        },
+        {
+          "candidate": "续做已关闭 PR #5",
+          "reason": "Q2 候选空间过窄、连续精修未落实、未决区间统计不完整，且该 PR 已关闭并明确禁止合并或复制正式结果。"
+        }
+      ],
+      "risks_identified": [
+        "初始坐标与航向缺失：用显式合成场景做 toy demo，不产出正式数值。",
+        "离散采样掩盖连续裸露：采用事件分段、约束生成和反例搜索并报告 unresolved。",
+        "旧代码反向固化模型：每个关键模块至少比较三族候选。",
+        "跨题污染：题面参数只接受原题 P2-P22，拒绝 10m/20s/下沉等外题参数。",
+        "最优性表述过强：严格区分可行、候选最优、局部最优和已认证全局最优。",
+        "范围失控：Gate B 停止，toy demo 不写正式 results。"
+      ],
+      "locked_until": "2026-08-01T00:26:18+08:00",
+      "task_type_rationale": "通用 B_evaluation 映射不适用于本校赛优化/仿真/计算几何/调度题；自定义键由评分脚本回退至 cumcm.default。"
+    },
+    "2": {
+      "_label": "analysis",
+      "decomposition": [
+        {
+          "id": "Q1",
+          "type": "continuous_nonconvex_hybrid",
+          "decision": "单机连续轨迹、指令/投放时刻与投放坐标",
+          "goal": "优先实现严格全窗口覆盖；严格不可行后依次最大化认证覆盖总时长、最小化最大连续裸露、最大化最小覆盖裕度，最后最小化航程或资源",
+          "difficulty": "hard"
+        },
+        {
+          "id": "Q2",
+          "type": "mixed_discrete_continuous_SIP",
+          "decision": "单机轨迹、1-3枚弹的使用/顺序/投放时空点",
+          "goal": "优先实现严格全窗口覆盖；其后依次最大化最长无空档连续覆盖和认证有效遮蔽总时长、最小化最大连续裸露与总裸露、最大化联合覆盖裕度，最后最小化弹药和航程",
+          "difficulty": "hard"
+        },
+        {
+          "id": "Q3",
+          "type": "multiobjective_cooperative_optimization",
+          "decision": "三机轨迹、三枚弹投放时空点与协同起爆",
+          "goal": "优先实现严格协同防御成功；其后依次最大化认证覆盖能力、最小化最大裸露或失效风险、最大化单点失效容错，最后最小化能耗与冲突风险",
+          "difficulty": "hard"
+        },
+        {
+          "id": "Q4",
+          "type": "dynamic_resource_scheduling",
+          "decision": "威胁选择、UAV-弹药-任务分配、轨迹与重调度",
+          "goal": "依次最大化认证防御的高损失威胁数与认证防御威胁总价值，再最小化未防御损失、资源消耗和重调度波动",
+          "difficulty": "hard"
+        }
+      ],
+      "key_variables": [
+        "ship_position_m: state",
+        "missile_position_m: state",
+        "missile_heading_rad: candidate_state",
+        "missile_ship_distance_m: derived",
+        "fov_offset_rad: interpretation_dependent",
+        "detection_time_set_s: derived_set",
+        "uav_position_m: state_or_trajectory_decision",
+        "uav_velocity_mps: control_or_state",
+        "command_time_s: decision",
+        "drop_time_s: decision",
+        "drop_position_m: decision",
+        "burst_time_s: decision_or_derived",
+        "smoke_center_m: candidate_state",
+        "smoke_radius_m: prompt_derived_state",
+        "bomb_used_binary: discrete_decision",
+        "threat_package_assignment_binary: discrete_decision",
+        "worst_coverage_gap_m: verifier_metric",
+        "continuous_coverage_duration_s: objective_metric",
+        "maximum_gap_s: objective_metric",
+        "robust_margin: objective_metric",
+        "uav_energy_or_proxy: undefined_metric",
+        "uav_separation_margin_m: constraint_metric",
+        "threat_loss_weight: scenario_parameter"
+      ],
+      "key_constraints": [
+        "二维水平面与题面速度/半径/时间/资源上限",
+        "距离<=8000m且视场偏角<=15deg的探测集合",
+        "全探测窗口连续时间内舰船80m圆盘属于活动烟幕并集",
+        "UAV可达性、作战半径语义、2s响应与3.5s起爆延时",
+        "同机投弹间隔>=1s且载弹量<=3",
+        "Q3每机仅1枚并满足待定义动态安全距离",
+        "Q4五机、每机最多3枚、因果信息和资源不重叠"
+      ],
+      "objective_per_subproblem": {
+        "Q1": "achieve strict full-window coverage; maximize certified total coverage duration; minimize maximum continuous exposure; maximize minimum coverage margin; minimize travel or resources",
+        "Q2": "achieve strict full-window coverage; maximize longest gap-free continuous coverage; maximize certified total effective coverage; minimize maximum continuous exposure; minimize total exposure; maximize joint coverage margin; minimize bombs; minimize travel",
+        "Q3": "achieve strict cooperative defense success; maximize certified coverage capability; minimize maximum exposure or failure risk; maximize single-point-failure tolerance; minimize energy and conflict risk",
+        "Q4": "maximize certified high-loss threats; maximize total certified threat value; minimize unprotected loss; minimize resource use; minimize rescheduling volatility"
+      },
+      "objective_hierarchies": {
+        "Q1": [
+          "strict_full_window_coverage",
+          "max_certified_total_coverage_duration",
+          "min_max_continuous_exposure",
+          "max_min_coverage_margin",
+          "min_travel_or_resources"
+        ],
+        "Q2": [
+          "strict_full_window_coverage",
+          "max_longest_gap_free_continuous_coverage",
+          "max_certified_total_effective_coverage",
+          "min_max_continuous_exposure",
+          "min_total_exposure",
+          "max_joint_coverage_margin",
+          "min_bombs",
+          "min_travel"
+        ],
+        "Q3": [
+          "strict_cooperative_defense_success",
+          "max_certified_coverage_capability",
+          "min_max_exposure_or_failure_risk",
+          "max_single_point_failure_tolerance",
+          "min_energy_and_conflict_risk"
+        ],
+        "Q4": [
+          "max_certified_high_loss_threats",
+          "max_total_certified_threat_value",
+          "min_unprotected_loss",
+          "min_resource_use",
+          "min_rescheduling_volatility"
+        ]
+      },
+      "data_schema": {
+        "source": "B题：舰船烟幕遮蔽干扰优化.docx",
+        "nonempty_paragraphs": 22,
+        "numeric_table_attachments": 0,
+        "prompt_parameters": "速度、半径、时间和资源上限",
+        "missing_scenario_fields": [
+          "初始坐标与航向",
+          "UAV机动界",
+          "制导律参数",
+          "烟幕中心运动",
+          "Q3安全距离",
+          "能耗函数",
+          "Q4威胁批次与损失"
+        ]
+      },
+      "subproblem_dependency": {
+        "Q1": [
+          "公共动力学与单烟幕覆盖认证原语"
+        ],
+        "Q2": [
+          "复用Q1公共原语；Q1方案仅作warm start，不收缩原始空间"
+        ],
+        "Q3": [
+          "复用Q1/Q2公共与联合覆盖原语；不依赖Q2单机最优顺序"
+        ],
+        "Q4": [
+          "复用Q1-Q3物理/认证接口与未来经认证任务包；不得假定所有包可行"
+        ]
+      },
+      "evidence_layers": [
+        "prompt_fact",
+        "direct_derivation",
+        "unresolved_ambiguity",
+        "interpretation_candidate",
+        "scenario_parameter",
+        "algorithm_assumption",
+        "robust_extension"
+      ],
+      "contract_status": "旧模型契约已解冻；Stage 4 未开始"
+    },
+    "3": {
+      "_label": "model_selection",
+      "candidate_models": [
+        {
+          "module": "missile_dynamics",
+          "candidates": [
+            "instantaneous_pure_pursuit",
+            "first_order_lag_pure_pursuit",
+            "proportional_navigation"
+          ],
+          "recommended": "minimum_parameter_pure_pursuit_with_interpretation_envelope"
+        },
+        {
+          "module": "shielding_geometry",
+          "candidates": [
+            "full_ship_disk_covered_by_smoke_union",
+            "single_smoke_disk_containment",
+            "line_of_sight_blocking",
+            "visible_contour_or_discrete_surface_point_occlusion",
+            "transmittance_threshold"
+          ],
+          "recommended": "continuous_full_ship_disk_union_coverage"
+        },
+        {
+          "module": "smoke_evolution",
+          "candidates": [
+            "fixed_center_prompt_piecewise_radius",
+            "deterministic_drift_puff",
+            "bounded_drift_and_radius_error"
+          ],
+          "recommended": "prompt_piecewise_radius_with_bounded_drift_extension"
+        },
+        {
+          "module": "uav_path",
+          "candidates": [
+            "event_parameterized_piecewise_linear",
+            "dubins_finite_turn",
+            "direct_collocation_multiple_shooting"
+          ],
+          "recommended": "event_parameterized_baseline_with_finite_turn_counterfactual"
+        },
+        {
+          "module": "Q1_algorithm",
+          "candidates": [
+            "multistart_SLSQP",
+            "DE_plus_SLSQP",
+            "PSO_plus_SLSQP",
+            "Sobol_trust_constr_plus_polish",
+            "SHGO_plus_polish"
+          ],
+          "recommended": "analytic_reduction_multi_route_exploration_local_polish_independent_verifier"
+        },
+        {
+          "module": "Q2_algorithm",
+          "candidates": [
+            "SIP_constraint_generation_separation",
+            "candidate_combination_continuous_polish",
+            "joint_MINLP_with_separation_oracle",
+            "LBBD",
+            "metaheuristic_with_independent_continuous_certification"
+          ],
+          "recommended": "priority_research_spatiotemporal_SIP_constraint_generation_independent_certification"
+        },
+        {
+          "module": "Q3_algorithm",
+          "candidates": [
+            "lexicographic_epsilon_constraint",
+            "NSGA_II",
+            "hierarchical_assignment_continuous_optimization",
+            "joint_event_MINLP"
+          ],
+          "recommended": "success_first_lexicographic_epsilon_constraint"
+        },
+        {
+          "module": "Q4_algorithm",
+          "candidates": [
+            "certified_packages_causal_rolling_MILP",
+            "certified_task_package_offline_hindsight_MILP",
+            "causal_density_greedy",
+            "LBBD",
+            "two_stage_robust_CCG"
+          ],
+          "recommended": "certified_packages_causal_online_rolling_research_framework"
+        }
+      ],
+      "selected_per_subproblem": {
+        "Q1": {
+          "framework": "analytic_reduction_multi_route_exploration_local_polish_independent_verifier",
+          "candidates": [
+            "multistart_SLSQP",
+            "Sobol_trust_constr_or_SLSQP",
+            "SHGO",
+            "DE_candidate_generation",
+            "PSO_heuristic_baseline"
+          ],
+          "status": "framework_pending_formal_benchmark",
+          "approval": "approved"
+        },
+        "Q2": {
+          "framework": "spatiotemporal_SIP_constraint_generation_continuous_separation_independent_verifier",
+          "formal_oracle_ready": false,
+          "status": "priority_research_route_pending_oracle",
+          "approval": "approved"
+        },
+        "Q3": {
+          "framework": "success_first_lexicographic_epsilon_constraint",
+          "nsga2_role": "pareto_coverage_baseline_only",
+          "status": "framework_approved_pending_implementation",
+          "approval": "approved"
+        },
+        "Q4": {
+          "framework": "certified_packages_causal_online_rolling_optimization_with_mandatory_baselines",
+          "current_rolling_baseline": "zero_forecast_whole_package_commitment_weak_baseline",
+          "status": "research_framework_pending_formal_benchmark",
+          "approval": "approved"
+        }
+      },
+      "rejection_log": [
+        "旧Q1有限候选库只作warm start，不称局部或全局最优。",
+        "PR #5固定9候选、129组合、伪branch-and-bound及全部数值结论拒绝继承。",
+        "旧一阶惯性纯追踪九组参数无题面标定，不进入正式基准。",
+        "80m只作等效被探测半径，不作命中或毁伤判据。",
+        "单烟幕包含关系不得收缩Q2/Q3联合烟幕原始空间。",
+        "DE、PSO、NSGA-II不得表述为提供全局最优保证。",
+        "无转弯半径的Dubins、无风场的漂移、无不确定集的CCG暂缓。",
+        "离线全知调度仅作hindsight上界，不作在线策略。",
+        "外题10m、20s、下沉等参数永久隔离。"
+      ],
+      "toy_demos_completed": true,
+      "toy_demo_conclusion": "mixed evidence; Q2 routes unresolved and Q4 rolling weaker than greedy",
+      "toy_demo_scope": {
+        "artifact_root": "experiments/toy_demos",
+        "formal_result": false,
+        "modules": 5,
+        "standard_records": 17,
+        "q1_methods": 5,
+        "q2_constraint_initial_violation": 1.0,
+        "q2_joint_global_gap_approximately": 1.176,
+        "q3_exact_pareto_points": 4,
+        "q3_nsga2_mean_coverage": 0.9375,
+        "q4_offline_upper_bound": 19.0,
+        "q4_rolling_value": 13.0,
+        "q4_greedy_value": 18.0,
+        "warning": "全部数值均来自synthetic toy，不得外推为正式题目结论。"
+      },
+      "red_team": [
+        {
+          "attack": "初始状态、导航比、转弯半径和风场缺失，物理模型可能只是想象。",
+          "response": "只推荐最小参数基准与结构反事实；缺失量在Gate B批准前不得固化。"
+        },
+        {
+          "attack": "人工toy不能证明正式模型有效。",
+          "response": "同意；toy只验证算法链、失败传播、独立验证和因果隔离。"
+        },
+        {
+          "attack": "Q2非凸SIP的separation也可能找不到全局最坏点。",
+          "response": "oracle必须报告精度和unresolved；未决区间进入风险上界。"
+        },
+        {
+          "attack": "Q1 toy不能支持预先冻结DE。",
+          "response": "只批准多路线框架；DE、Sobol、SHGO和multi-start进入正式benchmark。"
+        },
+        {
+          "attack": "Q4 toy中rolling MILP 13低于greedy 18。",
+          "response": "zero-forecast整包承诺是弱基线；至少两个改进版本进入正式benchmark，贪心保留为强制基线。"
+        },
+        {
+          "attack": "认证任务包会再次把连续空间压成有限库。",
+          "response": "任务包只作可行内近似，保留共享烟幕和直接联合反事实。"
+        }
+      ],
+      "model_family_consistency": "四问共享解释层、动力学层、连续覆盖层和三值认证层；solver生成候选，independent verifier认证。Q1只为Q2/Q3提供warm start；Q4只消费认证任务包且保留跨威胁共享与直接联合反事实。",
+      "gate_status": "approved_by_human; current_stage=4; next_stage=4; stage_4_started=false"
+    },
+    "4": {
+      "_label": "foundation",
+      "assumptions": [],
+      "symbols": [],
+      "terminology": [],
+      "consistency_check": {}
+    },
+    "5": {
+      "_label": "subproblem_loop",
+      "qi_count": 4,
+      "qi_weights": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "qi_status": {},
+      "sub_problems": {},
+      "cross_reference_chain": {},
+      "assumption_change_history": []
+    },
+    "6": {
+      "_label": "robustness"
+    },
+    "7": {
+      "_label": "evaluation"
+    },
+    "8": {
+      "_label": "writing"
+    },
+    "9": {
+      "_label": "review",
+      "submission_ready": false
+    }
+  },
+  "research": {
+    "literature": {
+      "completed_at": "2026-07-31T00:39:49+08:00",
+      "included_count": 29,
+      "category_counts": {
+        "smoke_obscurant_or_uav_interference": 8,
+        "sip_continuous_cover": 10,
+        "trajectory_nonconvex_hybrid": 9,
+        "numerical_validation": 2
+      },
+      "verification": "27条由主流程Crossref/官方页面直接复核；2条Crossref临时SSL失败后由独立agent重试复核。",
+      "excluded_high_pollution": [
+        "10.1109/ISCAIT69154.2026.11477504"
+      ],
+      "pollution_rule": "外题10m、20s、下沉等参数禁止进入本题；基准只采用原题P2-P22。"
+    },
+    "q1_audit": {
+      "completed_at": "2026-07-31T00:47:06+08:00",
+      "targeted_tests": "26 passed",
+      "continuous_optimizer_called": false,
+      "actual_method": "有限解析候选生成后按词典序取最大",
+      "strict_results_retained": [
+        "固定中心单烟幕模型下10.3761348898s解析上界",
+        "旧响应语义/无预部署/command=0下5.5s最早形成因果下界",
+        "给定旧模型与容差下的三值连续验证结果"
+      ],
+      "downgraded_results": [
+        "最佳方案降为旧模型下有限候选库最优",
+        "9组惯性参数结果降为团队场景敏感性",
+        "80m命中事件无题面依据",
+        "所有正式Q1坐标/时序需在未来Stage4后重算"
+      ],
+      "pr5_root_cause_reviewed": true
+    },
+    "toy_demos": {
+      "completed_at": "2026-07-31T01:45:00+08:00",
+      "root": "experiments/toy_demos",
+      "synthetic": true,
+      "formal_result": false,
+      "modules": 5,
+      "standard_records": 17,
+      "result_check": "python experiments/toy_demos/run_all.py --check",
+      "guarantee_boundary": "只验证算法行为、接口、失败状态、独立验证和因果隔离；不提供正式Q1-Q4数值或模型有效性证明。"
+    }
+  },
+  "scores": {
+    "0": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_role_clarity": 9,
+          "2_tools_ready": 9,
+          "3_time_planning": 9,
+          "4_problem_scan": 9,
+          "5_collab_protocol": 9
+        },
+        "min": 9,
+        "mean": 9.0,
+        "weighted_mean": 9.0,
+        "verdict": "pass_early",
+        "ts": "2026-07-31T00:24:00+08:00",
+        "evidence": "三主责互备；完整导入与 solver 复核；83 tests/ruff/schema/scenarios/diff fresh exit 0。"
+      }
+    ],
+    "1": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_comparison_depth": 9,
+          "2_team_fit": 9,
+          "3_risk_identification": 9,
+          "4_time_feasibility": 9,
+          "5_decision_record_quality": 9
+        },
+        "min": 9,
+        "mean": 9.0,
+        "weighted_mean": 9.0,
+        "verdict": "pass_early",
+        "ts": "2026-07-31T00:26:18+08:00",
+        "evidence": "仅有 B 题原文，未虚构 A/C 对比；对三条真实研究路径完成五维比较，记录团队匹配、七项风险、42h 时间盒和拒绝依据。"
+      }
+    ],
+    "2": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_subproblem_decomposition": 9,
+          "2_key_variable_identification": 9,
+          "3_mathematization": 9,
+          "4_data_alignment": 9,
+          "5_subproblem_dependency": 9
+        },
+        "min": 9,
+        "mean": 9.0,
+        "weighted_mean": 9.0,
+        "verdict": "pass_early",
+        "ts": "2026-07-31T00:30:49+08:00",
+        "evidence": "原题DOCX 22段重读；四问完整卡片、23个统一变量、连续时空覆盖骨架、无数值附件schema和跨问依赖均已记录。"
+      }
+    ],
+    "3": [
+      {
+        "iteration": 1,
+        "scores": {
+          "1_candidate_diversity": 9,
+          "2_selection_rationale": 9,
+          "3_named_model_variants": 8,
+          "4_solver_feasibility": 9,
+          "5_literature_support": 9
+        },
+        "min": 8,
+        "mean": 8.8,
+        "weighted_mean": 8.8,
+        "verdict": "pass",
+        "ts": "2026-07-31T01:45:00+08:00",
+        "evidence": "八模块各至少三候选；十维矩阵、29篇文献、Q1/PR5审计、五类synthetic toy、独立verifier与red-team共同支撑；不等于Stage4冻结。"
+      }
+    ],
+    "4": [],
+    "5": [],
+    "5_per_qi": [],
+    "6": [],
+    "7": [],
+    "8": [],
+    "9": []
+  },
+  "iterations": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 0,
+    "5": 0,
+    "5_per_qi": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0
+  },
+  "events": {
+    "log": [
+      {
+        "ts": "2026-07-31T00:20:55+08:00",
+        "type": "project_restart",
+        "detail": "按真实状态回退到 Stage 0；不承认旧模型冻结状态。"
+      },
+      {
+        "ts": "2026-07-31T00:20:55+08:00",
+        "type": "scope_boundary",
+        "detail": "本轮仅完成 Stage 0-3 与 Gate B；禁止正式重写 Q1 或实现 Q2-Q4。"
+      },
+      {
+        "ts": "2026-07-31T00:20:55+08:00",
+        "type": "problem_scan",
+        "detail": "题面路径：B题：舰船烟幕遮蔽干扰优化.docx；DOCX P1-P22 已可只读解析。"
+      },
+      {
+        "ts": "2026-07-31T00:24:00+08:00",
+        "type": "stage_complete",
+        "stage": 0,
+        "verdict": "pass_early",
+        "detail": "工具、角色、时间盒、问题预扫和协作协议通过；进入 Stage 1。"
+      },
+      {
+        "ts": "2026-07-31T00:26:18+08:00",
+        "type": "problem_locked",
+        "stage": 1,
+        "detail": "用户以编号 1 锁定 B 题；仓库无其他题原文，故采用真实研究路径复盘而不虚构多题评分。"
+      },
+      {
+        "ts": "2026-07-31T00:26:18+08:00",
+        "type": "task_type_override",
+        "stage": 1,
+        "detail": "B_evaluation 与本校赛题不符，设为 B_optimization_simulation；评分权重按 cumcm.default 回退。"
+      },
+      {
+        "ts": "2026-07-31T00:26:18+08:00",
+        "type": "stage_complete",
+        "stage": 1,
+        "verdict": "pass_early",
+        "detail": "选题复盘、研究路径比较、风险预案和时间可行性通过；进入 Stage 2。"
+      },
+      {
+        "ts": "2026-07-31T00:30:49+08:00",
+        "type": "contract_unfrozen",
+        "stage": 2,
+        "detail": "旧 assumption/architecture/model contract 仅作历史候选，不再具有 Stage 4 冻结效力。"
+      },
+      {
+        "ts": "2026-07-31T00:30:49+08:00",
+        "type": "stage_complete",
+        "stage": 2,
+        "verdict": "pass_early",
+        "detail": "七层证据、四问原始空间、23变量、数据缺口与依赖完成；进入文献/Q1审计/Stage 3。"
+      },
+      {
+        "ts": "2026-07-31T00:39:49+08:00",
+        "type": "literature_complete",
+        "detail": "29篇核心资料通过配额：烟幕/UAV 8、SIP/连续覆盖10、轨迹/混合9、数值验证2；高污染外题论文排除。"
+      },
+      {
+        "ts": "2026-07-31T00:47:06+08:00",
+        "type": "q1_audit_complete",
+        "detail": "确认连续精修未实施；10.376135s和5.5s仅按前提保留，最佳方案降为有限候选库最优；26个目标测试通过。"
+      },
+      {
+        "ts": "2026-07-31T00:47:06+08:00",
+        "type": "pr5_root_cause_complete",
+        "detail": "确认固定9候选、无连续精修、伪B&B与unresolved风险上界缺陷；全部Q2数值继续失效。"
+      },
+      {
+        "ts": "2026-07-31T01:45:00+08:00",
+        "type": "toy_demos_complete",
+        "stage": 3,
+        "detail": "五类synthetic toy形成17条统一记录；Q2联合路线保留unresolved，Q3保留启发式未完整覆盖，Q4严格隔离未来信息。"
+      },
+      {
+        "ts": "2026-07-31T01:45:00+08:00",
+        "type": "stage_complete",
+        "stage": 3,
+        "verdict": "pass",
+        "detail": "八模块候选、十维选型矩阵、拒绝台账、模型族一致性和六项red-team完成；进入Gate B人工审批。"
+      },
+      {
+        "ts": "2026-07-31T01:45:00+08:00",
+        "type": "gate_b_stop",
+        "detail": "Gate B等待人工批准；current_stage=3，next_stage=4，stage_4_started=false；未冻结模型合同，未生成正式Q1-Q4结果。"
+      },
+      {
+        "ts": "2026-07-31T02:42:03+08:00",
+        "type": "gate_b_revision",
+        "stage": 3,
+        "detail": "按审查修正四问独立目标层级；Q1只批多路线框架，Q2降为优先研究路线，Q4将zero-forecast整包承诺标为弱基线；继续等待人工批准。"
+      },
+      {
+        "ts": "2026-07-31T09:30:21+08:00",
+        "type": "gate_b_approved",
+        "stage": 3,
+        "approved_by": "human",
+        "detail": "人工批准 13 项 Gate B 决定；current_stage=4、next_stage=4、stage_4_started=false。Stage 4 尚未开始，PR #6 合并后才能建立后续正式实施分支。"
+      }
+    ]
+  }
+}
