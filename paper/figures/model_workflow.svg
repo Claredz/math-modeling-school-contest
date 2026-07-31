@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" role="img" aria-labelledby="title desc">
+  <title id="title">B题 Stage 4–7 model workflow</title>
+  <desc id="desc">Frozen assumptions feed solvers, independent continuous verifiers and three-valued result packages for Q1 through Q4.</desc>
+  <style>
+    .box { fill:#eff6ff; stroke:#1d4ed8; stroke-width:2; rx:14; }
+    .gate { fill:#ecfdf5; stroke:#047857; stroke-width:2; rx:14; }
+    .text { font-family:Arial,"Microsoft YaHei",sans-serif; font-size:18px; fill:#111827; text-anchor:middle; }
+    .small { font-size:14px; }
+    .arrow { stroke:#374151; stroke-width:2.5; marker-end:url(#arrowhead); fill:none; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#374151"/>
+    </marker>
+  </defs>
+  <rect class="gate" x="30" y="40" width="210" height="100"/>
+  <text class="text" x="135" y="80">Stage 4 冻结</text>
+  <text class="text small" x="135" y="108">假设·时间·事件·符号</text>
+  <path class="arrow" d="M240 90 H310"/>
+  <rect class="box" x="310" y="40" width="210" height="100"/>
+  <text class="text" x="415" y="80">候选求解器</text>
+  <text class="text small" x="415" y="108">Q1/Q2/Q3/Q4 事件方案</text>
+  <path class="arrow" d="M520 90 H590"/>
+  <rect class="gate" x="590" y="40" width="240" height="100"/>
+  <text class="text" x="710" y="80">独立连续验证器</text>
+  <text class="text small" x="710" y="108">空间并集·时间细分·反例</text>
+  <path class="arrow" d="M830 90 H900"/>
+  <rect class="box" x="900" y="40" width="250" height="100"/>
+  <text class="text" x="1025" y="80">三值认证结果</text>
+  <text class="text small" x="1025" y="108">feasible / infeasible / unresolved</text>
+
+  <path class="arrow" d="M415 140 V225"/>
+  <rect class="box" x="310" y="225" width="210" height="100"/>
+  <text class="text" x="415" y="265">Q1 → Q2</text>
+  <text class="text small" x="415" y="293">warm start + 联合覆盖</text>
+  <path class="arrow" d="M520 275 H590"/>
+  <rect class="box" x="590" y="225" width="240" height="100"/>
+  <text class="text" x="710" y="265">Q3 三机协同</text>
+  <text class="text small" x="710" y="293">每机一枚·冲突证书·ε约束</text>
+  <path class="arrow" d="M830 275 H900"/>
+  <rect class="box" x="900" y="225" width="250" height="100"/>
+  <text class="text" x="1025" y="265">Q4 因果滚动</text>
+  <text class="text small" x="1025" y="293">任务包·贪心·hindsight 上界</text>
+
+  <path class="arrow" d="M710 325 V390"/>
+  <rect class="gate" x="590" y="390" width="240" height="50"/>
+  <text class="text small" x="710" y="422">Stage 6–7 敏感性与论文素材</text>
+</svg>

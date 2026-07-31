@@ -1,0 +1,46 @@
+\section{统一模型与证据边界}
+
+\subsection{几何覆盖与时间分类}
+
+设舰船在时刻 $t$ 的中心为 $x_T(t)$，有效半径为 $r_T$；第 $j$ 枚烟幕中心和半径分别为 $x_j(t)$、$r_j(t)$。在二维截面中，目标盘可写成
+\begin{equation}
+  \mathcal{D}_T(t)=\{x:\|x-x_T(t)\|_2\le r_T\},
+  \label{eq:target-disk}
+\end{equation}
+烟幕联合覆盖集合为
+\begin{equation}
+  \mathcal{D}_S(t)=\bigcup_{j=1}^{k}\{x:\|x-x_j(t)\|_2\le r_j(t)\}.
+  \label{eq:smoke-union}
+\end{equation}
+代码的连续验证器不以单个采样点作为持续覆盖证据，而是对时间单元 $I=[t_l,t_r]$ 使用保守外包络：目标盘半径增加舰船速度上界乘以半单元长度，烟幕盘半径按衰减速度收缩。若外目标盘被内烟幕并集覆盖，则认证整个单元为覆盖；若精确目标盘被认证不可行，且存在一个固定空间见证点在单元内始终位于目标盘内、所有烟幕盘外，则认证为暴露，否则继续细分。
+
+对检测区间进行完整分类，得到
+\begin{equation}
+  D = D_{\mathrm{cov}}\ \dot\cup\ D_{\mathrm{exp}}\ \dot\cup\ D_{\mathrm{unres}},
+  \label{eq:time-partition}
+\end{equation}
+其中 $D_{\mathrm{unres}}$ 不会被默认为暴露。联合覆盖下界和上界分别由认证覆盖区间和覆盖区间加未解析区间给出；最大连续暴露只对已认证暴露区间取最大长度。
+
+\subsection{延迟与航迹约束}
+
+正式基线中指令、释放和爆炸满足
+\begin{align}
+  t_d-t_0 &= \tau_{\mathrm{cmd}}, \\
+  t_b-t_d &= \tau_{\mathrm{burst}}, \\
+  t_0 &\ge 0.
+  \label{eq:delays}
+\end{align}
+候选构造器先生成分段线性 UAV 航迹，再独立重新计算爆炸位置、作用半径和航迹长度。如果候选的路径与烟幕中心不一致，或者超过操作半径，则直接给出认证不可行，而不是由优化器的原生成功标志代替。
+
+\subsection{候选排序}
+
+Q1--Q3 使用成功优先的词典序。以 $s$ 表示认证状态等级，$g$ 表示覆盖下界，$L$ 表示最大连续暴露，$m$ 表示最小裕度，$d$ 表示航迹/资源代价，一个代表性排序向量为
+\begin{equation}
+  \rho=(s,\ \mathrm{conflict\_ok},\ g,\ -L,\ m,\ -d).
+  \label{eq:lexicographic-rank}
+\end{equation}
+代码在需要时使用显式的 $\varepsilon$ 容差处理数值相等，而不把浮点数近似误解为新的科学结果。因而“benchmark winner”只表示在给定算法、种子、预算和排序规则下的相对结果。
+
+\subsection{证据等级}
+
+本文将证据划分为四级：A 级为 CSV 与 JSON 同时给出并通过 artifact check 的结果；B 级为 JSON 中的结构化算法标志或路径证书；C 级为既有图表对 A/B 级结果的可视化；D 级为代码明确标记的实验性反事实。正文定量结论优先使用 A 级；D 级只用于说明敏感性方向，不用于证明正式方案可行。

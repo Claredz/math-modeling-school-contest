@@ -1,0 +1,101 @@
+\section{Q1：单弹连续优化与独立认证}
+
+\subsection{决策变量与候选构造}
+
+Q1 对每个正式场景使用两个主要连续变量：爆炸时刻 $t_b$ 和烟幕中心对应的舰船时刻 $t_c$。释放时刻和指令时刻由式\eqref{eq:delays}反推，烟幕中心取舰船在 $t_c$ 的位置，UAV 从起飞点到释放点采用分段线性航迹。候选构造器在生成几何对象时已经固定延迟关系，但认证器仍重新检查这些关系。
+
+对候选 $z=(t_b,t_c)$，代码先构造烟幕对象与 UAV 路径，再进行连续覆盖评价。形式化地，可把本阶段的候选目标写成
+\begin{equation}
+  \max_{z\in\Omega}\quad \left(\,C(z),\ -L(z),\ M(z),\ -F(z)\,\right),
+  \label{eq:q1-objective}
+\end{equation}
+其中 $C$ 是认证覆盖时长，$L$ 是最大连续暴露，$M$ 是最小覆盖裕度，$F$ 是航迹距离；实际选择遵循状态优先的词典序，而不是把这些量任意加权为单一目标。
+
+\subsection{四算法 benchmark}
+
+为避免把某一种优化器的原生返回值当作事实，Q1 对相同场景和固定种子比较四类算法：多起点 SLSQP、Sobol+SLSQP、SHGO、差分进化+SLSQP。每种方法的评估预算为 $24$，候选经过同一独立验证器。Sobol+SLSQP 的局部起点来自同一词典序中最好的有效缓存样本；SHGO 和差分进化仍只是有限预算候选搜索。SLSQP 的序列二次规划背景见文献\cite{kraft1988slsqp,byrd1995sqp}，SHGO 与差分进化分别参考\cite{endes2018shgo,storn1997differential}，这里只复述代码实际调用的有限比较。
+
+四种方法共享变量边界和候选评价器。若 $z^{(r)}$ 是第 $r$ 次评估的向量，则缓存记录为
+\begin{equation}
+  \mathcal{K}=\{(z^{(r)},\,C^{(r)},\,L^{(r)},\,M^{(r)},\,F^{(r)},\,s^{(r)})\}_{r=1}^{24}.
+  \label{eq:q1-cache}
+\end{equation}
+从缓存中选取暖启动和最终候选都使用同一排序函数
+\begin{equation}
+  \operatorname{rank}_1(r)=\bigl(s^{(r)},C^{(r)},-L^{(r)},M^{(r)},-F^{(r)},-r\bigr),
+  \label{eq:q1-rank}
+\end{equation}
+最后一项以评估顺序提供确定性平局处理。该设置避免用不同的暖启动准则和最终准则比较两个不同候选。
+
+\begin{table}[!htbp]
+\centering
+\caption{Q1 四算法基准（4 个前向场景，均为认证不可行）}
+\label{tab:q1-benchmark}
+\begin{tabular}{lrrrr}
+\toprule
+方法 & 场景数 & 平均覆盖/s & 平均最大暴露/s & 原生成功次数 \\
+\midrule
+多起点 SLSQP & 4 & 10.38 & 6.99 & 0 \\
+Sobol+SLSQP & 4 & 10.38 & 8.58 & 3 \\
+SHGO & 4 & 10.38 & 6.95 & 4 \\
+差分进化+SLSQP & 4 & 10.38 & 9.42 & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表\ref{tab:q1-benchmark}的平均值由 \path{results/q1_rebuild/q1_algorithm_benchmark.csv} 按方法聚合，原生成功次数不等于认证可行次数。四种方法的验证状态均为 \texttt{certified\_infeasible}，因此 SHGO 的“较小平均最大暴露”只能解释为本次 benchmark 中的相对优胜，不能写成对连续问题的全局证明。
+
+\subsection{独立 verifier 与正式矩阵}
+
+独立验证器依次检查指令/释放延迟、释放位置到爆炸中心的一致性、操作半径、连续覆盖、最大连续暴露和最小裕度。正式 $4\times4$ 场景矩阵共 $16$ 行，CSV 与 JSON 均报告 \texttt{certified\_infeasible}。正式 SHGO 结果的覆盖时长均约为 $10.3761\,\mathrm{s}$；最大连续暴露在 $6.8958$--$7.4931\,\mathrm{s}$ 之间，最小覆盖裕度的最小值为 $-177.7720\,\mathrm{m}$，最大航迹距离为 $529.6218\,\mathrm{m}$。
+
+\begin{table}[!htbp]
+\centering
+\caption{Q1 正式矩阵按威胁方向的范围核对}
+\label{tab:q1-direction}
+\begin{tabular}{lrrrr}
+\toprule
+方向 & 检测时长/s & 覆盖时长/s & 最大连续暴露/s & 最小裕度/m \\
+\midrule
+front & 24.168 & 10.376 & 6.896--6.903 & $-173.225$--$-173.167$ \\
+rear & 25.361 & 10.376 & 7.492--7.493 & $-177.772$--$-177.767$ \\
+side & 24.764--24.773 & 10.376 & 7.195--7.212 & $-175.605$--$-175.476$ \\
+oblique & 25.186--25.191 & 10.376 & 7.406--7.435 & $-177.109$--$-176.862$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+方向范围表直接由 Q1 正式结果 JSON 的 4 个方向分组复算；它只作摘要性核验，具体每一行仍以 \path{results/q1_rebuild/q1_results.csv} 为准。
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]{q1_trajectories.png}
+  \caption{Q1 冻结基线的候选航迹。}
+  \label{fig:q1-trajectories}
+\end{figure}
+
+需要说明的是，冻结的 Q1 时间线图没有绘制绿色覆盖色带；覆盖时长 $10.3761\,\mathrm{s}$ 来自 CSV/JSON 的验证字段，而不是从图中目测得到。论文保留原图以保证图表来源不漂移，数值以结构化结果文件为准。
+
+\begin{figure}[!htbp]
+  \centering
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.96\textwidth]{q1_margin_curve.png}
+    \subcaption{覆盖裕度曲线}
+  \end{minipage}
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.96\textwidth]{q1_counterfactual_comparison.png}
+    \subcaption{实验性丢失导引反事实}
+  \end{minipage}
+  \caption{Q1 正式验证与实验性反事实的图表证据。}
+  \label{fig:q1-evidence}
+\end{figure}
+
+\subsection{反事实边界}
+
+丢失导引图只重建正式候选的决策字段，改变模型层并标记 \texttt{formal\_baseline=false}；它不是 Q1 正式结果，也没有被用于改变四算法 benchmark 的排名。这个边界使“模型敏感性”与“正式认证”保持分离。
+
+\subsection{Q1 小结}
+
+Q1 的可信结论是：四种算法在固定预算下都提供了可复核候选，SHGO 在平均最大连续暴露这一 benchmark 指标上最小；独立 verifier 对正式矩阵全部给出认证不可行。论文不把该结果表述为完整连续全局求解，也不把优化器的 \texttt{native\_success} 直接等同于物理可行。

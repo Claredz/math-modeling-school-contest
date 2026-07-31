@@ -1,0 +1,106 @@
+\section{Q2：单机多弹联合覆盖}
+
+\subsection{有限事件候选}
+
+Q2 将同一架 UAV 的多枚烟幕弹表示为有序爆炸时刻元组
+\begin{equation}
+  \mathbf{t}_b=(t_{b,1},\ldots,t_{b,k}),\qquad 1\le k\le3,
+  \quad t_{b,1}<\cdots<t_{b,k}.
+  \label{eq:q2-events}
+\end{equation}
+候选网格由检测端点、Q1 暖启动事件以及烟幕事件断点组成；代码枚举有限组合并设置最大候选数。对于每个候选，中心时刻由暖启动偏移或爆炸事件计算，路径连接器检查 UAV 在相邻释放事件之间是否可达，并要求同一 UAV 的相邻释放间隔至少为 $1\,\mathrm{s}$。
+
+\subsection{SLSQP 精修}
+
+对有限事件候选，代码把爆炸时刻和中心偏移送入 SLSQP 做局部精修；精修结果仍需重建计划并通过同一验证器。实际返回对象明确写成“best known candidate under a bounded search”，因此该过程不是完整混合整数非线性规划，也不是连续全局最优求解。候选排序使用
+\begin{equation}
+  \rho_2=(s,\ g,\ -L,\ G,\ -u),
+  \label{eq:q2-rank}
+\end{equation}
+其中 $s$ 为认证状态，$g$ 为联合覆盖下界，$L$ 为最大连续暴露，$G$ 为相对最佳单烟幕基线的联合增益，$u$ 为未解析量或代价字段。
+
+\subsection{保守联合覆盖认证}
+
+对每个检测组件，验证器将烟幕爆炸、保持结束和失效时刻加入断点集合。对每个时间单元，先检验保守覆盖；如果失败，再检验精确目标盘是否认证不可行。只有当精确不可行且固定空间见证点在整个单元内持续位于目标盘内、烟幕盘外时，才把该单元加入认证暴露集合；否则二分，直至达到时间容差并将单元保留为未解析。于是
+\begin{equation}
+  G=C_{\mathrm{joint,lower}}-C_{\mathrm{single,best,lower}},
+  \label{eq:q2-gain}
+\end{equation}
+而不是把联合覆盖下界本身误叫做 gain。
+
+对一个时间单元 $I$，若保守目标盘为 $\widehat{\mathcal{D}}_T(I)$，收缩后的烟幕盘为 $\check{\mathcal{D}}_S(I)$，则覆盖证书使用充分条件
+\begin{equation}
+  \widehat{\mathcal{D}}_T(I)\subseteq\check{\mathcal{D}}_S(I)
+  \quad\Longrightarrow\quad I\subseteq D_{\mathrm{cov}}.
+  \label{eq:q2-covered-cell}
+\end{equation}
+若一个固定见证点 $w$ 在整个单元内满足
+\begin{equation}
+  w\in\mathcal{D}_T(t),\qquad
+  w\notin\mathcal{D}_{S,j}(t)\quad(j=1,\ldots,k),\qquad \forall t\in I,
+  \label{eq:q2-exposed-cell}
+\end{equation}
+才有 $I\subseteq D_{\mathrm{exp}}$。否则，当 $|I|$ 大于时间容差时把 $I$ 分成两个子单元；达到容差仍不能认证时记为 $I\subseteq D_{\mathrm{unres}}$。因此总暴露和最大连续暴露由不同的区间集合计算：
+\begin{align}
+  E_{\mathrm{total,lower}} &= \mu(D_{\mathrm{exp}}),\\
+  L_{\mathrm{max,lower}} &= \max_{I\subseteq D_{\mathrm{exp}}}|I|,\\
+  E_{\mathrm{total,upper}} &= \mu(D_{\mathrm{exp}}\cup D_{\mathrm{unres}}).
+  \label{eq:q2-exposure-bounds}
+\end{align}
+
+\begin{table}[!htbp]
+\centering
+\caption{Q2 四个代表场景的联合认证结果}
+\label{tab:q2-results}
+\begin{tabular}{lrrrrr}
+\toprule
+场景 & 覆盖下界/s & 单弹基线/s & 联合增益/s & 最大连续暴露/s & 状态 \\
+\midrule
+$d=8000$ & 17.2634 & 10.3738 & 6.8896 & 5.4993 & 不可行 \\
+$d=10000$ & 17.2710 & 10.3738 & 6.8971 & 6.8951 & 不可行 \\
+$d=12000$ & 17.2710 & 10.3738 & 6.8971 & 6.8956 & 不可行 \\
+$d=15000$ & 17.2710 & 10.3738 & 6.8971 & 6.8951 & 不可行 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表\ref{tab:q2-results}中的“不可行”是 \texttt{verification\_status=certified\_infeasible}，不表示候选生成失败；它表示仍有认证暴露区间。四个场景的覆盖上界约为 $17.2658$--$17.2726\,\mathrm{s}$，未解析单元被单独序列化，未被并入最大连续暴露。
+
+\begin{table}[!htbp]
+\centering
+\caption{Q2 结果字段的语义与来源}
+\label{tab:q2-fields}
+\begin{tabular}{lll}
+\toprule
+字段 & 本文解释 & 不能替代的量 \\
+\midrule
+coverage\_lower\_s & 已认证覆盖区间长度 & 覆盖上界 \\
+coverage\_upper\_s & 覆盖区间加未解析区间的上界 & 已认证覆盖 \\
+total\_exposure\_lower\_s & 已认证暴露区间总长度下界 & 最大连续暴露 \\
+maximum\_continuous\_exposure\_s & 已认证连续暴露最大段 & 未解析总长度 \\
+joint\_gain\_s & 相对最佳单烟幕覆盖下界的增量 & 联合覆盖本身 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!htbp]
+  \centering
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.96\textwidth]{q2_coverage_timeline.png}
+    \subcaption{联合覆盖时间线}
+  \end{minipage}
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=0.96\textwidth]{q2_joint_gain.png}
+    \subcaption{联合增益}
+  \end{minipage}
+  \caption{Q2 认证边界与单弹基线对照。}
+  \label{fig:q2-evidence}
+\end{figure}
+
+Q2 冻结的联合增益图纵轴标签对覆盖下界与覆盖上界的区分不够充分，因此表\ref{tab:q2-results}中的上下界直接采用 CSV/JSON 字段，图仅用于展示场景间相对差异，不作为上下界数值的唯一证据。
+
+\subsection{物理解释与限制}
+
+联合释放的主要收益来自多枚烟幕在检测区间内的时间错位和几何并集，因而联合覆盖下界高于最佳单弹基线。但证书仍找到连续暴露区间；最短的 $5.4993\,\mathrm{s}$ 只出现在 $d=8000$ 代表场景，不能被外推成所有场景均有同样的遮蔽效果。Q2 的结论是有限事件候选经过 SLSQP 精修后得到的证书结果，不宣称完整 SIP 或全局最优。

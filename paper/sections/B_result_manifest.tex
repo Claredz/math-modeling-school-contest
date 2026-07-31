@@ -1,0 +1,59 @@
+\section{代表性事件与任务包清单}
+
+本附录把正文中的代表性数字展开为可人工复核的事件表。表中数值均取自冻结 CSV/JSON；没有把它们重新送入求解器，也没有用表格反向修改结果文件。
+
+\begin{longtable}{lrrrrrr}
+\caption{Q2/Q3 代表性爆炸事件与覆盖证书}\label{tab:event-manifest}\\
+\toprule
+场景 & Q2 第1/s & Q2 第2/s & Q3 第3/s & 覆盖下界/s & 上界/s & 联合增益/s \\
+\midrule
+\endfirsthead
+\toprule
+场景 & Q2 第1/s & Q2 第2/s & Q3 第3/s & 覆盖下界/s & 上界/s & 联合增益/s \\
+\midrule
+\endhead
+front-$d8000$ & 5.5000 & 14.8339 & 24.1670 & 17.2634 & 17.2658 & 6.8896 \\
+front-$d10000$ & 6.1030 & 15.1658 & 30.2697 & 17.2710 & 17.2726 & 6.8971 \\
+front-$d12000$ & 12.2060 & 21.2528 & 36.3726 & 17.2710 & 17.2722 & 6.8971 \\
+front-$d15000$ & 21.3603 & 30.4232 & 45.5271 & 17.2710 & 17.2726 & 6.8971 \\
+\bottomrule
+\end{longtable}
+
+Q2 的两列爆炸时刻来自 \path{results/q2_rebuild/q2_results.csv}，Q3 第三列来自 \path{results/q3_rebuild/q3_results.json} 的三枚计划；表格同时说明了 Q2/Q3 复用覆盖验证器后联合覆盖量相同的原因。该表不表示第三枚弹由同一架 UAV 释放：Q2 是单机多弹，Q3 是三架 UAV 各一枚。
+
+\begin{longtable}{lrrrrl}
+\caption{Q4 固定任务包}\label{tab:task-manifest}\\
+\toprule
+任务 & 揭示/s & 价值 & 资源成本 & 认证覆盖下界/s & 备注 \\
+\midrule
+\endfirsthead
+\toprule
+任务 & 揭示/s & 价值 & 资源成本 & 认证覆盖下界/s & 备注 \\
+\midrule
+\endhead
+threat\_front & 0.0 & 17.2 & 1 & 17.2 & 已认证 \\
+threat\_rear & 4.0 & 15.8 & 1 & 15.8 & 已认证 \\
+threat\_side & 8.0 & 13.4 & 2 & 13.4 & 已认证 \\
+threat\_oblique & 12.0 & 11.1 & 1 & 11.1 & 在部分容量情形未服务 \\
+\bottomrule
+\end{longtable}
+
+Q4 的任务包由 \texttt{build\_q4\_tasks()} 固定构造，数值并非由 Q1--Q3 的 JSON 自动转换得到。正文因此称它为“认证任务包基准”，而不声称它已经覆盖所有威胁场景。
+
+\subsection{状态字段复核}
+
+\begin{table}[!htbp]
+\centering
+\caption{状态字段的人工读法}
+\begin{tabular}{lll}
+\toprule
+字段 & 值/形式 & 论文读法 \\
+\midrule
+verification\_status & certified\_infeasible & 仍有认证不可行/暴露证据 \\
+unresolved\_intervals & 区间列表 & 不把列表合并为已认证暴露 \\
+pairwise\_conflict\_ok & true & 在当前 $d_{safe}=0$ 下通过 \\
+causal & true & 决策不早于揭示时刻 \\
+global\_optimum\_claim & false & 不得写成全局最优 \\
+\bottomrule
+\end{tabular}
+\end{table}
