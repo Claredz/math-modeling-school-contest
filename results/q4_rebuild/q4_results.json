@@ -1,8 +1,10 @@
 {
-  "generated_at": "2026-07-31T02:30:18.410304+00:00",
-  "git_sha": "e1d155c05dadfb9adcb5eb142dac5cc0a122613b",
+  "generated_at": "2026-07-31T02:52:47.764890+00:00",
+  "git_sha": "24fb849ff057d657c3238a1fdfb90a110f411a26",
   "formal_baseline": true,
   "causal_rolling": true,
+  "causal_greedy_baseline": true,
+  "offline_hindsight_upper_bound": true,
   "task_package_source": "Q1-Q3 certified task-package interface",
   "global_optimum_claim": false,
   "resource_cases": [
@@ -13,6 +15,19 @@
       "causal": true,
       "total_value": 46.4,
       "certified_value": 46.4,
+      "rolling_value": 46.4,
+      "greedy_value": 46.4,
+      "hindsight_upper_bound": 46.4,
+      "rolling_vs_greedy_gap": 0.0,
+      "hindsight_gap": 0.0,
+      "greedy_unresolved_task_ids": [
+        "threat_oblique"
+      ],
+      "hindsight_decision_task_ids": [
+        "threat_front",
+        "threat_rear",
+        "threat_side"
+      ],
       "decisions": [
         {
           "time_s": 0.0,
@@ -45,6 +60,19 @@
       "causal": true,
       "total_value": 33.0,
       "certified_value": 33.0,
+      "rolling_value": 33.0,
+      "greedy_value": 33.0,
+      "hindsight_upper_bound": 33.0,
+      "rolling_vs_greedy_gap": 0.0,
+      "hindsight_gap": 0.0,
+      "greedy_unresolved_task_ids": [
+        "threat_side",
+        "threat_oblique"
+      ],
+      "hindsight_decision_task_ids": [
+        "threat_front",
+        "threat_rear"
+      ],
       "decisions": [
         {
           "time_s": 0.0,
@@ -72,6 +100,19 @@
       "causal": true,
       "total_value": 17.2,
       "certified_value": 17.2,
+      "rolling_value": 17.2,
+      "greedy_value": 17.2,
+      "hindsight_upper_bound": 17.2,
+      "rolling_vs_greedy_gap": 0.0,
+      "hindsight_gap": 0.0,
+      "greedy_unresolved_task_ids": [
+        "threat_rear",
+        "threat_side",
+        "threat_oblique"
+      ],
+      "hindsight_decision_task_ids": [
+        "threat_front"
+      ],
       "decisions": [
         {
           "time_s": 0.0,

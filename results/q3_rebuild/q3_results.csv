@@ -1,0 +1,5 @@
+scenario_id,uav_count,bomb_count,verification_status,coverage_lower_s,coverage_upper_s,total_exposure_lower_s,total_exposure_upper_s,maximum_continuous_exposure_s,joint_gain_s,pairwise_conflict_ok,minimum_pairwise_distance_m
+q1_rebuild_front_d8000,3,3,certified_infeasible,14.0007819413505,14.0007819413505,10.1669273137835,10.1669273137835,10.1669273137835,14.0007819413505,True,0.0
+q1_rebuild_front_d10000,3,3,certified_infeasible,12.083854627567,12.083854627567,12.083854627567,12.083854627567,12.083854627567,12.083854627567,True,0.0
+q1_rebuild_front_d12000,3,3,certified_infeasible,12.083854627567,12.083854627567,12.083854627567,12.083854627567,12.083854627567,12.083854627567,True,0.0
+q1_rebuild_front_d15000,3,3,certified_infeasible,12.083854627567,12.083854627567,12.083854627566996,12.083854627566996,12.083854627566996,12.083854627567,True,0.0

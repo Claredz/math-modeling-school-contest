@@ -4,6 +4,7 @@ from smoke_defense.q1_rebuild import build_q1_problem
 from smoke_defense.q3_rebuild import (
     construct_q3_plan,
     generate_q3_plan,
+    q3_verification_rank,
     verify_q3_plan,
 )
 from smoke_defense.scenario_matrix import generate_q1_rebuild_matrix
@@ -20,6 +21,11 @@ def test_q3_main_interpretation_has_exactly_three_bombs():
         "certified_infeasible",
         "unresolved",
     }
+    certificate = verify_q3_plan(problem, plan)
+    assert certificate.pairwise_conflict_ok
+    assert certificate.minimum_pairwise_distance_m >= 0.0
+    assert "max_continuous_exposure_s" in certificate.epsilon_constraints
+    assert len(q3_verification_rank(certificate)) == 5
 
 
 def test_q3_generator_is_reproducible():

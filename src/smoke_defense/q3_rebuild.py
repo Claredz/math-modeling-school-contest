@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from smoke_defense.path_constraints import certify_operation_radius
+from smoke_defense.path_constraints import (
+    certify_operation_radius,
+    certify_pairwise_separation,
+)
 from smoke_defense.q1_rebuild import Q1Problem
 from smoke_defense.q2_rebuild import (
     Q2CertificationStatus,
@@ -28,6 +31,9 @@ class Q3Certificate:
     status: Q2CertificationStatus
     joint: Q2JointCertificate
     operation_radius_ok: bool
+    pairwise_conflict_ok: bool
+    minimum_pairwise_distance_m: float
+    epsilon_constraints: dict[str, float]
     interpretation: str
     reason: str = ""
 
@@ -82,9 +88,28 @@ def verify_q3_plan(problem: Q1Problem, plan: Q3Plan) -> Q3Certificate:
             joint.status,
             joint,
             False,
+            False,
+            0.0,
+            {"max_continuous_exposure_s": joint.maximum_continuous_exposure_s},
             plan.interpretation,
             joint.reason,
         )
+    pairwise_results = tuple(
+        certify_pairwise_separation(
+            first,
+            second,
+            safe_distance_m=0.0,
+        )
+        for index, first in enumerate(plan.paths)
+        for second in plan.paths[index + 1 :]
+    )
+    pairwise_conflict_ok = all(
+        item.status == "certified_feasible" for item in pairwise_results
+    )
+    minimum_pairwise_distance = min(
+        (item.minimum_value or 0.0 for item in pairwise_results),
+        default=0.0,
+    )
     joint = certify_joint_coverage(
         ship_position=problem.ship.position,
         detection_components=problem.detection.components,
@@ -96,8 +121,31 @@ def verify_q3_plan(problem: Q1Problem, plan: Q3Plan) -> Q3Certificate:
         joint.status,
         joint,
         True,
+        pairwise_conflict_ok,
+        minimum_pairwise_distance,
+        {
+            "max_continuous_exposure_s": joint.maximum_continuous_exposure_s,
+            "minimum_pairwise_distance_m": minimum_pairwise_distance,
+        },
         plan.interpretation,
         joint.reason,
+    )
+
+
+def q3_verification_rank(certificate: Q3Certificate) -> tuple[float, ...]:
+    """Success-first lexicographic rank with explicit epsilon constraints."""
+
+    status_rank = {
+        Q2CertificationStatus.CERTIFIED_FEASIBLE: 2.0,
+        Q2CertificationStatus.UNRESOLVED: 1.0,
+        Q2CertificationStatus.CERTIFIED_INFEASIBLE: 0.0,
+    }[certificate.status]
+    return (
+        status_rank,
+        float(certificate.pairwise_conflict_ok),
+        certificate.joint.coverage_lower_s,
+        -certificate.joint.maximum_continuous_exposure_s,
+        certificate.minimum_pairwise_distance_m,
     )
 
 

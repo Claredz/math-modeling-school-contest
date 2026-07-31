@@ -696,6 +696,9 @@
         "main_interpretation": "three_uavs_exactly_one_bomb_each",
         "relaxation": "at_most_one_bomb_per_uav_not_promoted",
         "result_root": "results/q3_rebuild",
+        "result_table": "results/q3_rebuild/q3_results.csv",
+        "pairwise_conflict_certificate": true,
+        "epsilon_constraints": true,
         "global_optimum_claim": false
       },
       "q4": {
@@ -703,6 +706,9 @@
         "framework": "certified_packages_causal_online_rolling",
         "resource_cases": ["abundant", "critical", "shortage"],
         "result_root": "results/q4_rebuild",
+        "result_table": "results/q4_rebuild/q4_results.csv",
+        "causal_greedy_baseline": true,
+        "offline_hindsight_upper_bound": true,
         "global_optimum_claim": false
       }
     },
@@ -712,6 +718,14 @@
       "completed_at": "2026-07-31T12:30:00+08:00",
       "scope": "Q1失锁耦合代表性反事实、Q2/Q3 unresolved边界、Q4资源工况",
       "formal_result_isolation": true,
+      "sensitivity_artifacts": "results/sensitivity_rebuild",
+      "sensitivity_categories": [
+        "missile_model",
+        "lost_counterfactual",
+        "smoke_drift",
+        "response_delay",
+        "uav_reachability"
+      ],
       "high_severity_issues": []
     },
     "7": {
@@ -731,7 +745,8 @@
         "docs/q2",
         "docs/q3",
         "docs/q4",
-        "paper_workspace/sections"
+        "paper_workspace/sections",
+        "figures/model_workflow.svg"
       ]
     },
     "8": {

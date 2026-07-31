@@ -1,0 +1,4 @@
+resource_case,capacity,status,rolling_value,greedy_value,hindsight_upper_bound,rolling_vs_greedy_gap,hindsight_gap,causal
+abundant,4,unresolved,46.4,46.4,46.4,0.0,0.0,True
+critical,2,unresolved,33.0,33.0,33.0,0.0,0.0,True
+shortage,1,unresolved,17.2,17.2,17.2,0.0,0.0,True

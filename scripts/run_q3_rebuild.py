@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import subprocess
 from datetime import UTC, datetime
@@ -11,7 +12,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from smoke_defense.q1_rebuild import build_q1_problem
-from smoke_defense.q3_rebuild import generate_q3_plan
+from smoke_defense.q3_rebuild import generate_q3_plan, q3_verification_rank
 from smoke_defense.scenario_matrix import generate_q1_rebuild_matrix
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +43,10 @@ def run() -> dict:
                 "center_times_s": list(plan.center_times_s),
                 "verification_status": certificate.status.value,
                 "operation_radius_ok": certificate.operation_radius_ok,
+                "pairwise_conflict_ok": certificate.pairwise_conflict_ok,
+                "minimum_pairwise_distance_m": certificate.minimum_pairwise_distance_m,
+                "lexicographic_rank": list(q3_verification_rank(certificate)),
+                "epsilon_constraints": certificate.epsilon_constraints,
                 "coverage_lower_s": certificate.joint.coverage_lower_s,
                 "coverage_upper_s": certificate.joint.coverage_upper_s,
                 "total_exposure_lower_s": certificate.joint.total_exposure_lower_s,
@@ -53,6 +58,21 @@ def run() -> dict:
                     for item in certificate.joint.unresolved_intervals
                 ],
                 "reason": certificate.reason,
+                "uav_paths": [
+                    {
+                        "uav_index": index + 1,
+                        "segments": [
+                            {
+                                "start_time_s": segment.start_time_s,
+                                "end_time_s": segment.end_time_s,
+                                "start_position_m": segment.start_position_m.tolist(),
+                                "end_position_m": segment.end_position_m.tolist(),
+                            }
+                            for segment in path.segments
+                        ],
+                    }
+                    for index, path in enumerate(plan.paths)
+                ],
             }
         )
     output = {
@@ -69,6 +89,27 @@ def run() -> dict:
     (RESULTS / "q3_results.json").write_text(
         json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    fields = [
+        "scenario_id",
+        "uav_count",
+        "bomb_count",
+        "verification_status",
+        "coverage_lower_s",
+        "coverage_upper_s",
+        "total_exposure_lower_s",
+        "total_exposure_upper_s",
+        "maximum_continuous_exposure_s",
+        "joint_gain_s",
+        "pairwise_conflict_ok",
+        "minimum_pairwise_distance_m",
+    ]
+    with (RESULTS / "q3_results.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field) for field in fields})
     if rows:
         first = rows[0]
         fig, ax = plt.subplots(figsize=(8, 4))
@@ -99,6 +140,7 @@ def run() -> dict:
 def check() -> int:
     required = (
         RESULTS / "q3_results.json",
+        RESULTS / "q3_results.csv",
         FIGURES / "q3_schedule.png",
         FIGURES / "q3_coverage_bounds.png",
         ROOT / "docs/q3/q3-model.md",

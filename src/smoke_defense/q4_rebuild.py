@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import combinations
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,8 @@ class Q4ScheduleCertificate:
     causal: bool
     unresolved_task_ids: tuple[str, ...] = ()
     reason: str = ""
+    strategy: str = "causal_rolling"
+    hindsight_upper_bound_value: float | None = None
 
 
 def schedule_causal_rolling(
@@ -40,6 +43,7 @@ def schedule_causal_rolling(
     *,
     resource_capacity: int,
     horizon_end_s: float,
+    selection_rule: str = "value_per_resource",
 ) -> Q4ScheduleCertificate:
     """Schedule only tasks revealed by the current rolling time."""
 
@@ -58,10 +62,15 @@ def schedule_causal_rolling(
             index += 1
         feasible = [item for item in pending if item.resource_cost <= remaining]
         if feasible:
-            selected = max(
-                feasible,
-                key=lambda item: (item.value / item.resource_cost, item.value, item.task_id),
-            )
+            if selection_rule == "value":
+                def key(item: ThreatTask) -> tuple[float, int, str]:
+                    return item.value, -item.resource_cost, item.task_id
+            elif selection_rule == "value_per_resource":
+                def key(item: ThreatTask) -> tuple[float, float, str]:
+                    return item.value / item.resource_cost, item.value, item.task_id
+            else:
+                raise ValueError("unknown Q4 selection rule")
+            selected = max(feasible, key=key)
             pending.remove(selected)
             remaining -= selected.resource_cost
             decisions.append(
@@ -110,6 +119,69 @@ def schedule_causal_rolling(
             if not unresolved
             else "pending tasks retained as unresolved"
         ),
+        strategy=(
+            "causal_greedy"
+            if selection_rule == "value"
+            else "causal_rolling_value_per_resource"
+        ),
+    )
+
+
+def schedule_causal_greedy(
+    tasks: tuple[ThreatTask, ...],
+    *,
+    resource_capacity: int,
+    horizon_end_s: float,
+) -> Q4ScheduleCertificate:
+    """Mandatory causal greedy baseline using revealed task value only."""
+
+    return schedule_causal_rolling(
+        tasks,
+        resource_capacity=resource_capacity,
+        horizon_end_s=horizon_end_s,
+        selection_rule="value",
+    )
+
+
+def schedule_offline_hindsight(
+    tasks: tuple[ThreatTask, ...],
+    *,
+    resource_capacity: int,
+    horizon_end_s: float,
+) -> Q4ScheduleCertificate:
+    """Small exact subset oracle used only as an offline upper bound."""
+
+    if resource_capacity <= 0:
+        raise ValueError("resource capacity must be positive")
+    candidates = tuple(
+        task
+        for task in tasks
+        if task.reveal_time_s <= horizon_end_s and task.certified
+    )
+    best_subset: tuple[ThreatTask, ...] = ()
+    best_value = 0.0
+    for count in range(len(candidates) + 1):
+        for subset in combinations(candidates, count):
+            if sum(item.resource_cost for item in subset) > resource_capacity:
+                continue
+            value = sum(item.value for item in subset)
+            if value > best_value:
+                best_value = value
+                best_subset = subset
+    decisions = tuple(
+        ScheduleDecision(item.reveal_time_s, item.task_id, item.resource_cost, item.value)
+        for item in sorted(best_subset, key=lambda item: item.reveal_time_s)
+    )
+    return Q4ScheduleCertificate(
+        status="certified_feasible",
+        decisions=decisions,
+        total_value=best_value,
+        certified_value=best_value,
+        capacity=resource_capacity,
+        causal=False,
+        reason="offline hindsight subset oracle; not an online policy",
+        strategy="offline_hindsight_upper_bound",
+        hindsight_upper_bound_value=best_value,
     )
 
 
