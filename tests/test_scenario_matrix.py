@@ -3,6 +3,7 @@ import numpy as np
 from smoke_defense.scenario_matrix import (
     generate_instantaneous_ablation_matrix,
     generate_q1_q3_matrix,
+    generate_q1_rebuild_matrix,
 )
 
 
@@ -20,6 +21,20 @@ def test_ablation_matrix_has_16_scenes():
     assert len(scenes) == 16
     assert len({scene.scenario_id for scene in scenes}) == len(scenes)
     assert all(scene.model_layer == "ablation" for scene in scenes)
+
+
+def test_q1_rebuild_formal_baseline_is_four_by_four_without_inertial_parameters():
+    scenes = generate_q1_rebuild_matrix()
+
+    assert len(scenes) == 4 * 4
+    assert len({scene.scenario_id for scene in scenes}) == len(scenes)
+    assert all(scene.model_layer == "formal_baseline" for scene in scenes)
+    assert all(
+        scene.missiles[0].guidance_model == "instantaneous_pure_pursuit"
+        and scene.missiles[0].heading_response_rate_per_s is None
+        and scene.missiles[0].max_turn_rate_deg_s is None
+        for scene in scenes
+    )
 
 
 def test_matrix_contains_expected_distances_and_directions():

@@ -17,7 +17,7 @@ GuidanceModel = Literal[
     "inertial_pure_pursuit",
     "instantaneous_pure_pursuit",
 ]
-ModelLayer = Literal["formal", "ablation"]
+ModelLayer = Literal["formal", "formal_baseline", "ablation"]
 
 
 class FrozenModel(BaseModel):
@@ -91,13 +91,13 @@ class Scenario(FrozenModel):
             else:
                 if missile.guidance_model != "instantaneous_pure_pursuit":
                     raise ValueError(
-                        "ablation scenarios require instantaneous_pure_pursuit"
+                        f"{self.model_layer} scenarios require instantaneous_pure_pursuit"
                     )
                 if (
                     missile.heading_response_rate_per_s is not None
                     or missile.max_turn_rate_deg_s is not None
                 ):
-                    raise ValueError("instantaneous ablation has no inertial parameters")
+                    raise ValueError("instantaneous pursuit has no inertial parameters")
         return self
 
 
