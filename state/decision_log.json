@@ -1,6 +1,6 @@
 {
   "_schema_version": "3.0",
-  "_doc": "mathmodel-skill 跨阶段决策日志；本轮仅执行 Stage 0-3，并在 Gate B 停止。",
+  "_doc": "mathmodel-skill 跨阶段决策日志；Stage 0-3 已完成，Gate B 已人工批准，下一待执行阶段为 Stage 4。",
   "competition": "cumcm",
   "task_type": "B_optimization_simulation",
   "problem": "2026-school-contest-B",
@@ -13,10 +13,31 @@
   },
   "mode": "standard",
   "started_at": "2026-07-31T00:20:55+08:00",
-  "current_stage": 3,
+  "current_stage": 4,
   "next_stage": 4,
-  "gate_b_status": "pending_human_approval",
+  "gate_b_status": "approved",
   "stage_4_started": false,
+  "gate_b_approval": {
+    "decision_time": "2026-07-31T09:30:21+08:00",
+    "approved_by": "human",
+    "stage_4_started_at_approval": false,
+    "post_merge_rule": "PR #6 合并后才能从最新 main 建立后续正式实施分支。",
+    "decisions": [
+      {"id": 1, "approved": true, "decision": "瞬时纯追踪作为最少参数的正式基准。"},
+      {"id": 2, "approved": true, "decision": "一阶惯性纯追踪与比例导引 PN 作为参数化反事实。"},
+      {"id": 3, "approved": true, "decision": "固定烟幕中心作为正式基准。"},
+      {"id": 4, "approved": true, "decision": "有界漂移与半径误差作为鲁棒扩展。"},
+      {"id": 5, "approved": true, "decision": "分段直线 UAV 路径作为理想化基准。"},
+      {"id": 6, "approved": true, "decision": "Dubins 或有限转弯模型只在转弯参数有来源时升级。"},
+      {"id": 7, "approved": true, "decision": "Q1/Q3 算法框架、Q2 SIP 优先研究路线、Q4 因果滚动框架获批，但不冻结具体主求解器。"},
+      {"id": 8, "approved": true, "decision": "Q3 主解释为三架无人机每架恰好投放一枚，至多一枚作为放松对照。"},
+      {"id": 9, "approved": true, "decision": "2 秒响应延时定义为投弹指令到实际释放的固定延时。"},
+      {"id": 10, "approved": true, "decision": "3.5 秒起爆延时从实际释放时刻开始计算。"},
+      {"id": 11, "approved": true, "decision": "UAV 在 2 秒响应期间可以正常飞行。"},
+      {"id": 12, "approved": true, "decision": "基准场景不允许负时间预指令。"},
+      {"id": 13, "approved": true, "decision": "授权进入 Stage 4；本记录更新时 Stage 4 尚未开始。"}
+    ]
+  },
   "budget": {
     "tokens_used": 0,
     "tokens_cap": 200000,
@@ -401,25 +422,25 @@
             "PSO_heuristic_baseline"
           ],
           "status": "framework_pending_formal_benchmark",
-          "approval": "pending_human_approval"
+          "approval": "approved"
         },
         "Q2": {
           "framework": "spatiotemporal_SIP_constraint_generation_continuous_separation_independent_verifier",
           "formal_oracle_ready": false,
           "status": "priority_research_route_pending_oracle",
-          "approval": "pending_human_approval"
+          "approval": "approved"
         },
         "Q3": {
           "framework": "success_first_lexicographic_epsilon_constraint",
           "nsga2_role": "pareto_coverage_baseline_only",
-          "status": "framework_pending_human_approval",
-          "approval": "pending_human_approval"
+          "status": "framework_approved_pending_implementation",
+          "approval": "approved"
         },
         "Q4": {
           "framework": "certified_packages_causal_online_rolling_optimization_with_mandatory_baselines",
           "current_rolling_baseline": "zero_forecast_whole_package_commitment_weak_baseline",
           "status": "research_framework_pending_formal_benchmark",
-          "approval": "pending_human_approval"
+          "approval": "approved"
         }
       },
       "rejection_log": [
@@ -477,7 +498,7 @@
         }
       ],
       "model_family_consistency": "四问共享解释层、动力学层、连续覆盖层和三值认证层；solver生成候选，independent verifier认证。Q1只为Q2/Q3提供warm start；Q4只消费认证任务包且保留跨威胁共享与直接联合反事实。",
-      "gate_status": "pending_human_approval; current_stage=3; next_stage=4; stage_4_started=false"
+      "gate_status": "approved_by_human; current_stage=4; next_stage=4; stage_4_started=false"
     },
     "4": {
       "_label": "foundation",
@@ -747,6 +768,13 @@
         "type": "gate_b_revision",
         "stage": 3,
         "detail": "按审查修正四问独立目标层级；Q1只批多路线框架，Q2降为优先研究路线，Q4将zero-forecast整包承诺标为弱基线；继续等待人工批准。"
+      },
+      {
+        "ts": "2026-07-31T09:30:21+08:00",
+        "type": "gate_b_approved",
+        "stage": 3,
+        "approved_by": "human",
+        "detail": "人工批准 13 项 Gate B 决定；current_stage=4、next_stage=4、stage_4_started=false。Stage 4 尚未开始，PR #6 合并后才能建立后续正式实施分支。"
       }
     ]
   }

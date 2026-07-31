@@ -87,13 +87,18 @@ def read_text(relative_path: str) -> str:
     return (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
 
 
-def test_decision_log_stops_unambiguously_at_gate_b() -> None:
+def test_gate_b_is_approved_without_starting_stage_4() -> None:
     decision_log = json.loads(read_text("state/decision_log.json"))
 
-    assert decision_log["current_stage"] == 3
+    assert decision_log["current_stage"] == 4
     assert decision_log["next_stage"] == 4
-    assert decision_log["gate_b_status"] == "pending_human_approval"
+    assert decision_log["gate_b_status"] == "approved"
     assert decision_log["stage_4_started"] is False
+    approval = decision_log["gate_b_approval"]
+    assert approval["approved_by"] == "human"
+    assert approval["stage_4_started_at_approval"] is False
+    assert len(approval["decisions"]) == 13
+    assert all(item["approved"] for item in approval["decisions"])
     assert decision_log["scores"]["4"] == []
     assert decision_log["iterations"]["4"] == 0
     assert decision_log["stages"]["4"] == {
@@ -127,9 +132,9 @@ def test_gate_b_approves_frameworks_without_freezing_q1_q2_or_q4_solver() -> Non
 
     assert selections["Q1"]["status"] == "framework_pending_formal_benchmark"
     assert selections["Q2"]["status"] == "priority_research_route_pending_oracle"
-    assert selections["Q3"]["status"] == "framework_pending_human_approval"
+    assert selections["Q3"]["status"] == "framework_approved_pending_implementation"
     assert selections["Q4"]["status"] == "research_framework_pending_formal_benchmark"
-    assert all(item["approval"] == "pending_human_approval" for item in selections.values())
+    assert all(item["approval"] == "approved" for item in selections.values())
 
 
 def test_research_docs_do_not_reintroduce_unified_or_frozen_solver_claims() -> None:
