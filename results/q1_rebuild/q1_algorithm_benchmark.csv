@@ -1,0 +1,17 @@
+scenario_id,method,seed,evaluation_budget,evaluations,runtime_s,native_success,native_status,verification_status,covered_duration_s,maximum_exposure_s
+q1_rebuild_front_d8000,multistart_slsqp,20260731,24,24,0.4912609250022797,False,Iteration limit reached,certified_infeasible,10.376134889753999,6.955549286657
+q1_rebuild_front_d8000,sobol_slsqp,20260731,24,10,0.4912609250022797,True,Optimization terminated successfully,certified_infeasible,10.376134889753999,11.583535262923
+q1_rebuild_front_d8000,shgo,20260731,24,24,0.4912609250022797,True,Optimization terminated successfully.,certified_infeasible,10.376134889754002,7.116312578623
+q1_rebuild_front_d8000,differential_evolution_slsqp,20260731,24,24,0.4912609250022797,False,Inequality constraints incompatible,certified_infeasible,10.376134889754002,7.809246517856998
+q1_rebuild_front_d10000,multistart_slsqp,20260731,24,24,0.5119446750031784,False,Iteration limit reached,certified_infeasible,10.376134889753999,6.908197062013
+q1_rebuild_front_d10000,sobol_slsqp,20260731,24,10,0.5119446750031784,True,Optimization terminated successfully,certified_infeasible,10.376134889754002,9.404447006613
+q1_rebuild_front_d10000,shgo,20260731,24,24,0.5119446750031784,True,Optimization terminated successfully.,certified_infeasible,10.376134889754,6.895787182713001
+q1_rebuild_front_d10000,differential_evolution_slsqp,20260731,24,24,0.5119446750031784,True,Optimization terminated successfully,certified_infeasible,10.376134889754002,9.954827161812998
+q1_rebuild_front_d12000,multistart_slsqp,20260731,24,24,0.6401803749904502,False,Inequality constraints incompatible,certified_infeasible,10.376134889754002,7.056539721476
+q1_rebuild_front_d12000,sobol_slsqp,20260731,24,24,0.6401803749904502,True,Optimization terminated successfully,certified_infeasible,10.376134889753999,7.3259344930040005
+q1_rebuild_front_d12000,shgo,20260731,24,24,0.6401803749904502,True,Optimization terminated successfully.,certified_infeasible,10.376134889753999,6.895787182704
+q1_rebuild_front_d12000,differential_evolution_slsqp,20260731,24,24,0.6401803749904502,True,Optimization terminated successfully,certified_infeasible,10.376134889753999,9.954827161804
+q1_rebuild_front_d15000,multistart_slsqp,20260731,24,24,0.6399286999949254,False,Inequality constraints incompatible,certified_infeasible,10.376134889754002,7.056534846690994
+q1_rebuild_front_d15000,sobol_slsqp,20260731,24,24,0.6399286999949254,True,Optimization terminated successfully,certified_infeasible,10.376134889754002,7.325982417688998
+q1_rebuild_front_d15000,shgo,20260731,24,24,0.6399286999949254,True,Optimization terminated successfully.,certified_infeasible,10.376134889754002,6.895787182690995
+q1_rebuild_front_d15000,differential_evolution_slsqp,20260731,24,24,0.6399286999949254,True,Optimization terminated successfully,certified_infeasible,10.376134889754002,9.954827161788998

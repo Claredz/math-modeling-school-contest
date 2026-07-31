@@ -17,6 +17,7 @@ from smoke_defense.lost_counterfactual import (
     LostCounterfactualParameters,
     simulate_lost_counterfactual,
 )
+from smoke_defense.q1 import _integrate_scenario
 from smoke_defense.q1_rebuild import (
     Q1_METHODS,
     Q1MethodResult,
@@ -130,6 +131,60 @@ def _write_figures(problem, candidate, payloads: list[dict]) -> None:
     fig.savefig(FIGURES / "q1_margin_curve.png", dpi=180)
     plt.close(fig)
 
+    ship, missile = _integrate_scenario(problem.scenario, problem.constants)
+    trajectory_end = min(missile.end_time_s, detection[-1].end_s)
+    trajectory_times = np.linspace(0.0, trajectory_end, 500)
+    ship_positions = np.asarray([ship.position(float(t)) for t in trajectory_times])
+    missile_positions = np.asarray([missile.position(float(t)) for t in trajectory_times])
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(ship_positions[:, 0], ship_positions[:, 1], label="ship", color="#2563eb")
+    ax.plot(
+        missile_positions[:, 0],
+        missile_positions[:, 1],
+        label="missile",
+        color="#dc2626",
+    )
+    for segment in candidate.path.segments:
+        ax.plot(
+            [segment.start_position_m[0], segment.end_position_m[0]],
+            [segment.start_position_m[1], segment.end_position_m[1]],
+            color="#16a34a",
+            linewidth=2,
+        )
+    ax.scatter(*problem.ship.position(0.0), color="#111827", s=24, label="ship start")
+    ax.set(
+        xlabel="x (m)",
+        ylabel="y (m)",
+        title="Q1 ship/missile trajectories and UAV path",
+        aspect="equal",
+    )
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(FIGURES / "q1_trajectories.png", dpi=180)
+    plt.close(fig)
+
+
+def _write_counterfactual_figure(output: dict) -> None:
+    formal = output["scenarios"][:4]
+    counterfactual = output["counterfactual"]["representative_scenarios"]
+    if not counterfactual:
+        return
+    labels = [item["scenario_id"].replace("q1_rebuild_", "") for item in counterfactual]
+    coverage = [item["covered_duration_s"] for item in formal[: len(labels)]]
+    separation = [item["minimum_separation_m"] for item in counterfactual]
+    x = np.arange(len(labels))
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.bar(x - 0.2, coverage, width=0.4, label="formal covered duration (s)")
+    ax2 = ax.twinx()
+    ax2.plot(x + 0.2, separation, marker="o", color="#dc2626", label="lost minimum separation (m)")
+    ax.set_xticks(x, labels, rotation=20)
+    ax.set_ylabel("formal coverage (s)")
+    ax2.set_ylabel("counterfactual separation (m)")
+    ax.set_title("Formal baseline versus lost-guidance counterfactual")
+    fig.tight_layout()
+    fig.savefig(FIGURES / "q1_counterfactual_comparison.png", dpi=180)
+    plt.close(fig)
+
 
 def run() -> dict:
     RESULTS.mkdir(parents=True, exist_ok=True)
@@ -240,10 +295,30 @@ def run() -> dict:
         writer.writeheader()
         for row in scenario_rows:
             writer.writerow({field: row.get(field) for field in fields})
+    benchmark_fields = [
+        "scenario_id",
+        "method",
+        "seed",
+        "evaluation_budget",
+        "evaluations",
+        "runtime_s",
+        "native_success",
+        "native_status",
+        "verification_status",
+        "covered_duration_s",
+        "maximum_exposure_s",
+    ]
+    with (RESULTS / "q1_algorithm_benchmark.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as stream:
+        writer = csv.DictWriter(stream, fieldnames=benchmark_fields)
+        writer.writeheader()
+        writer.writerows(benchmark_rows)
 
     if first_problem and first_result:
         candidate = first_result.best_candidate
         _write_figures(first_problem, candidate, scenario_rows)
+        _write_counterfactual_figure(output)
     return output
 
 
@@ -251,8 +326,11 @@ def check() -> int:
     required = (
         RESULTS / "q1_results.json",
         RESULTS / "q1_results.csv",
+        RESULTS / "q1_algorithm_benchmark.csv",
         FIGURES / "q1_coverage_timeline.png",
         FIGURES / "q1_margin_curve.png",
+        FIGURES / "q1_trajectories.png",
+        FIGURES / "q1_counterfactual_comparison.png",
         ROOT / "docs/q1/q1-model.md",
         ROOT / "docs/q1/q1-algorithm-benchmark.md",
         ROOT / "docs/q1/q1-verification.md",

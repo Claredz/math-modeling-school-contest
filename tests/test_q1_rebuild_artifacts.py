@@ -30,7 +30,10 @@ def test_q1_rebuild_has_paper_ready_docs_and_figures():
         "docs/q1/q1-algorithm-benchmark.md",
         "docs/q1/q1-verification.md",
         "results/q1_rebuild/q1_results.csv",
+        "results/q1_rebuild/q1_algorithm_benchmark.csv",
         "figures/q1_rebuild/q1_coverage_timeline.png",
         "figures/q1_rebuild/q1_margin_curve.png",
+        "figures/q1_rebuild/q1_trajectories.png",
+        "figures/q1_rebuild/q1_counterfactual_comparison.png",
     ):
         assert (ROOT / relative).exists(), relative
